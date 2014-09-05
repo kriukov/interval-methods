@@ -18,15 +18,9 @@ type Interval
 
 end
 
-# Thin (degenerate) interval and functions zero() and one()
+# Thin (degenerate) interval
 
 Interval(x) = Interval(x, x)
-
-import Base.one
-one(x::Interval) = Interval(1.0)
-
-import Base.zero
-zero(x::Interval) = Interval(0.0)
 
 # The basic operations on intervals. Left end is rounded down, right end is rounded up.
 
@@ -42,8 +36,14 @@ function +(x::Interval, y::Interval)
     Interval(z1, z2)
 end
 
-+(x::Interval, y::Real) = x + Interval(y)
-+(x::Real, y::Interval) = Interval(x) + y
+function +(x::Interval, y::prec)
+    x + Interval(y)
+end
+
+function +(x::prec, y::Interval)
+    Interval(x) + y
+end
+
 
 # Subtraction
 
@@ -57,10 +57,23 @@ x.hi - y.lo
     Interval(z1, z2)
 end
 
--(x::Interval) = Interval(-x.lo, -x.hi)
+function -(x::Interval, y::prec)
+    x - Interval(y)
+end
 
--(x::Interval, y::Real) = x - Interval(y)
--(x::Real, y::Interval) = Interval(x) - y
+function -(x::Interval, y::Int32)
+    x - Interval(y)
+end
+
+function -(x::Interval)
+    Interval(-x.lo, -x.hi)
+end
+
+
+function -(x::prec, y::Interval)
+    Interval(x) - y
+end
+
 
 # Multiplication
 
@@ -74,8 +87,13 @@ function *(x::Interval, y::Interval)
     Interval(z1, z2)
 end
 
-*(x::Interval, y::Real) = x*Interval(y)
-*(x::Real, y::Interval) = Interval(x)*y
+function *(x::Interval, y::prec)
+    x*Interval(y)
+end
+
+function *(x::prec, y::Interval)
+    Interval(x)*y
+end
 
 
 # Division
@@ -90,8 +108,14 @@ function /(x::Interval, y::Interval)
     x*Interval(z1, z2)
 end
 
-/(x::Interval, y::Real) = x/Interval(y)
-/(x::Real, y::Interval) = Interval(x)/y
+function /(x::Interval, y::prec)
+    x/Interval(y)
+end
+
+function /(x::prec, y::Interval)
+    Interval(x)/y
+end
+
 
 # Extended division
 
@@ -166,14 +190,6 @@ end
 rad(x::Interval) = (x.hi - x.lo)/2
 
 mid(x::Interval) = (x.hi + x.lo)/2
-# Making mid() process 1-D interval arrays into arrays of midpoints
-function mid(array::Array{Interval, 1})
-	array1 = prec[]
-	for i = 1:length(array)
-		push!(array1, mid(array[i]))
-	end
-	array1
-end
 
 function mig(x::Interval)
     if belong(0.0, x) == true
@@ -281,46 +297,11 @@ end
 
 # Trigonometry
 
-#= COMMENTED OUT: old Tucker definition of sin
-import Base.sin
-function sin(x::Interval)
-
-    k = 0
-    pcount = 0
-    for k = -1000:1000
-p = pi/2 + 2pi*k
-if belong(p, x) == true
-pcount = pcount + 1
-end
-    end
-    
-    k = 0
-    qcount = 0
-    for k = -1000:1000
-q = - pi/2 + 2pi*k
-if belong(q, x) == true
-qcount = qcount + 1
-end
-    end
-    
-    if qcount != 0 && pcount != 0
-		return Interval(-1., 1.)
-    elseif qcount != 0 && pcount == 0
-		return Interval(-1., max(sin(x.lo), sin(x.hi)))
-    elseif qcount == 0 && pcount != 0
-		return Interval(min(sin(x.lo), sin(x.hi)), 1.)
-    elseif qcount == 0 && pcount == 0
-		return Interval(min(sin(x.lo), sin(x.hi)), max(sin(x.lo), sin(x.hi)))
-    end
-end
-
-=#
-
 # Following http://jenchienjackchang.com/sample-page/implicit-solid-modeling-using-interval-methods/interval-arithmetic/
 
 import Base.sin
 function sin(x::Interval)
-	x1 = Interval(x.lo%(2pi), x.lo%(2pi) + x.hi - x.lo)
+	x1 = Interval(x.lo%2pi, x.lo%2pi + x.hi - x.lo)
 	if rad(x) >= pi
 		return Interval(-1, 1)
 	elseif 0 <= x1.lo <= x1.hi <= pi/2 || 3pi/2 <= x1.lo <= x1.hi <= 2pi
@@ -337,8 +318,8 @@ function sin(x::Interval)
 	
 end
 
-import Base.cos
 cos(x::Interval) = sin(Interval(x.lo + pi/2, x.hi + pi/2))
+
 
 # Miscellaneous
 
