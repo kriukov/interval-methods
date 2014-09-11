@@ -29,31 +29,44 @@ function newton(f::Function, a::Interval)
 
 	k = 0
 	while true
+		
+		println(k)
+		@show((arr_a, arr_b))
+		
 		arr_b = Interval[]
 
 		for i = 1:length(arr_a)
 			push!(arr_b, N(arr_a[i]))
 		end
+		
+		@show arr_b
 
 		arr_a_new = Interval[]
 
 		for i = 1:length(arr_b)
+			@show do_isect(i, i)
 			if do_isect(i, i) != false
 				arr_a_new = vcat(arr_a_new, do_isect(i, i))
 			end
 		end
-				
-		# Stopping cycle routine
-		m = 0
-		# Make sure that the cycle stops when all elements of an array change by less than a ~10eps() (smaller number of eps may not finish the cycle)
-		for i = 1:length(arr_a)
-			# Convert true/false to 1/0
-			m += convert(Int, (mid(abs(arr_a[i] - arr_b[i])) <= 9*eps()))
-		end
 
-		if m >= length(arr_a)
+		if arr_a_new == arr_a 
 			break
 		end
+				
+		# # Stopping cycle routine
+		# m = 0
+		# # Make sure that the cycle stops when all elements of an array change by less than a ~10eps() (smaller number of eps may not finish the cycle)
+		# for i = 1:length(arr_a)
+		# 	# Convert true/false to 1/0
+		# 	#m += ( @show mid(abs(arr_a[i] - arr_b[i])) <= 9*eps() )
+		# 	@show((arr_a[i], arr_b[i]))
+		# 	m += @show(arr_a[i] == arr_b[i])
+		# end
+
+		# if m >= length(arr_a)
+		# 	break
+		# end
 		
 		arr_a = arr_a_new
 		k += 1

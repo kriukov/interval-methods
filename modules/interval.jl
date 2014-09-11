@@ -161,10 +161,10 @@ return true
 end
 
 
-# Radius, midpoint, mignitude, magnitude, absolute value
+# Radius, diameter, midpoint, mignitude, magnitude, absolute value
 
 rad(x::Interval) = (x.hi - x.lo)/2
-
+diam(x::Interval) = x.hi - x.lo
 mid(x::Interval) = (x.hi + x.lo)/2
 # Making mid() process 1-D interval arrays into arrays of midpoints
 function mid(array::Array{Interval, 1})
@@ -185,9 +185,7 @@ end
 mag(x::Interval) = max(abs(x.lo), abs(x.hi))
 
 import Base.abs
-function abs(x::Interval)
-    Interval(mig(x), mag(x))
-end
+abs(x::Interval) = Interval(mig(x), mag(x))
 
 
 # Hausdorff distance
@@ -238,18 +236,6 @@ function isectext(x::Interval, y::Interval)
 		return isect(x, y)
 	end
 end
-
-
-# Elementary functions
-
-import Base.exp
-exp(x::Interval) = Interval(exp(x.lo), exp(x.hi))
-
-import Base.sqrt
-sqrt(x::Interval) = Interval(sqrt(x.lo), sqrt(x.hi))
-
-import Base.log
-log(x::Interval) = Interval(log(x.lo), log(x.hi))
 
 
 # Integer power
@@ -318,20 +304,26 @@ end
 
 # Following http://jenchienjackchang.com/sample-page/implicit-solid-modeling-using-interval-methods/interval-arithmetic/
 
+
 import Base.sin
 function sin(x::Interval)
-	x1 = Interval(x.lo%(2pi), x.lo%(2pi) + x.hi - x.lo)
-	if rad(x) >= pi
+	if x.lo%2pi >= 0
+		low = x.lo%2pi
+	else low = x.lo%2pi + 2pi
+	end	
+	x1 = Interval(low, low + diam(x))
+	# If the interval has a diameter equal or greater than 2pi or it is an extended interval, return [-1, 1]
+	if diam(x) >= 2pi || x.lo > x.hi
 		return Interval(-1, 1)
-	elseif 0 <= x1.lo <= x1.hi <= pi/2 || 3pi/2 <= x1.lo <= x1.hi <= 2pi
+	elseif 0 <= x1.lo <= x1.hi <= pi/2 || 3pi/2 <= x1.lo <= x1.hi <= 5pi/2 || 7pi/2 <= x1.lo <= x1.hi <= 4pi
 			return Interval(sin(x1.lo), sin(x1.hi))
-		elseif pi/2 <= x1.lo <= x1.hi <= 3pi/2
+		elseif pi/2 <= x1.lo <= x1.hi <= 3pi/2 || 5pi/2 <= x1.lo <= x1.hi <= 7pi/2
 			return Interval(sin(x1.hi), sin(x1.lo))
-		elseif 0 <= x1.lo <= pi/2 && pi/2 <= x1.hi <= 3pi/2
+		elseif (0 <= x1.lo <= pi/2 && pi/2 <= x1.hi <= 3pi/2) || (3pi/2 <= x1.lo <= 5pi/2 && 5pi/2 <= x1.hi <= 7pi/2)
 			return Interval(min(sin(x1.lo), sin(x1.hi)), 1)
-		elseif pi/2 <= x1.lo <= 3pi/2 && 3pi/2 <= x1.hi <= 2pi
+		elseif (pi/2 <= x1.lo <= 3pi/2 && 3pi/2 <= x1.hi <= 5pi/2) || (5pi/2 <= x1.lo <= 7pi/2 && 7pi/2 <= x1.hi <= 4pi)
 			return Interval(-1, max(sin(x1.lo), sin(x1.hi)))
-		elseif 0 <= x1.lo <= pi/2 && 3pi/2 <= x1.hi <= 2pi
+		elseif (0 <= x1.lo <= pi/2 && 3pi/2 <= x1.hi <= 5pi/2) || (pi/2 <= x1.lo <= 3pi/2 && 5pi/2 <= x1.hi <= 7pi/2) || (3pi/2 <= x1.lo <= 5pi/2 && 7pi/2 <= x1.hi <= 4pi)
 			return Interval(-1, 1)
 		end
 	
@@ -354,3 +346,22 @@ function /(x::Array{Any, 1}, y::Interval)
     [x[1]/y, x[2]/y]
 end
 
+# Equality of two intervals
+==(a::Interval, b::Interval) = a.lo == b.lo && a.hi == b.hi
+
+# Monotonic functions
+
+import Base.exp
+exp(x::Interval) = Interval(exp(x.lo), exp(x.hi))
+
+import Base.sqrt
+sqrt(x::Interval) = Interval(sqrt(x.lo), sqrt(x.hi))
+
+import Base.log
+log(x::Interval) = Interval(log(x.lo), log(x.hi))
+
+import Base.asin
+asin(x::Interval) = Interval(asin(x.lo), asin(x.hi))
+
+import Base.acos
+acos(x::Interval) = Interval(acos(x.hi), acos(x.lo))
