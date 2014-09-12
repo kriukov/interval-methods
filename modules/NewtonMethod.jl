@@ -1,11 +1,10 @@
 ## Newton's method (interval) code
 
-#module NewtonMethod
+module NewtonMethod
+export newton, differentiate, Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext
 
-#export newton, Interval
-
-include("interval.jl")
-include("ad-int.jl")
+using IntervalArithmetic
+using AutoDiff
 
 println("Syntax: newton(function, Interval(lo, hi))")
 
@@ -30,8 +29,8 @@ function newton(f::Function, a::Interval)
 	k = 0
 	while true
 		
-		println(k)
-		@show((arr_a, arr_b))
+		#println(k)
+		#@show((arr_a, arr_b))
 		
 		arr_b = Interval[]
 
@@ -39,12 +38,12 @@ function newton(f::Function, a::Interval)
 			push!(arr_b, N(arr_a[i]))
 		end
 		
-		@show arr_b
+		#@show arr_b
 
 		arr_a_new = Interval[]
 
 		for i = 1:length(arr_b)
-			@show do_isect(i, i)
+			do_isect(i, i)
 			if do_isect(i, i) != false
 				arr_a_new = vcat(arr_a_new, do_isect(i, i))
 			end
@@ -78,4 +77,4 @@ function newton(f::Function, a::Interval)
 end
 
 # end of module
-#end
+end

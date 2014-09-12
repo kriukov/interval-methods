@@ -4,7 +4,7 @@ using NewtonMethod
 # Transcendental true roots were found using Wolfram Mathematica
 
 # Choose interval [-20, 20]
-a = Interval(-20., 20.)
+a = Interval(-20, 20)
 
 enclosure(x) = Interval(x - 10*eps(), x + 10*eps())
 
