@@ -3,12 +3,13 @@
 module NewtonMethod
 export newton, differentiate, Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext
 
-using IntervalArithmetic
 using AutoDiff
 
-println("Syntax: newton(function, Interval(lo, hi))")
+println("Syntax: newton(function, Interval(lo, hi), precision)")
 
-function newton(f::Function, a::Interval)
+function newton(f::Function, a::Interval, bigprec::Integer)
+
+	set_bigfloat_precision(bigprec)
 
 	center(x) = Interval(mid(x))
 	N(x) = center(x) - f(center(x))//differentiate(f, x)
@@ -52,20 +53,6 @@ function newton(f::Function, a::Interval)
 		if arr_a_new == arr_a 
 			break
 		end
-				
-		# # Stopping cycle routine
-		# m = 0
-		# # Make sure that the cycle stops when all elements of an array change by less than a ~10eps() (smaller number of eps may not finish the cycle)
-		# for i = 1:length(arr_a)
-		# 	# Convert true/false to 1/0
-		# 	#m += ( @show mid(abs(arr_a[i] - arr_b[i])) <= 9*eps() )
-		# 	@show((arr_a[i], arr_b[i]))
-		# 	m += @show(arr_a[i] == arr_b[i])
-		# end
-
-		# if m >= length(arr_a)
-		# 	break
-		# end
 		
 		arr_a = arr_a_new
 		k += 1
@@ -73,7 +60,6 @@ function newton(f::Function, a::Interval)
 
 	println("Function calls: ", k)
 	return arr_a
-
 end
 
 # end of module

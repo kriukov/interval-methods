@@ -3,20 +3,19 @@
 module IntervalArithmetic
 export Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext
 
-#set_bigfloat_precision(64)
-
-typealias prec Float64
+typealias prec BigFloat
 
 type Interval
+
     lo
     hi
 
     function Interval(a, b)
         set_rounding(prec, RoundDown)
-        lo = float("$a")
+        lo = BigFloat("$a")
 
         set_rounding(prec, RoundUp)
-        hi = float("$b")
+        hi = BigFloat("$b")
 
         new(lo, hi)
     end
@@ -296,8 +295,8 @@ end
 		return Interval(min(sin(x.lo), sin(x.hi)), max(sin(x.lo), sin(x.hi)))
     end
 end
-
 =#
+
 
 # Following http://jenchienjackchang.com/sample-page/implicit-solid-modeling-using-interval-methods/interval-arithmetic/
 
@@ -325,6 +324,7 @@ function sin(x::Interval)
 		end
 	
 end
+
 
 import Base.cos
 cos(x::Interval) = sin(Interval(x.lo + pi/2, x.hi + pi/2))
