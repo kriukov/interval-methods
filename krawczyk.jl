@@ -1,8 +1,15 @@
 using IntervalArithmetic
 using AutoDiff
 
-	center(x) = Interval(mid(x))
-	K(x) = center(x) - f(center(x))/differentiate(f, center(x)) - (Interval(1.) + differentiate(f, x)/differentiate(f, center(x)))*(x - mid(x))
+	# center(x) = Interval(mid(x))
+	function y(x)
+		if differentiate(f, mid(x)) == Interval(0) 
+			Interval(1)//(1.0001*differentiate(f, mid(x)))
+		else Interval(1)//differentiate(f, mid(x))
+		end
+	end
+	z(x) = 1 - y(x)*differentiate(f, x)
+	K(x) = mid(x) - y(x)*f(mid(x)) + z(x)*(x - mid(x))
 	do_isect(x, y) = isectext(arr_a[x], arr_b[y])
 
 	# If a is symmetric, i.e., mid(a) = 0, the process may stall. The initial interval should be slightly asymmetrized then
