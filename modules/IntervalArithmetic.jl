@@ -22,6 +22,9 @@ type Interval
 
 end
 
+#import MPFR.BigFloat
+#BigFloat(x::Interval) = Interval(BigFloat(x.lo), BigFloat(x.hi))
+
 # Thin (degenerate) interval and functions zero() and one()
 
 Interval(x) = Interval(x, x)
@@ -31,6 +34,7 @@ one(x::Interval) = Interval(1.0)
 
 import Base.zero
 zero(x::Interval) = Interval(0.0)
+zero(Interval) = Interval(0)
 
 # The basic operations on intervals. Left end is rounded down, right end is rounded up.
 

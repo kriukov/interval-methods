@@ -4,8 +4,8 @@ using AutoDiff
 	# center(x) = Interval(mid(x))
 	function y(x)
 		if differentiate(f, mid(x)) == Interval(0) 
-			Interval(1)//(differentiate(f, mid(x)))
-		else Interval(1)//differentiate(f, mid(x))
+			Interval(1)//(0.00001+Interval(differentiate(f, mid(x))))
+		else Interval(1)//Interval(differentiate(f, mid(x)))
 		end
 	end
 	z(x) = 1 - y(x)*differentiate(f, x)
@@ -14,6 +14,25 @@ using AutoDiff
 	
 	lower(x::Interval) = Interval(x.lo, mid(x))
 	higher(x::Interval) = Interval(mid(x), x.hi)
+	
+	# Need the function to remove duplicates from an interval array.
+	# unique() doesn't seem to work with interval arrays and sort() cannot compare intervals (< or >)
+	function undupe(x::Array)
+		y = Interval[]
+		push!(y, x[1])
+		for i = 2:length(x)
+			s = 0
+			for j = 1:i-1
+				if x[i] == x[i-j]
+					s += 1
+				end
+			end
+			if s == 0
+				push!(y, x[i])
+			end			
+		end
+		y
+	end
 
 	x = Ad(a, Interval(1.))
 
@@ -49,7 +68,7 @@ using AutoDiff
 			break
 		end
 		
-		arr_a = arr_a_new
+		arr_a = undupe(arr_a_new)
 		k += 1
 	end
 
