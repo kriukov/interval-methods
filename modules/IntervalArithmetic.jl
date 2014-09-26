@@ -65,7 +65,7 @@ x.hi - y.lo
     Interval(z1, z2)
 end
 
--(x::Interval) = Interval(-x.lo, -x.hi)
+-(x::Interval) = Interval(-x.hi, -x.lo)
 
 -(x::Interval, y::Real) = x - Interval(y)
 -(x::Real, y::Interval) = Interval(x) - y
@@ -161,19 +161,11 @@ function belong(p::Real, x::Interval)
     end
 end
 
-# Radius, diameter, midpoint, mignitude, magnitude, absolute value
+# Bottom, top, radius, diameter, midpoint, mignitude, magnitude, absolute value
 
 rad(x::Interval) = (x.hi - x.lo)/2
 diam(x::Interval) = x.hi - x.lo
 mid(x::Interval) = (x.hi + x.lo)/2
-# Making mid() process 1-D interval arrays into arrays of midpoints
-function mid(array::Array{Interval, 1})
-	array1 = prec[]
-	for i = 1:length(array)
-		push!(array1, mid(array[i]))
-	end
-	array1
-end
 
 function mig(x::Interval)
     if belong(0.0, x) == true
@@ -366,6 +358,27 @@ asin(x::Interval) = Interval(asin(x.lo), asin(x.hi))
 
 import Base.acos
 acos(x::Interval) = Interval(acos(x.hi), acos(x.lo))
+
+
+## Interval arithmetic for 2D objects
+
+# Making mid() process 1-D and 2-D interval arrays into arrays of midpoints
+function mid(array::Array{Interval, 1})
+	array1 = prec[]
+	for i = 1:length(array)
+		push!(array1, mid(array[i]))
+	end
+	array1
+end
+
+function mid(array::Array{Interval, 2})
+	array1 = prec[]
+	for i = 1:length(array)
+		push!(array1, mid(array[i]))
+	end
+	reshape(array1, (2, 2))
+end
+
 
 # End of module
 end

@@ -68,3 +68,24 @@ differentiate(f, a) = f(Ad(a, 1.)).up
 
 # End of module
 end
+
+function jacobian(f, a)
+
+	f1(x) = f(x)[1]
+	f2(x) = f(x)[2]
+
+	f11(x1) = f1([x1, a[2]])
+	J11 = differentiate(f11, a[1])
+
+	f12(x2) = f1([a[1], x2])
+	J12 = differentiate(f12, a[2])
+
+	f21(x1) = f2([x1, a[2]])
+	J21 = differentiate(f21, a[1])
+
+	f22(x2) = f2([a[1], x2])
+	J22 = differentiate(f22, a[2])
+
+	[J11 J12; J21 J22]
+
+end
