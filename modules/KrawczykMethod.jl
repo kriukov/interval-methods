@@ -26,8 +26,8 @@ function krawczyk_internal(f::Function, a::Interval, bigprec::Integer)
 	end
 	
 	if isect(a, K(a)) != false
-		@show diam(a)
-		@show diam(K(a))
+		#@show diam(a)
+		#@show diam(K(a))
 
 
 		if diam(K(a)) < tol

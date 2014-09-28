@@ -1,7 +1,7 @@
 ## Automatic differentiation (interval version)
 
 module AutoDiff
-export differentiate, Ad, Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext
+export differentiate, Ad, Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, make_intervals
 
 using IntervalArithmetic
 

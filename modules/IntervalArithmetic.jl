@@ -1,7 +1,7 @@
 ## Interval arithmetic
 
 module IntervalArithmetic
-export Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext
+export Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, make_intervals, det_2dint
 
 typealias prec BigFloat
 
@@ -161,8 +161,10 @@ function belong(p::Real, x::Interval)
     end
 end
 
-# Bottom, top, radius, diameter, midpoint, mignitude, magnitude, absolute value
+# Lower end, higher end, bottom, top, radius, diameter, midpoint, mignitude, magnitude, absolute value
 
+lo(x::Interval) = x.lo
+hi(x::Interval) = x.hi
 rad(x::Interval) = (x.hi - x.lo)/2
 diam(x::Interval) = x.hi - x.lo
 mid(x::Interval) = (x.hi + x.lo)/2
@@ -360,7 +362,25 @@ import Base.acos
 acos(x::Interval) = Interval(acos(x.hi), acos(x.lo))
 
 
+#-------------------------------------------------------
+
 ## Interval arithmetic for 2D objects
+
+function lo(x::Array{Interval})
+	y = prec[]
+	for i = 1:length(x)
+		push!(y, lo(x[i]))
+	end
+	y
+end
+
+function hi(x::Array{Interval})
+	y = prec[]
+	for i = 1:length(x)
+		push!(y, hi(x[i]))
+	end
+	y
+end
 
 # Making mid() process 1-D and 2-D interval arrays into arrays of midpoints
 function mid(array::Array{Interval, 1})
@@ -378,6 +398,54 @@ function mid(array::Array{Interval, 2})
 	end
 	reshape(array1, (2, 2))
 end
+
+function diam(x::Array{Interval, 1})
+	y = prec[]
+	for i = 1:length(x)
+		push!(y, diam(x[i]))
+	end
+	y
+end
+
+
+# Function that makes numbers into thin intervals in arrays
+function make_intervals(x::Array{prec, 1})
+	y = Interval[]
+	for i = 1:length(x)
+		push!(y, Interval(x[i]))
+	end
+	return y
+end
+
+
+function make_intervals(x::Array{prec, 2})
+	y = Interval[]
+	for i = 1:length(x)
+		push!(y, Interval(x[i]))
+	end
+	return reshape(y, (2, 2))
+end
+
+# Intersection of 2-D vectors
+function isect(x::Array{Interval, 1}, y::Array{Interval, 1})
+	z = Interval[]
+	if length(x) == length(y)
+		for i = 1:length(x)
+			if isect(x[i], y[i]) == false
+				return false
+			end
+		end	
+		for i = 1:length(x)
+			push!(z, isect(x[i], y[i]))
+		end
+	else return false
+	end
+	return z
+end
+
+# Determinant of a 2-D interval matrix
+
+det_2dint(x::Array{Interval, 2}) = x[1]*x[4] - x[3]*x[2]
 
 
 # End of module
