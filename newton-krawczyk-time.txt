@@ -1,0 +1,21 @@
+Comparison between Newton and Krawczyk methods made by running file newton-krawczyk-time.jl. It is seen that Newton is faster than Krawczyk (after "Function calls", the first time value is of Newton, the second is of Krawczyk)
+
+Function calls: 16
+elapsed time: 1.565580033 seconds (252322430 bytes allocated, 4.00% gc time)
+elapsed time: 9.915345432 seconds (3577530829 bytes allocated, 15.90% gc time)
+
+Function calls: 10
+elapsed time: 0.017599943 seconds (3370058 bytes allocated)
+elapsed time: 0.258211858 seconds (113664575 bytes allocated)
+
+Function calls: 11
+elapsed time: 0.024908051 seconds (5353331 bytes allocated)
+elapsed time: 0.475278221 seconds (156370354 bytes allocated, 18.42% gc time)
+
+Function calls: 11
+elapsed time: 0.039670328 seconds (6722259 bytes allocated)
+elapsed time: 0.585135394 seconds (206057476 bytes allocated, 13.86% gc time)
+
+Function calls: 6
+elapsed time: 0.00397811 seconds (1490223 bytes allocated)
+elapsed time: 0.022749604 seconds (9578812 bytes allocated)
