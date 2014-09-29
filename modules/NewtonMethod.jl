@@ -5,9 +5,9 @@ export newton, differentiate, Interval, rad, diam, mid, mig, mag, belong, hd, hu
 
 using AutoDiff
 
-println("Syntax: newton(function, Interval(lo, hi), precision)")
+println("Syntax: newton(function, Interval(lo, hi), precision [default is 64])")
 
-function newton(f::Function, a::Interval, bigprec::Integer)
+function newton(f::Function, a::Interval, bigprec::Integer=64)
 
 	set_bigfloat_precision(bigprec)
 

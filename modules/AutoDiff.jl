@@ -1,7 +1,7 @@
 ## Automatic differentiation (interval version)
 
 module AutoDiff
-export differentiate, Ad, Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, make_intervals
+export differentiate, Ad, Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, make_intervals, det2
 
 using IntervalArithmetic
 
@@ -10,7 +10,7 @@ type Ad
     up
 end
 
-Ad(c) = Ad(c, Interval(0.0))
+Ad(c) = Ad(c, Interval(0))
 
 # Arithmetic between two Ad
 +(x::Ad, y::Ad) = Ad(x.u + y.u, x.up + y.up)
@@ -38,8 +38,8 @@ for op in (:+, :-, :*, :/)
     @eval begin
         $op(u::Ad, c::Interval) = $op(u, Ad(c))
         $op(c::Interval, u::Ad) = $op(Ad(c), u)
-        $op(u::Ad, c::Real) = $op(u, Ad(Interval(c)))
-        $op(c::Real, u::Ad) = $op(Ad(Interval(c)), u)
+        $op(u::Ad, c::Real) = $op(u, Ad(c))
+        $op(c::Real, u::Ad) = $op(Ad(c), u)
     end
 end
 

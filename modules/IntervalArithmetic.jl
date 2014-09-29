@@ -1,7 +1,7 @@
 ## Interval arithmetic
 
 module IntervalArithmetic
-export Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, make_intervals, det_2dint
+export Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, make_intervals, det2
 
 typealias prec BigFloat
 
@@ -168,6 +168,7 @@ hi(x::Interval) = x.hi
 rad(x::Interval) = (x.hi - x.lo)/2
 diam(x::Interval) = x.hi - x.lo
 mid(x::Interval) = (x.hi + x.lo)/2
+mid(x::prec) = x
 
 function mig(x::Interval)
     if belong(0.0, x) == true
@@ -443,9 +444,9 @@ function isect(x::Array{Interval, 1}, y::Array{Interval, 1})
 	return z
 end
 
-# Determinant of a 2-D interval matrix
+# Determinant of a 2x2 interval matrix
 
-det_2dint(x::Array{Interval, 2}) = x[1]*x[4] - x[3]*x[2]
+det2(x::Array{Interval, 2}) = x[1]*x[4] - x[3]*x[2]
 
 
 # End of module

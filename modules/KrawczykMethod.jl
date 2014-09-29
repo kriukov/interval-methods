@@ -17,8 +17,8 @@ function krawczyk_internal(f::Function, a::Interval, bigprec::Integer)
 
 	set_bigfloat_precision(bigprec)
 	tol = 100eps(BigFloat)
-	
-	K(x) = mid(x) - (Interval(1)//differentiate(f, mid(x)))*f(mid(x)) + (1 - (Interval(1)//differentiate(f, mid(x)))*differentiate(f, x))*(x - mid(x))
+		
+	K(x) = mid(x) - (Interval(1)//Interval(differentiate(f, mid(x))))*f(mid(x)) + (1 - (Interval(1)//Interval(differentiate(f, mid(x))))*differentiate(f, x))*(x - mid(x))
 	
 	# If a is symmetric, i.e., mid(a) = 0, the process may stall. The initial interval should be slightly asymmetrized then
 	if mid(a) == 0
