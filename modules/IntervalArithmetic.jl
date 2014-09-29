@@ -27,7 +27,8 @@ end
 
 # Thin (degenerate) interval and functions zero() and one()
 
-Interval(x) = Interval(x, x)
+Interval(x::Number) = Interval(x, x)
+Interval(x::Interval) = x
 
 import Base.one
 one(x::Interval) = Interval(1.0)
@@ -297,9 +298,9 @@ end
 =#
 
 
-# Following http://jenchienjackchang.com/sample-page/implicit-solid-modeling-using-interval-methods/interval-arithmetic/
+# Taken from http://jenchienjackchang.com/sample-page/implicit-solid-modeling-using-interval-methods/interval-arithmetic/
 
-
+#= Deprecated in favour of the next
 import Base.sin
 function sin(x::Interval)
 	if x.lo%2pi >= 0
@@ -322,6 +323,69 @@ function sin(x::Interval)
 			return Interval(-1, 1)
 		end
 	
+end
+=#
+
+# Using Sanders/Benet sin() from https://github.com/dpsanders/ValidatedNumerics.jl
+import Base.sin
+function sin(a::Interval)
+    piHalf = pi*BigFloat("0.5")
+    twoPi = pi*BigFloat("2.0")
+    domainSin = Interval( BigFloat(-1.0), BigFloat(1.0) )
+
+    # Checking the specific case
+    diam(a) >= twoPi && return domainSin
+
+    # Limits within 1 full period of sin(x)
+    # Abbreviations
+    loMod2pi = mod(a.lo, twoPi)
+    hiMod2pi = mod(a.hi, twoPi)
+    loQuartile = floor( loMod2pi / piHalf )
+    hiQuartile = floor( hiMod2pi / piHalf )
+
+    # 20 different cases
+    if loQuartile == hiQuartile # Interval limits in the same quartile
+        loMod2pi > hiMod2pi && return domainSin
+        set_rounding(BigFloat, RoundDown)
+        lo = sin( a.lo )
+        set_rounding(BigFloat, RoundUp)
+        hi = sin( a.hi )
+        set_rounding(BigFloat, RoundNearest)
+        return Interval( lo, hi )
+    elseif loQuartile == 3 && hiQuartile==0
+        set_rounding(BigFloat, RoundDown)
+        lo = sin( a.lo )
+        set_rounding(BigFloat, RoundUp)
+        hi = sin( a.hi )
+        set_rounding(BigFloat, RoundNearest)
+        return Interval( lo, hi )
+    elseif loQuartile == 1 && hiQuartile==2
+        set_rounding(BigFloat, RoundDown)
+        lo = sin( a.hi )
+        set_rounding(BigFloat, RoundUp)
+        hi = sin( a.lo )
+        set_rounding(BigFloat, RoundNearest)
+        return Interval( lo, hi )
+    elseif ( loQuartile == 0 || loQuartile==3 ) && ( hiQuartile==1 || hiQuartile==2 )
+        set_rounding(BigFloat, RoundDown)
+        slo = sin( a.lo )
+        shi = sin( a.hi )
+        set_rounding(BigFloat, RoundNearest)
+        lo = min( slo, shi )
+        return Interval( lo, BigFloat(1.0) )
+    elseif ( loQuartile == 1 || loQuartile==2 ) && ( hiQuartile==3 || hiQuartile==0 )
+        set_rounding(BigFloat, RoundUp)
+        slo = sin( a.lo )
+        shi = sin( a.hi )
+        set_rounding(BigFloat, RoundNearest)
+        hi = max( slo, shi )
+        return Interval( BigFloat(-1.0), hi )
+    elseif ( loQuartile == 0 && hiQuartile==3 ) || ( loQuartile == 2 && hiQuartile==1 )
+        return domainSin
+    else
+        # This should be never reached!
+        error(string("SOMETHING WENT WRONG in sin.\nThis should have never been reached") )
+    end
 end
 
 
