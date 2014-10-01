@@ -28,6 +28,8 @@ end
 # Thin (degenerate) interval and functions zero() and one()
 
 Interval(x::Number) = Interval(x, x)
+
+# Prevent errors from embedded interval functions
 Interval(x::Interval) = x
 
 import Base.one
