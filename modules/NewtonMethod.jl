@@ -13,53 +13,38 @@ function newton(f::Function, a::Interval, bigprec::Integer=64)
 
 	center(x) = Interval(mid(x))
 	N(x) = center(x) - f(center(x))//differentiate(f, x)
-	do_isect(x, y) = isectext(arr_a[x], arr_b[y])
 
 	# If a is symmetric, i.e., mid(a) = 0, the process may stall. The initial interval should be slightly asymmetrized then
 	if mid(a) == 0
 		a = Interval(a.lo, a.hi + 0.0001*mag(a))
 	end
 
-	x = Ad(a, Interval(1.))
+	roots_array = Interval[]
 
-	arr_a = Interval[]
-	arr_b = Interval[]
-
-	push!(arr_a, a)
+	push!(roots_array, a)
 
 	k = 0
 	while true
-		
-		#println(k)
-		#@show((arr_a, arr_b))
-		
-		arr_b = Interval[]
 
-		for i = 1:length(arr_a)
-			push!(arr_b, N(arr_a[i]))
-		end
-		
-		#@show arr_b
+		roots_array_new = Interval[]
 
-		arr_a_new = Interval[]
-
-		for i = 1:length(arr_b)
-			do_isect(i, i)
-			if do_isect(i, i) != false
-				arr_a_new = vcat(arr_a_new, do_isect(i, i))
+		for i = 1:length(roots_array)
+			if isectext(roots_array[i], N(roots_array[i])) != false
+				roots_array_new = vcat(roots_array_new, isectext(roots_array[i], N(roots_array[i])))
 			end
 		end
 
-		if arr_a_new == arr_a 
+		# Exit criterion
+		if roots_array_new == roots_array 
 			break
 		end
 		
-		arr_a = arr_a_new
+		roots_array = roots_array_new
 		k += 1
 	end
 
 	println("Function calls: ", k)
-	return arr_a
+	return roots_array
 end
 
 # end of module

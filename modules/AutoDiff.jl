@@ -62,6 +62,9 @@ exp(x::Ad) = Ad(exp(x.u), x.up*exp(x.u))
 import Base.log
 log(x::Ad) = Ad(log(x.u), x.up/x.u)
 
+import Base.abs
+abs(x::Ad) = Ad(abs(x.u), x.up*sign(x.u))
+
 (x::Ad)^y::Interval = Ad(x.u^y, x.up*y*x.u^(y-1))
 
 differentiate(f, a) = f(Ad(a, 1.)).up

@@ -1,7 +1,7 @@
 ## Interval arithmetic
 
 module IntervalArithmetic
-export Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, make_intervals, det2
+export Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, make_intervals, det2, inside
 
 typealias prec BigFloat
 
@@ -160,8 +160,19 @@ end
 function belong(p::Real, x::Interval)
     if p >= x.lo && p <= x.hi
 		return true
-    else return false
+    else 
+    	return false
     end
+end
+
+# Whether one interval is inside of the other
+
+function inside(x::Interval, y::Interval)
+	if x.lo > y.lo && x.hi < y.hi
+		return true
+	else 
+		return false
+	end
 end
 
 # Lower end, higher end, bottom, top, radius, diameter, midpoint, mignitude, magnitude, absolute value

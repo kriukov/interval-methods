@@ -3,26 +3,23 @@
 module KrawczykMethod
 export krawczyk, differentiate, Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, K
 
+using IntervalArithmetic
 using AutoDiff
 
-println("Syntax: krawczyk(function, Interval(lo, hi), precision)")
+
+println("Syntax: krawczyk(function, Interval(lo, hi), precision [default is 64])")
 
 K(f, x) = mid(x) - (Interval(1)//Interval(differentiate(f, mid(x))))*f(mid(x)) + (1 - (Interval(1)//Interval(differentiate(f, mid(x))))*differentiate(f, x))*(x - mid(x))
 
-
-
 # Outside wrapping function was made in order for it to clean up the array of roots every time
-function krawczyk(f::Function, a::Interval, bigprec::Integer)
+function krawczyk(f::Function, a::Interval, bigprec::Integer=64)
 
+  arr_a = Any[] # instead of Interval[] to put symbols at each encountered root
 
-  arr_a = Interval[]
-
-  function krawczyk_internal(f::Function, a::Interval, bigprec::Integer=64)
+  function krawczyk_internal(f::Function, a::Interval, bigprec::Integer)
 
     set_bigfloat_precision(bigprec)
     tol = 1e-15 #100eps(BigFloat)
-
-
 
     # If a is symmetric, i.e., mid(a) = 0, the process may stall. The initial interval should be slightly asymmetrized then
     if mid(a) == 0
@@ -36,13 +33,13 @@ function krawczyk(f::Function, a::Interval, bigprec::Integer)
       #@show diam(a)
       #@show diam(K(a))
 
-
       if diam(Ka) < tol
-        if a.lo < Ka.lo && Ka.hi < a.hi   # inside
+        if inside(Ka, a)   # inside
           println("Unique zero in $(Ka)")
-          push!(arr_a, Ka)
+          push!(arr_a, [Ka, :unique])
         else
           println("Maybe a zero in $(Ka)")
+          push!(arr_a, [Ka, :possible])
         end
 
       else
