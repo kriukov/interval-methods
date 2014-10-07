@@ -9,7 +9,16 @@ using AutoDiff
 
 println("Syntax: krawczyk(function, Interval(lo, hi), precision [default is 64])")
 
-K(f, x) = mid(x) - (Interval(1)//Interval(differentiate(f, mid(x))))*f(mid(x)) + (1 - (Interval(1)//Interval(differentiate(f, mid(x))))*differentiate(f, x))*(x - mid(x))
+# If the derivative is 0, the constant C will return a "division by thin zero" error. We slightly change the denominator of the constant if this is the case.
+function C(f, x)
+	if differentiate(f, mid(x)) == Interval(0)
+		return Interval(1)//Interval(differentiate(f, mid(x)) + 0.0001*rad(x))
+	else
+		return Interval(1)//Interval(differentiate(f, mid(x)))
+	end
+end
+
+K(f, x) = mid(x) - C(f, x)*f(mid(x)) + (1 - C(f, x)*differentiate(f, x))*(x - mid(x))
 
 # Outside wrapping function was made in order for it to clean up the array of roots every time
 function krawczyk(f::Function, a::Interval, bigprec::Integer=64)
@@ -21,7 +30,7 @@ function krawczyk(f::Function, a::Interval, bigprec::Integer=64)
     set_bigfloat_precision(bigprec)
     tol = 1e-15 #100eps(BigFloat)
 
-    # If a is symmetric, i.e., mid(a) = 0, the process may stall. The initial interval should be slightly asymmetrized then
+    # If a is symmetric, i.e., mid(a) = 0, the process may stall. The initial interval should be slightly asymmetrized then. This fix also removes the "possible" roots which correctly merge into "unique".
     if mid(a) == 0
       a = Interval(a.lo, a.hi + 0.0001*mag(a))
     end
