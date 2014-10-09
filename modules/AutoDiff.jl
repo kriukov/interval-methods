@@ -23,14 +23,14 @@ function /(x::Ad, y::Ad)
 end
 
 # Power; two functions for power because it is less costly
-#= Commented out because it gave errors
+# Commented out because it gave errors
 ^(x::Ad, a::Integer)= Ad(x.u^a, a*x.u^(a-1)*x.up)
 
 function ^(x::Ad, a::Real)
     ff = x.u^(a-1)    
     Ad(ff*x.u, a*ff*x.up)
 end
-=#
+
 
 # Arithmetic operations between Ad and intervals/numbers
 
@@ -65,7 +65,10 @@ log(x::Ad) = Ad(log(x.u), x.up/x.u)
 import Base.abs
 abs(x::Ad) = Ad(abs(x.u), x.up*sign(x.u))
 
-(x::Ad)^y::Interval = Ad(x.u^y, x.up*y*x.u^(y-1))
+#(x::Ad)^y::Interval = Ad(x.u^y, x.up*y*x.u^(y-1))
+
+
+
 
 differentiate(f, a) = f(Ad(a, 1.)).up
 

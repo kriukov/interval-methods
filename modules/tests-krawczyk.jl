@@ -12,7 +12,7 @@ function checkroots(f, trueroots)
 	# Check if both ends of the found interval lie within the 10eps-enclosure of the true root
 	n = 0
 	for i = 1:length(roots)
-		if belong(roots[i].lo, enclosure(trueroots[i])) == false && belong(roots[i].hi, enclosure(trueroots[i])) == false
+		if belong(roots[i][1].lo, enclosure(trueroots[i])) == false && belong(roots[i][1].hi, enclosure(trueroots[i])) == false
 			n += 1
 		end
 	end

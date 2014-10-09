@@ -148,7 +148,7 @@ function //(x::Interval, y::Interval)
 		end
 		return Interval(z1, Inf)
 	elseif belong(0, x) == false && y.lo == 0 && y.hi == 0
-		return println("Empty set: extended division by thin zero")
+		return error("\nEmpty set: extended division by thin zero")
 	end
 end		
 	
@@ -249,7 +249,7 @@ end
 
 # Integer power
 
-function ^(x::Interval, n::Int32)
+function ^(x::Interval, n::Integer)
     if n > 0 && n % 2 == 1
 		return Interval(x.lo^n, x.hi^n)
     elseif n > 0 && n % 2 == 0
@@ -263,7 +263,64 @@ function ^(x::Interval, n::Int32)
 end
 
 
-# Real power - exercise 3.5 from Tucker "Validated Numerics"
+# Real power function - taken from https://github.com/dpsanders/ValidatedNumerics.jl
+
+
+
+macro round_down(expr)
+	quote
+		with_rounding(BigFloat, RoundDown) do
+				$expr
+			end
+	end
+end
+
+macro round_up(expr)
+	quote
+	with_rounding(BigFloat, RoundUp) do
+			$expr
+		end
+	end
+end
+
+macro round(expr1, expr2)
+	quote
+		Interval(@round_down($expr1), @round_up($expr2))
+	end
+end
+
+function reciprocal(a::Interval)
+	uno = one(BigFloat)
+	z = zero(BigFloat)
+	if belong(z, a)
+	#if z in a
+		warn("\nInterval in denominator contains 0.")
+		return Interval(-inf(z),inf(z)) # inf(z) returns inf of type of z
+	end
+	@round(uno/a.hi, uno/a.lo)
+end
+
+function ^(a::Interval, x::Real)
+	x == int(x) && return a^(int(x))
+	x < zero(x) && return reciprocal( a^(-x) )
+	x == 0.5*one(x) && return sqrt(a)
+	#
+	z = zero(BigFloat)
+	z > a.hi && error("Undefined operation; Interval is strictly negative and power is not an integer")
+	#
+	xInterv = Interval( x )
+	diam( xInterv ) >= eps(x) && return a^xInterv
+	# xInterv is a thin interval
+	domainPow = Interval(z, big(Inf))
+	aRestricted = isect(a, domainPow)
+	@round(aRestricted.lo^x, aRestricted.hi^x)
+end
+
+
+
+
+
+# Interval power - exercise 3.5 from Tucker "Validated Numerics"
 
 function ^(x::Interval, n::Interval)
 	if x.lo > 0
