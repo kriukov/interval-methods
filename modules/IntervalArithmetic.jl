@@ -534,6 +534,14 @@ function mid(array::Array{Interval, 2})
 	reshape(array1, (2, 2))
 end
 
+function mid(array::Array{Array{Interval, 1}, 1})
+	array1 = Array{prec, 1}[]
+	for i = 1:length(array)
+		push!(array1, mid(array[i]))
+	end
+	array1
+end
+
 function diam(x::Array{Interval, 1})
 	y = prec[]
 	for i = 1:length(x)
@@ -572,6 +580,23 @@ function isect(x::Array{Interval, 1}, y::Array{Interval, 1})
 		end	
 		for i = 1:length(x)
 			push!(z, isect(x[i], y[i]))
+		end
+	else return false
+	end
+	return z
+end
+
+
+function isectext(x::Array{Interval, 1}, y::Array{Interval, 1})
+	z = Interval[]
+	if length(x) == length(y)
+		for i = 1:length(x)
+			if isectext(x[i], y[i]) == false
+				return false
+			end
+		end	
+		for i = 1:length(x)
+			push!(z, isectext(x[i], y[i]))
 		end
 	else return false
 	end

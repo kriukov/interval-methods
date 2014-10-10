@@ -41,7 +41,7 @@ function krawczyk2d_internal(f, a::Array{Interval, 1}, bigprec::Integer)
 	#	a = Interval(a.lo, a.hi + 0.0001*mag(a))
 	#end
 
-  Ka = isect(a, K(a))
+  Ka = isectext(a, K(a))
 	if Ka != false
 		@show a
 		@show diam(a)
