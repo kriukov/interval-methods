@@ -15,6 +15,23 @@ function all_inside(x::Array{Interval, 1}, y::Array{Interval, 1})
 	end
 end
 
+# Functions for bisection
+
+function lower(x::Array{Interval, 1})
+	z = Interval[]
+	for i = 1:length(x)
+		push!(z, Interval(x[i].lo, mid(x[i])))
+	end
+	return z
+end
+
+function upper(x::Array{Interval, 1})
+	z = Interval[]
+	for i = 1:length(x)
+		push!(z, Interval(mid(x[i]), x[i].hi))
+	end
+	return z
+end
 
 function krawczyk2d(f, a::Array{Interval, 1}, bigprec::Integer=64)
 
@@ -31,6 +48,9 @@ K(x) = make_intervals(mid(x)) - Y(x)*make_intervals(f(mid(x))) + M(x)*(x - make_
 
 Y1 = Array{Interval, 2}[]
 push!(Y1, Y(a))
+
+Kprev(x) = make_intervals(mid(x)) - Y1[k-1]*make_intervals(f(mid(x))) + (I - Y1[k-1]*jacobian(f, x))*(x - make_intervals(mid(x)))
+
 
 k = 1
 
@@ -65,12 +85,14 @@ function krawczyk2d_internal(f, a::Array{Interval, 1}, bigprec::Integer)
 				if true #@show mid(det2(I - Y1[k]*jacobian(f, a))) <= mid(det2(I - Y(a)*jacobian(f, a)))
 					k += 1
 					push!(Y1, Y(a))
-					krawczyk2d_internal(f, Ka, bigprec)
+					@show krawczyk2d_internal(f, lower(Ka), bigprec)
+					@show krawczyk2d_internal(f, upper(Ka), bigprec)
 
 				else
 					k += 1
 					push!(Y1, Y(a))
-					krawczyk2d_internal(f, make_intervals(mid(a)) - Y1[k-1]*make_intervals(f(mid(a))) + (I - Y1[k-1]*jacobian(f, a))*(a - make_intervals(mid(a))), bigprec)
+					@show krawczyk2d_internal(f, lower(Kprev(a)), bigprec)
+					@show krawczyk2d_internal(f, upper(Kprev(a)), bigprec)					
 
 				end
 		
@@ -81,12 +103,14 @@ function krawczyk2d_internal(f, a::Array{Interval, 1}, bigprec::Integer)
 				if mid(det2(I - Y1[k]*jacobian(f, a))) <= mid(det2(I - Y1[k-1]*jacobian(f, a)))
 					@show k += 1
 					push!(Y1, Y(a))
-					krawczyk2d_internal(f, Ka, bigprec)
-
+					krawczyk2d_internal(f, lower(Ka), bigprec)
+					krawczyk2d_internal(f, upper(Ka), bigprec)
+					
 				else
 					@show k += 1
 					push!(Y1, Y(a))
-					krawczyk2d_internal(f, make_intervals(mid(a)) - Y1[k-1]*make_intervals(f(mid(a))) + (I - Y1[k-1]*jacobian(f, a))*(a - make_intervals(mid(a))), bigprec)
+					krawczyk2d_internal(f, lower(Kprev(a)), bigprec)
+					krawczyk2d_internal(f, upper(Kprev(a)), bigprec)	
 
 				end
 			

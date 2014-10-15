@@ -607,6 +607,13 @@ end
 
 det2(x::Array{Interval, 2}) = x[1]*x[4] - x[3]*x[2]
 
+# Definitions for the inverse of an interval matrix
+
+import Base.one; one(::Type{Interval}) = Interval(1)
+import Base.real; real(x::Interval) = x
+import Base.inv; inv(x::Interval) = Interval(1)/x
+import Base.isless; isless(a::Interval, b::Interval) = a.hi < b.lo
+
 
 # End of module
 end

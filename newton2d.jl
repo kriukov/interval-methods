@@ -1,12 +1,14 @@
+using IntervalArithmetic
 using AutoDiff
 
 
 function newton2d(f, a::Array{Interval, 1}, bigprec::Integer=64)
 
 	set_bigfloat_precision(bigprec)
-
-	#center(x) = Interval(mid(x))
-	N(x) = x - make_intervals(inv(mid(jacobian(f, mid(x)))))*f(x)
+	
+	# center() makes degenerate interval midpoints of the intervals in an array
+	center(x) = make_intervals(mid(x))
+	N(x) = center(x) - inv(jacobian(f, x))*f(center(x))
 
 	# If a is symmetric, i.e., mid(a) = 0, the process may stall. The initial interval should be slightly asymmetrized then
 	#if mid(a) == 0
