@@ -1,8 +1,32 @@
 using IntervalArithmetic
 using AutoDiff
 
+# Bisection
 
-function newton2d(f, a::Array{Interval, 1}, bigprec::Integer=64)
+left(x::Interval) = Interval(x.lo, mid(x))
+right(x::Interval) = Interval(mid(x), x.hi)
+
+
+function bisect(xx::Vector{Interval})
+ 
+	if length(xx) != 2
+	error("Only works for 2 at the moment")
+	end
+
+	x, y = xx
+
+	intervals = Vector{Interval}[]
+
+	push!(intervals, [left(x), left(y)])
+	push!(intervals, [left(x), right(y)])
+	push!(intervals, [right(x), left(y)])
+	push!(intervals, [right(x), right(y)])
+
+	intervals
+end
+
+
+function newton2d(f, a::MultiDimInterval, bigprec::Integer=64)
 
 	set_bigfloat_precision(bigprec)
 	
@@ -15,18 +39,27 @@ function newton2d(f, a::Array{Interval, 1}, bigprec::Integer=64)
 	#	a = Interval(a.lo, a.hi + 0.0001*mag(a))
 	#end
 
-	roots_array = Array{Interval, 1}[]
+	roots_array = MultiDimInterval[]
 
 	push!(roots_array, a)
 
 	k = 0
 	while true
 
-		roots_array_new = Array{Interval, 1}[]
+		roots_array_new = MultiDimInterval[]
 
 		for i = 1:length(roots_array)
 			if isectext(roots_array[i], N(roots_array[i])) != false
-				@show roots_array_new = push!(roots_array_new, isectext(roots_array[i], N(roots_array[i])))
+				if true #isectext(roots_array[i], N(roots_array[i])) != roots_array[i] - enabled only this part because doesn't work otherwise
+					@show roots_array_new = push!(roots_array_new, isectext(roots_array[i], N(roots_array[i])))
+				else
+					@show roots_array_new = push!(roots_array_new, 
+						isectext(bisect(roots_array[i])[1], N(bisect(roots_array[i])[1])), 
+						isectext(bisect(roots_array[i])[2], N(bisect(roots_array[i])[2])), 
+						isectext(bisect(roots_array[i])[3], N(bisect(roots_array[i])[3])), 
+						isectext(bisect(roots_array[i])[4], N(bisect(roots_array[i])[4]))
+					)
+				end
 			end
 		end
 

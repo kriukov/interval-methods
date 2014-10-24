@@ -1,9 +1,10 @@
 ## Interval arithmetic
 
 module IntervalArithmetic
-export Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, make_intervals, det2, inside
+export Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, make_intervals, det2, inside, MultiDimInterval
 
 typealias prec BigFloat
+
 
 type Interval
 
@@ -21,6 +22,8 @@ type Interval
     end
 
 end
+
+typealias MultiDimInterval Array{Interval, 1}
 
 #import MPFR.BigFloat
 #BigFloat(x::Interval) = Interval(BigFloat(x.lo), BigFloat(x.hi))
@@ -467,7 +470,7 @@ cos(x::Interval) = sin(Interval(x.lo + pi/2, x.hi + pi/2))
 import Base.complex
 complex(x::Interval) = Interval(complex(x.lo), complex(x.hi))
 
-function *(x::Array{Interval, 1}, y::Interval)
+function *(x::MultiDimInterval, y::Interval)
     [x[1]*y, x[2]*y]
 end
 
@@ -518,7 +521,7 @@ function hi(x::Array{Interval})
 end
 
 # Making mid() process 1-D and 2-D interval arrays into arrays of midpoints
-function mid(array::Array{Interval, 1})
+function mid(array::MultiDimInterval)
 	array1 = prec[]
 	for i = 1:length(array)
 		push!(array1, mid(array[i]))
@@ -534,7 +537,7 @@ function mid(array::Array{Interval, 2})
 	reshape(array1, (2, 2))
 end
 
-function mid(array::Array{Array{Interval, 1}, 1})
+function mid(array::Array{MultiDimInterval, 1})
 	array1 = Array{prec, 1}[]
 	for i = 1:length(array)
 		push!(array1, mid(array[i]))
@@ -542,7 +545,7 @@ function mid(array::Array{Array{Interval, 1}, 1})
 	array1
 end
 
-function diam(x::Array{Interval, 1})
+function diam(x::MultiDimInterval)
 	y = prec[]
 	for i = 1:length(x)
 		push!(y, diam(x[i]))
@@ -570,7 +573,7 @@ function make_intervals(x::Array{prec, 2})
 end
 
 # Intersection of 2-D vectors
-function isect(x::Array{Interval, 1}, y::Array{Interval, 1})
+function isect(x::MultiDimInterval, y::MultiDimInterval)
 	z = Interval[]
 	if length(x) == length(y)
 		for i = 1:length(x)
@@ -587,7 +590,7 @@ function isect(x::Array{Interval, 1}, y::Array{Interval, 1})
 end
 
 
-function isectext(x::Array{Interval, 1}, y::Array{Interval, 1})
+function isectext(x::MultiDimInterval, y::MultiDimInterval)
 	z = Interval[]
 	if length(x) == length(y)
 		for i = 1:length(x)

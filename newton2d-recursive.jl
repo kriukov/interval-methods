@@ -1,6 +1,20 @@
 using IntervalArithmetic
 using AutoDiff
 
+function all_inside(x::MultiDimInterval, y::MultiDimInterval)
+	k = 0
+	for i = 1:length(x)
+		if !inside(x[i], y[i])
+			k += 1
+		end
+	end
+	if k > 0
+		return false
+	else
+		return true
+	end
+end
+
 # Bisection
 
 left(x::Interval) = Interval(x.lo, mid(x))
@@ -24,59 +38,66 @@ function bisect(xx::Vector{Interval})
 	intervals
 end
 
-function newton2d(f, a::Array{Interval, 1}, bigprec::Integer=64)
+function newton2d(f, a::MultiDimInterval, bigprec::Integer=64)
 
 	# If a is symmetric, i.e., mid(a) = 0, the process may stall. The initial interval should be slightly asymmetrized then
 	#if mid(a) == 0
 	#	a = Interval(a.lo, a.hi + 0.0001*mag(a))
 	#end
 
-	roots_array = Array{Interval, 1}[]
+	center(x) = make_intervals(mid(x))
+	N(x) = center(x) - inv(jacobian(f, x))*f(center(x))
 
-	#push!(roots_array, a)
+	roots_array = MultiDimInterval[]
 
-	tol = 1e-10
+	push!(roots_array, a)
+
+	@show tol = 1e-10
+	
+	k = 0
 println("point 1")
-	function newton2d_internal(f, a::Array{Interval, 1}, bigprec::Integer)
+	function newton2d_internal(f, a::MultiDimInterval, bigprec::Integer)
 
 
 		set_bigfloat_precision(bigprec)
-
-		# center() makes degenerate interval midpoints of the intervals in an array
-		center(x) = make_intervals(mid(x))
-		N(x) = center(x) - inv(jacobian(f, x))*f(center(x))
-
-
-		k = 0
-		while diam(a)[1] >= tol || diam(a)[2] >= tol
-			@show diam(a)
-			#roots_array_new = Array{Interval, 1}[]
-
-			for i = 1:length(roots_array)
-				if isectext(roots_array[i], N(roots_array[i])) != false
-					#if isectext(roots_array[i], N(roots_array[i])) != roots_array[i]
-						@show newton2d_internal(f, isectext(roots_array[i], N(roots_array[i])), bigprec)
-					#else
-						#@show newton2d_internal(f, isectext(bisect(roots_array[i])[1], N(bisect(roots_array[i])[1])), bigprec)
-						#@show newton2d_internal(f, isectext(bisect(roots_array[i])[2], N(bisect(roots_array[i])[2])), bigprec)
-						#@show newton2d_internal(f, isectext(bisect(roots_array[i])[3], N(bisect(roots_array[i])[3])), bigprec)
-						#@show newton2d_internal(f, isectext(bisect(roots_array[i])[4], N(bisect(roots_array[i])[4])), bigprec)
-					#end
+		
+		@show a
+		@show N(a)
+		@show Na = isectext(a, N(a))
+			
+			if Na != false
+			
+				@show d = diam(a)
+				@show dN = diam(Na)
+				
+				if dN[1] < tol && dN[2] < tol 
+					if all_inside(Na, a)
+						println("Unique zero in $Na")
+						push!(roots_array, Na)
+					else
+						println("Maybe a zero in $Na")
+					end
+					
+				else
+					
+					if isectext(roots_array, N(roots_array)) != roots_array
+					 	for i = 1:length(roots_array)
+							newton2d_internal(f, roots_array[i], bigprec)
+						end
+					else 
+					
+						for i = 1:length(roots_array)
+							@show k += 1
+					
+							newton2d_internal(f, bisect(roots_array[i])[1], bigprec)
+							newton2d_internal(f, bisect(roots_array[i])[2], bigprec)
+							newton2d_internal(f, bisect(roots_array[i])[3], bigprec)
+							newton2d_internal(f, bisect(roots_array[i])[4], bigprec)
+						end
+						
+					end
 				end
 			end
-
-			# Exit criterion
-			#=
-			if roots_array_new == roots_array
-				for i = 1:length(roots_array)
-					push!(roots_array_new, isectext(roots_array[i], N(roots_array[i])))
-				end 
-				break
-			end
-			=#
-			#@show roots_array = roots_array_new
-			@show k += 1
-		end
 		
 		return roots_array
 

@@ -1,7 +1,7 @@
 using IntervalArithmetic
 using AutoDiff
 
-function all_inside(x::Array{Interval, 1}, y::Array{Interval, 1})
+function all_inside(x::MultiDimInterval, y::MultiDimInterval)
 	k = 0
 	for i = 1:length(x)
 		if !inside(x[i], y[i])
@@ -17,7 +17,8 @@ end
 
 # Functions for bisection
 
-function lower(x::Array{Interval, 1})
+#=
+function lower(x::MultiDimInterval)
 	z = Interval[]
 	for i = 1:length(x)
 		push!(z, Interval(x[i].lo, mid(x[i])))
@@ -25,17 +26,43 @@ function lower(x::Array{Interval, 1})
 	return z
 end
 
-function upper(x::Array{Interval, 1})
+function upper(x::MultiDimInterval)
 	z = Interval[]
 	for i = 1:length(x)
 		push!(z, Interval(mid(x[i]), x[i].hi))
 	end
 	return z
 end
+=#
 
-function krawczyk2d(f, a::Array{Interval, 1}, bigprec::Integer=64)
 
-arr_a = Array{Interval, 1}[]
+left(x::Interval) = Interval(x.lo, mid(x))
+right(x::Interval) = Interval(mid(x), x.hi)
+
+
+function bisect(xx::Vector{Interval})
+ 
+	if length(xx) != 2
+	error("Only works for 2 at the moment")
+	end
+
+	x, y = xx
+
+	@show x
+
+	intervals = Vector{Interval}[]
+
+	push!(intervals, [left(x), left(y)])
+	push!(intervals, [left(x), right(y)])
+	push!(intervals, [right(x), left(y)])
+	push!(intervals, [right(x), right(y)])
+
+	intervals
+end
+
+function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
+
+arr_a = MultiDimInterval[]
 
 set_bigfloat_precision(bigprec)
 #tol = (1e-10)*eps(BigFloat)
@@ -54,7 +81,7 @@ Kprev(x) = make_intervals(mid(x)) - Y1[k-1]*make_intervals(f(mid(x))) + (I - Y1[
 
 k = 1
 
-function krawczyk2d_internal(f, a::Array{Interval, 1}, bigprec::Integer)
+function krawczyk2d_internal(f, a::MultiDimInterval, bigprec::Integer)
 
 	# If a is symmetric, i.e., mid(a) = 0, the process may stall. The initial interval should be slightly asymmetrized then
 	#if mid(a) == 0
@@ -85,14 +112,18 @@ function krawczyk2d_internal(f, a::Array{Interval, 1}, bigprec::Integer)
 				if true #@show mid(det2(I - Y1[k]*jacobian(f, a))) <= mid(det2(I - Y(a)*jacobian(f, a)))
 					k += 1
 					push!(Y1, Y(a))
-					@show krawczyk2d_internal(f, lower(Ka), bigprec)
-					@show krawczyk2d_internal(f, upper(Ka), bigprec)
+					@show krawczyk2d_internal(f, bisect(Ka)[1], bigprec)
+					@show krawczyk2d_internal(f, bisect(Ka)[2], bigprec)
+					@show krawczyk2d_internal(f, bisect(Ka)[3], bigprec)
+					@show krawczyk2d_internal(f, bisect(Ka)[4], bigprec)
 
 				else
 					k += 1
 					push!(Y1, Y(a))
-					@show krawczyk2d_internal(f, lower(Kprev(a)), bigprec)
-					@show krawczyk2d_internal(f, upper(Kprev(a)), bigprec)					
+					@show krawczyk2d_internal(f, bisect(Kprev(a))[1], bigprec)
+					@show krawczyk2d_internal(f, bisect(Kprev(a))[2], bigprec)
+					@show krawczyk2d_internal(f, bisect(Kprev(a))[3], bigprec)
+					@show krawczyk2d_internal(f, bisect(Kprev(a))[4], bigprec)					
 
 				end
 		
@@ -103,14 +134,18 @@ function krawczyk2d_internal(f, a::Array{Interval, 1}, bigprec::Integer)
 				if mid(det2(I - Y1[k]*jacobian(f, a))) <= mid(det2(I - Y1[k-1]*jacobian(f, a)))
 					@show k += 1
 					push!(Y1, Y(a))
-					krawczyk2d_internal(f, lower(Ka), bigprec)
-					krawczyk2d_internal(f, upper(Ka), bigprec)
+					@show krawczyk2d_internal(f, bisect(Ka)[1], bigprec)
+					@show krawczyk2d_internal(f, bisect(Ka)[2], bigprec)
+					@show krawczyk2d_internal(f, bisect(Ka)[3], bigprec)
+					@show krawczyk2d_internal(f, bisect(Ka)[4], bigprec)
 					
 				else
 					@show k += 1
 					push!(Y1, Y(a))
-					krawczyk2d_internal(f, lower(Kprev(a)), bigprec)
-					krawczyk2d_internal(f, upper(Kprev(a)), bigprec)	
+					@show krawczyk2d_internal(f, bisect(Kprev(a))[1], bigprec)
+					@show krawczyk2d_internal(f, bisect(Kprev(a))[2], bigprec)
+					@show krawczyk2d_internal(f, bisect(Kprev(a))[3], bigprec)
+					@show krawczyk2d_internal(f, bisect(Kprev(a))[4], bigprec)	
 
 				end
 			
