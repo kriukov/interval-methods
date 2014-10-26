@@ -1,7 +1,7 @@
 ## Interval arithmetic
 
 module IntervalArithmetic
-export Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, make_intervals, det2, inside, MultiDimInterval
+export Interval, MultiDimInterval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, det2, inside
 
 typealias prec BigFloat
 
@@ -178,10 +178,12 @@ function inside(x::Interval, y::Interval)
 	end
 end
 
-# Lower end, higher end, bottom, top, radius, diameter, midpoint, mignitude, magnitude, absolute value
+# Miscellaneous: lower end, higher end, lower (left) half, higher (right) half, bottom, top, radius, diameter, midpoint, mignitude, magnitude, absolute value
 
 lo(x::Interval) = x.lo
 hi(x::Interval) = x.hi
+left(x::Interval) = Interval(x.lo, mid(x))
+right(x::Interval) = Interval(mid(x), x.hi)
 rad(x::Interval) = (x.hi - x.lo)/2
 diam(x::Interval) = x.hi - x.lo
 mid(x::Interval) = (x.hi + x.lo)/2

@@ -1,7 +1,7 @@
 ## Automatic differentiation (interval version)
 
 module AutoDiff
-export differentiate, Ad, Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, make_intervals, det2
+export differentiate, Ad, Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, make_intervals, det2, jacobian
 
 using IntervalArithmetic
 
@@ -68,12 +68,8 @@ abs(x::Ad) = Ad(abs(x.u), x.up*sign(x.u))
 #(x::Ad)^y::Interval = Ad(x.u^y, x.up*y*x.u^(y-1))
 
 
-
-
 differentiate(f, a) = f(Ad(a, 1.)).up
 
-# End of module
-end
 
 function jacobian(f, a)
 
@@ -95,3 +91,7 @@ function jacobian(f, a)
 	[J11 J12; J21 J22]
 
 end
+
+# End of module
+end
+
