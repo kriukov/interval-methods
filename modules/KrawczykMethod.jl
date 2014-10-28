@@ -10,7 +10,7 @@ module KrawczykMethod
 
 	# If the derivative is 0, the constant C will return a "division by thin zero" error. We slightly change the denominator of the constant if this is the case.
 	function C(f, x)
-		if differentiate(f, mid(x)) == Interval(0)
+		if differentiate(f, mid(x)) == 0
 			return Interval(1)//Interval(differentiate(f, mid(x)) + 0.0001*rad(x))
 		else
 			return Interval(1)//Interval(differentiate(f, mid(x)))

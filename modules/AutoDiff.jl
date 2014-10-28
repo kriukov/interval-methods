@@ -67,7 +67,7 @@ module AutoDiff
 
 
 	function differentiate(f, a) 
-		y = f(Ad(a, 1))
+		y = f(Ad(a, one(a)))
 		if typeof(y) != Ad # When f(x) = const so f'(x) = 0, and typeof(f(Ad())) = typeof(const)
 			return zero(a)
 		else

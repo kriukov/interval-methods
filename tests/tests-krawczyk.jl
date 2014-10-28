@@ -43,4 +43,9 @@ a = Interval(1.01, 10)
 trueroots = [1.0617135926109396]
 @test checkroots(f, trueroots)
 
+# Function where initial derivative at midpoint is zero
+f(x) = (x - 2)^2
+a = Interval(1, 3)
+trueroots = [2]
+@test checkroots(f, trueroots)
 
