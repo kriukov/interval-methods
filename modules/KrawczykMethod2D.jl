@@ -46,7 +46,7 @@ set_bigfloat_precision(bigprec)
 tol = 1e-10
 
 I = [Interval(1) Interval(0); Interval(0) Interval(1)]
-Y(f, x) = make_intervals(inv(mid(jacobian(f, mid(x)))))
+Y(f, x) = make_intervals(inv(jacobian(f, mid(x))))
 M(f, x) = I - Y(f, x)*jacobian(f, x)
 K(f, x) = make_intervals(mid(x)) - Y(f, x)*make_intervals(f(mid(x))) + M(f, x)*(x - make_intervals(mid(x)))
 

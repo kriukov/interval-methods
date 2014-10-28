@@ -1,16 +1,14 @@
 ## Automatic differentiation (interval version)
 
 module AutoDiff
-	export differentiate, Ad, Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, make_intervals, det2, jacobian
-
-	using IntervalArithmetic
+	export differentiate, Ad, det2, jacobian
 
 	type Ad
 		u
 		up
 	end
 
-	Ad(c) = Ad(c, Interval(0))
+	Ad(c) = Ad(c, zero(c))
 
 	# Arithmetic between two Ad
 	+(x::Ad, y::Ad) = Ad(x.u + y.u, x.up + y.up)
@@ -71,7 +69,7 @@ module AutoDiff
 	function differentiate(f, a) 
 		y = f(Ad(a, 1))
 		if typeof(y) != Ad # When f(x) = const so f'(x) = 0, and typeof(f(Ad())) = typeof(const)
-			return 0
+			return zero(a)
 		else
 			return y.up
 		end
