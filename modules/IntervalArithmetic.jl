@@ -506,63 +506,23 @@ module IntervalArithmetic
 
 	## Interval arithmetic for 2D objects
 
-	function lo(x::Array{Interval})
-		y = prec[]
-		for i = 1:length(x)
-			push!(y, lo(x[i]))
-		end
-		y
-	end
+	lo(x::Array{Interval}) = map(lo, x)
 
-	function hi(x::Array{Interval})
-		y = prec[]
-		for i = 1:length(x)
-			push!(y, hi(x[i]))
-		end
-		y
-	end
+	hi(x::Array{Interval}) = map(hi, x)
 
 	# Making mid() process 1-D and 2-D interval arrays into arrays of midpoints
-	function mid(array::MultiDimInterval)
-		array1 = prec[]
-		for i = 1:length(array)
-			push!(array1, mid(array[i]))
-		end
-		array1
-	end
+	mid(x::MultiDimInterval) = map(mid, x)
 
-	function mid(array::Array{Interval, 2})
-		array1 = prec[]
-		for i = 1:length(array)
-			push!(array1, mid(array[i]))
-		end
-		reshape(array1, (2, 2))
-	end
+	mid(x::Array{Interval, 2}) = map(mid, x)
+	
+	mid(x::Array{MultiDimInterval, 1}) = map(mid, x)
 
-	function mid(array::Array{MultiDimInterval, 1})
-		array1 = Array{prec, 1}[]
-		for i = 1:length(array)
-			push!(array1, mid(array[i]))
-		end
-		array1
-	end
-
-	function diam(x::MultiDimInterval)
-		y = prec[]
-		for i = 1:length(x)
-			push!(y, diam(x[i]))
-		end
-		y
-	end
+	diam(x::MultiDimInterval) = map(diam, x)
 
 
 	# Function that makes numbers into thin intervals in arrays
 	function make_intervals(x::Array{prec, 1})
-		y = Interval[]
-		for i = 1:length(x)
-			push!(y, Interval(x[i]))
-		end
-		return y
+		map(Interval, x)
 	end
 
 

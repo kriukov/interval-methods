@@ -26,12 +26,15 @@ a = [Interval(0, 1), Interval(0, 1)]
 trueroots = Array[[(sqrt(5) - 1)/2, sqrt((sqrt(5) - 1)/2)]]
 @test checkroots(f, trueroots)
 
+f(x) = [x[1]^2 - 2, x[2]^2 - 2]
+a = [Interval(0, 5), Interval(0, 5)]
+trueroots = Array[[sqrt(2), sqrt(2)]]
+@test checkroots(f, trueroots)
 
 f(x) = [20 - 20x[1] - x[2], x[1] - x[2]/20 - 1e-9*exp(x[2]/0.052)]
 a = [Interval(0, 2), Interval(0, 2)]
 trueroots = Array[[0.9464142468335176, 1.0717150633296477]]
 @test checkroots(f, trueroots)
-
 
 f(x) = [0.5*(-(17.76x[1] - 103.79x[1]^2 + 229.62x[1]^3 - 226.31x[1]^4 + 83.72x[1]^5) + x[2]), 0.2*(-x[1] - 1.5x[2] + 1.2)]
 a = [Interval(0, 1), Interval(0, 1)]
