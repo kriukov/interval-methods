@@ -1,7 +1,7 @@
 ## Automatic differentiation (interval version)
 
 module AutoDiff
-	export differentiate, Ad, det2, jacobian
+	export Ad, det2, differentiate, jacobian
 
 	type Ad
 		u
@@ -34,8 +34,6 @@ module AutoDiff
 
 	for op in (:+, :-, :*, :/)
 		@eval begin
-		    #$op(u::Ad, c::Interval) = $op(u, Ad(c))
-		    #$op(c::Interval, u::Ad) = $op(Ad(c), u)
 		    $op(u::Ad, c) = $op(u, Ad(c))
 		    $op(c, u::Ad) = $op(Ad(c), u)
 		end
@@ -44,15 +42,32 @@ module AutoDiff
 	+(x::Ad) = x
 	-(x::Ad) = Ad(-x.u, -x.up)
 
-	# Elementary functions
+	# Elementary functions - now with metaprogramming
+	
+	for (func, deriv) in (
+		(:(Base.exp), :(Base.exp)),  
+		(:(Base.log), :(x->1/x)), 
+		(:(Base.sin), :(Base.cos)), 
+		(:(Base.cos), :(x->-sin(x))), 
+		(:(Base.tan), :(x->(sec(x))^2)),
+		(:(Base.abs), :(Base.sign)),
+		(:(Base.sqrt), :(x->1/(2sqrt(x))))				
+		)
+	    @eval begin
+	        function $func(x::Ad)
+	            Ad($func(x.u), x.up*$deriv(x.u))
+	        end
+	    end
+	end
 
+	e^(x::Ad) = Ad(e^x.u, x.up*e^x.u)
+
+	#=
 	import Base.sin
 	sin(x::Ad) = Ad(sin(x.u), x.up*cos(x.u))
 
 	import Base.cos
 	cos(x::Ad) = Ad(cos(x.u), -x.up*sin(x.u))
-
-	e^(x::Ad) = Ad(e^x.u, x.up*e^x.u)
 
 	import Base.exp
 	exp(x::Ad) = Ad(exp(x.u), x.up*exp(x.u))
@@ -62,10 +77,12 @@ module AutoDiff
 
 	import Base.abs
 	abs(x::Ad) = Ad(abs(x.u), x.up*sign(x.u))
-
-	#(x::Ad)^y::Interval = Ad(x.u^y, x.up*y*x.u^(y-1))
-
-
+	
+	import Base.sqrt
+	sqrt(x::Ad) = Ad(sqrt(x.u), x.up/(2sqrt(x.u)))
+	
+	=#
+	
 	function differentiate(f, a) 
 		y = f(Ad(a, one(a)))
 		if typeof(y) != Ad # When f(x) = const so f'(x) = 0, and typeof(f(Ad())) = typeof(const)
@@ -76,7 +93,6 @@ module AutoDiff
 	end
 
 	function jacobian(f, a)
-
 		f1(x) = f(x)[1]
 		f2(x) = f(x)[2]
 
@@ -93,7 +109,6 @@ module AutoDiff
 		J22 = differentiate(f22, a[2])
 
 		[J11 J12; J21 J22]
-
 	end
 
 # End of module
