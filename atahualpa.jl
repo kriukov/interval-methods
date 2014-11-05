@@ -1,23 +1,23 @@
 
-function first_collision(irr, delta)
+function frac(alpha, epsilon)
 	
-	irr0 = irr
+	irr0 = alpha
 
 	arr_a = Integer[]
 
 	n = 0
-	while n <= 38
-		a = floor(irr)
-		#println(a)
-		@show push!(arr_a, a)
-		@show irr = 1/(irr - a)
+	while n <= 38 # change!
+		a = int(floor(alpha))
+		print("$a, ")
+		push!(arr_a, a)
+		alpha = 1/(alpha - a)
 		n += 1
 	end
 
 
 	h = Integer[]
 	push!(h, 0, 1)
-	for i = 3:40
+	for i = 3:40 # change!
 		push!(h, arr_a[i-2]*h[i-1] + h[i-2])
 	end
 	shift!(h)
@@ -26,25 +26,41 @@ function first_collision(irr, delta)
 
 	k = Integer[]
 	push!(k, 1, 0)
-	for i = 3:40
+	for i = 3:40 # change!
 		push!(k, arr_a[i-2]*k[i-1] + k[i-2])
 	end
 	shift!(k)
 	shift!(k)
 
-	#for i = 1:length(h)
-	#	println("$(abs(irr0 - h[i]/k[i])), $(1/(sqrt(5)*(k[i])^2))")
-	#	@show abs(irr0 - h[i]/k[i]) <= 1/(sqrt(5)*(k[i])^2)
-	#end
 
-
-	function first_solution(alpha, delta)
+	function first_solution(alpha, epsilon)
 		n = 1
-		while k[n] < 1/(sqrt(1 + alpha^2)*sqrt(5)*delta)
+		while abs(alpha*k[n] - h[n]) < epsilon
 			n +=1	
 		end
-		[k[n], h[n]]
+		(k[n], h[n])
 	end
 
-	first_solution(irr0, delta)
+	first_solution(irr0, epsilon)
 end
+
+function eff(m, b, epsilon)
+	bb = b
+	kn = 0
+	while bb > epsilon && 1 - bb > epsilon
+		if bb < 0.5
+			(q, p) = frac(m, 2bb)
+		else
+			(q, p) = frac(m, 2*(1 - bb))
+		end
+		bb = m*q + b - int(m*q + b)
+		kn = kn + q		
+	end
+	q = kn
+	p = int(q*m) + 1
+	return (q, p)	
+end
+
+
+
+
