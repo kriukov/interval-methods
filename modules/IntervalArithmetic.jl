@@ -500,9 +500,24 @@ module IntervalArithmetic
 
 	import Base.acos
 	acos(x::Interval) = Interval(acos(x.hi), acos(x.lo))
+	
+	# Modulo
+	
+	import Base.rem
+	function rem(x::Interval, y::Real)
+		if diam(x) > y
+			return Interval(0, y)
+		else
+			if belong((floor(x.lo/y) + 1)*y, x)
+				return [Interval(0, x.hi % y), Interval(x.lo % y, y)]
+			else
+				return Interval(x.lo % y, x.hi % y)
+			end
+		end
+	end
 
 
-	#-------------------------------------------------------
+	##-------------------------------------------------------
 
 	## Interval arithmetic for 2D objects
 

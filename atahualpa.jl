@@ -5,7 +5,7 @@ conv(x) = convergents(ContinuedFraction(x), Rational)
 
 function frac(alpha, epsilon)
 	n = 1
-	while abs(alpha*den(conv(alpha)[n]) - num(conv(alpha)[n])) < epsilon
+	while abs(alpha*den(conv(alpha)[n]) - num(conv(alpha)[n])) > epsilon
 		n += 1
 	end
 	(den(conv(alpha)[n]), num(conv(alpha)[n]))
@@ -16,13 +16,16 @@ function eff(m, b, epsilon)
 	kn = 0
 	while bb > epsilon && 1 - bb > epsilon
 		if bb < 0.5
-			(q, p) = frac(m, 2bb)
+			println("way 1")
+			@show (q, p) = frac(m, 2bb)
 		else
-			(q, p) = frac(m, 2*(1 - bb))
+			println("way 2")
+			@show (q, p) = frac(m, 2*(1 - bb))
 		end
 		bb = m*q + b - ifloor(m*q + b)
 		kn = kn + q		
 	end
+	println("cycle ended")
 	q = kn
 	p = ifloor(m*q) + 1
 	return (q, p)	
