@@ -4,7 +4,8 @@
 using KrawczykMethod2D
 
 # Base function for the kicked rotor, x[1] is x, x[2] is p
-f(x, K) = [(x[1] + K*sin(x[1]) + x[2]), (K*sin(x[1]) + x[2])] # % 2pi doesn't work yet
+f(x, K) = [mod(x[1] + K*sin(x[1]) + x[2], 2pi), mod(K*sin(x[1]) + x[2], 2pi)]
+# % = rem (may be negative), mod is non-negative
 
 # Function composition while keeping K arbitrary
 compose(f::Function, g::Function) = (x, K) -> f(g(x, K), K)
@@ -23,3 +24,14 @@ h(x, K, n) = T(x, K, n) - x
 
 # Function to output zeros of n-th order given the K and the limits (x1, x2) and (p1, p2)
 zeros(K, n, x1, x2, p1, p2, precision) = krawczyk2d(x -> h(x, K, n), [Interval(x1, x2), Interval(p1, p2)], precision)
+
+# Function to output the plot points
+
+for n = 1:40
+	x0 = [2pi*rand(), 2pi*rand()]
+	K = 0.8
+	for i = 1:10000
+		output = T(x0, K, i)
+		println("$(output[1]) $(output[2])")
+	end
+end

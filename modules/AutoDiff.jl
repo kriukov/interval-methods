@@ -61,6 +61,9 @@ module AutoDiff
 	end
 
 	e^(x::Ad) = Ad(e^x.u, x.up*e^x.u)
+	
+	import Base.rem
+	rem(x::Ad, y::Real) = Ad(rem(x.u, y), one(y))
 
 	#=
 	import Base.sin
