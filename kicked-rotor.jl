@@ -27,11 +27,27 @@ zeros(K, n, x1, x2, p1, p2, precision) = krawczyk2d(x -> h(x, K, n), [Interval(x
 
 # Function to output the plot points
 
+#= turned off
 for n = 1:40
 	x0 = [2pi*rand(), 2pi*rand()]
-	K = 0.8
+	K = 1.5
 	for i = 1:10000
 		output = T(x0, K, i)
 		println("$(output[1]) $(output[2])")
 	end
 end
+=# 
+
+# Function to look for periodic points
+
+for x = 1:20
+	for y = 1:20
+		for px = 1:20
+			for py = 1:20
+				output = zeros(0.7, 1, 2pi*x/20, 2pi*y/20, 2pi*px/20, 2pi*py/20, 64)
+				println(mid(output))
+			end
+		end
+	end
+end
+

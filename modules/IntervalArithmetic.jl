@@ -501,20 +501,34 @@ module IntervalArithmetic
 	import Base.acos
 	acos(x::Interval) = Interval(acos(x.hi), acos(x.lo))
 	
-	# Modulo
+	# Modulo and remainder
 	
-	import Base.rem
-	function rem(x::Interval, y::Real)
-		if diam(x) > y
+	import Base.mod
+	function mod(x::Interval, y::Real)
+		if diam(x) >= y
 			return Interval(0, y)
 		else
-			if belong((floor(x.lo/y) + 1)*y, x)
-				return [Interval(0, x.hi % y), Interval(x.lo % y, y)]
+			if belong(ceil(x.lo/y)*y, x)
+				return [Interval(0, mod(x.hi, y)), Interval(mod(x.lo, y), y)]
 			else
-				return Interval(x.lo % y, x.hi % y)
+				return Interval(mod(x.lo, y), mod(x.hi, y))
 			end
 		end
 	end
+	
+	#= Unfinished; let's use only mod
+	import Base.rem
+	function mod(x::Interval, y::Real)
+		if x.lo >= 0
+			return rem(x, y)
+		elseif x.hi < 0
+			return rem(x, y) + 1
+		else
+			# If 0 belongs to the interval, need more stuff
+		end
+	
+	end
+	=#	
 	
 	## --------- Attempt to introduce interval unions --------------
 	

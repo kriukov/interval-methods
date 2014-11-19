@@ -64,7 +64,10 @@ module AutoDiff
 	
 	import Base.rem
 	rem(x::Ad, y::Real) = Ad(rem(x.u, y), one(y))
-
+	
+	import Base.mod
+	mod(x::Ad, y::Real) = Ad(mod(x.u, y), one(y))
+	
 	#=
 	import Base.sin
 	sin(x::Ad) = Ad(sin(x.u), x.up*cos(x.u))

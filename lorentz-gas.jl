@@ -19,13 +19,13 @@ function collisions(r0, v0, rho, tmax)
 
 		# Arrays of times, n and m corresponding to each intersection in both solutions
 
-		array_t1nm = zeros(Float64, 30, 3)
+		array_t1nm = zeros(Float64, 300, 3)
 
 		# Checking the real intersection points
 
 		i = 1
-		for n = -10:10
-			for m = -10:10
+		for n = -100:100
+			for m = -100:100
 				R = [n,m]
 				# By trial and error, it turned out that only the solution with a "-" before sqrt gave valid data
 				t1 = -dot(v0, r0 - R) - sqrt(complex(rho^2 - (crossz(v0, r0 - R))^2))
@@ -76,7 +76,7 @@ function collisions(r0, v0, rho, tmax)
 		
 		push!(places, r0)
 		# Output for Mathematica
-		print("{$(r0[1]), $(r0[2])}, "); println("")
+		print("{$(r0[1]), $(r0[2])}, ")
 
 	end
 	return places
@@ -88,4 +88,4 @@ function collisions(r0, v0, rho, tmax)
 
 end
 
-collisions([0.5, 0.1], [0.7, 0.4], 1/3, 20)
+collisions([0.5, 0.1], [0.7, 0], 0.45, 20)
