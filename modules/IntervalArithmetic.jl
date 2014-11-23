@@ -1,7 +1,7 @@
 ## Interval arithmetic
 
 module IntervalArithmetic
-	export Interval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, det2, inside, intunion
+	export Interval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24
 
 	typealias prec BigFloat
 
@@ -516,6 +516,23 @@ module IntervalArithmetic
 		end
 	end
 	
+	import Base.mod1 # mod1 is built-in
+	function mod1(x::Interval, y::Real)
+		z = mod(x, y)
+		if typeof(z) == Interval
+			return z
+		elseif typeof(z) == Array{Interval, 1}
+			return z[1]
+		end
+	end
+	
+	function mod2(x::Interval, y::Real)
+		z = mod(x, y)
+		if typeof(z) == Array{Interval, 1}
+			return z[2]
+		end
+	end
+	
 	#= Unfinished; let's use only mod
 	import Base.rem
 	function mod(x::Interval, y::Real)
@@ -655,21 +672,6 @@ module IntervalArithmetic
 	=#
 	
 	# Still need to deal with arrays output by mod(interval)
-	function +(x::Array{Interval, 1}, y::Interval)
-		z = Interval[]
-		for i = 1:length(x)
-			push!(z, x[i] + y)
-		end
-		z
-	end
-	
-	function -(x::Array{Interval, 1}, y::Interval)
-		z = Interval[]
-		for i = 1:length(x)
-			push!(z, x[i] - y)
-		end
-		z
-	end	
 
 
 	##-------------------------------------------------------
@@ -677,18 +679,17 @@ module IntervalArithmetic
 	## Interval arithmetic for 2D objects
 
 	lo(x::Array{Interval}) = map(lo, x)
-
 	hi(x::Array{Interval}) = map(hi, x)
 
 	# Making mid() process 1-D and 2-D interval arrays into arrays of midpoints
 	mid(x::MultiDimInterval) = map(mid, x)
-
 	mid(x::Array{Interval, 2}) = map(mid, x)
-	
 	mid(x::Array{MultiDimInterval, 1}) = map(mid, x)
-
 	diam(x::MultiDimInterval) = map(diam, x)
-
+	sin(x::MultiDimInterval) = map(sin, x)
+	sin(x::Array{Any, 1}) = map(sin, x)	
+	cos(x::MultiDimInterval) = map(cos, x)
+	cos(x::Array{Any, 1}) = map(cos, x)	
 
 	# Function that makes numbers into thin intervals in arrays
 	function make_intervals(x::Array{prec, 1})
@@ -748,6 +749,109 @@ module IntervalArithmetic
 	import Base.real; real(x::Interval) = x
 	import Base.inv; inv(x::Interval) = Interval(1)/x
 	import Base.isless; isless(a::Interval, b::Interval) = a.hi < b.lo
+	
+	# 2D mod
+	
+	import Base.mod
+	function mod(x::MultiDimInterval, y::Real)
+		z1 = mod(x[1], y)
+		z2 = mod(x[2], y)
+		if typeof(z1) == Interval && typeof(z2) == Interval
+			return [z1, z2]
+		elseif typeof(z1) == Array{Interval, 1} && typeof(z2) == Interval
+			A = Array{Interval, 1}[]
+			push!(A, [z1[1], z2])
+			push!(A, [z1[2], z2])
+			return A
+		elseif typeof(z1) == Interval && typeof(z2) == Array{Interval, 1}
+			A = Array{Interval, 1}[]
+			push!(A, [z1, z2[1]])
+			push!(A, [z1, z2[2]])
+			return A			
+		elseif typeof(z1) == Array{Interval, 1} && typeof(z2) == Array{Interval, 1}
+			A = Array{Interval, 1}[]
+			push!(A, [z1[1], z2[1]])
+			push!(A, [z1[2], z2[1]])
+			push!(A, [z1[1], z2[2]])
+			push!(A, [z1[2], z2[2]])
+			return A
+		else error("This should not happen")
+		end
+	end
+
+	mod21(x, y::Real) = [mod1(x[1], y), mod1(x[2], y)] # Deleted x::MultiDimInterval to make it work
+	mod22(x, y::Real) = [mod1(x[1], y), mod2(x[2], y)]
+	mod23(x, y::Real) = [mod2(x[1], y), mod1(x[2], y)]
+	mod24(x, y::Real) = [mod2(x[1], y), mod2(x[2], y)]
+	
+
+	# Experimental: arithmetic operations between intervals and sets of intervals
+	
+	#=
+	
+	function +(x::Array{Interval, 1}, y::Interval)
+		z = Interval[]
+		for i = 1:length(x)
+			push!(z, x[i] + y)
+		end
+		z
+	end
+	
+	function +(x::Array{Any, 1}, y::Interval)
+		z = Any[]
+		for i = 1:length(x)
+			push!(z, x[i] + y)
+		end
+		z
+	end
+	
+	
+	+(x::Interval, y::Array{Interval, 1}) = y + x
+	+(x::Interval, y::Array{Any, 1}) = y + x	
+	
+	function -(x::Array{Interval, 1}, y::Interval)
+		z = Interval[]
+		for i = 1:length(x)
+			push!(z, x[i] - y)
+		end
+		z
+	end	
+	
+	function -(x::Array{Any, 1}, y::Interval)
+		z = Any[]
+		for i = 1:length(x)
+			push!(z, x[i] - y)
+		end
+		z
+	end		
+	
+	-(x::Interval, y::Array{Interval, 1}) = -(y - x)
+
+
+	function *(x::Array{Interval, 1}, y::Interval)
+		z = Interval[]
+		for i = 1:length(x)
+			push!(z, x[i]*y)
+		end
+		z
+	end
+	
+	*(x::Interval, y::Array{Interval, 1}) = y*x
+
+	function *(x::Array{Any, 1}, y::Array{Any, 1})	
+		z = Any[]
+		for i = 1:length(x)
+			for j = 1:length(y)
+				push!(z, i*j)
+			end
+		end
+		z
+	end
+
+	.*(x::Real, y::Interval) = Interval(x*y.lo, x*y.hi)
+	.*(x::Interval, y::Real) = Interval(x.lo*y, x.hi*y)
+	
+	=#
 
 
 # End of module

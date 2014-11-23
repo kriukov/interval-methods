@@ -1,8 +1,3 @@
-# Initial conditions
-
-#r0 = [0.5, 0.1]
-#v0 = [1., 0]
-#rho = 1/3
 
 # Perpendicular (z-) component of cross product (scalar quantity) for 2-D vectors: (x cross y) dot e_z
 crossz(x, y) = x[1]*y[2] - x[2]*y[1]
@@ -10,6 +5,7 @@ crossz(x, y) = x[1]*y[2] - x[2]*y[1]
 function collisions(r0, v0, rho, tmax)
 
 	places = Vector[]
+	circles = Vector[]
 	push!(places, r0)	
 	#Normalize the speed
 	v0 = v0/norm(v0)
@@ -19,13 +15,13 @@ function collisions(r0, v0, rho, tmax)
 
 		# Arrays of times, n and m corresponding to each intersection in both solutions
 
-		array_t1nm = zeros(Float64, 300, 3)
+		array_t1nm = zeros(Float64, 3000, 3)
 
 		# Checking the real intersection points
 
 		i = 1
-		for n = -100:100
-			for m = -100:100
+		for n = -1000:1000
+			for m = -1000:1000
 				R = [n,m]
 				# By trial and error, it turned out that only the solution with a "-" before sqrt gave valid data
 				t1 = -dot(v0, r0 - R) - sqrt(complex(rho^2 - (crossz(v0, r0 - R))^2))
@@ -75,11 +71,12 @@ function collisions(r0, v0, rho, tmax)
 		#println("r0 = ", r0, "v0 = ", v0, "t = ", t)
 		
 		push!(places, r0)
+		push!(circles, [nfinal, mfinal])
 		# Output for Mathematica
 		print("{$(r0[1]), $(r0[2])}, ")
 
 	end
-	return places
+	return places, circles
 	# Now the location will be
 
 	#r = r0 + v0*(10 - t)
@@ -88,4 +85,4 @@ function collisions(r0, v0, rho, tmax)
 
 end
 
-collisions([0.5, 0.1], [0.7, 0], 0.45, 20)
+#collisions([0.5, 0.1], [0.7, 0], 0.45, 20)

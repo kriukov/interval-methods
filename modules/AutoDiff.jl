@@ -60,34 +60,23 @@ module AutoDiff
 	    end
 	end
 
+	# Some more functions
+
 	e^(x::Ad) = Ad(e^x.u, x.up*e^x.u)
 	
 	import Base.rem
-	rem(x::Ad, y::Real) = Ad(rem(x.u, y), one(y))
+	rem(x::Ad, y::Real) = Ad(rem(x.u, y), x.up)
 	
 	import Base.mod
-	mod(x::Ad, y::Real) = Ad(mod(x.u, y), one(y))
+	mod(x::Ad, y::Real) = Ad(mod(x.u, y), x.up)
 	
-	#=
-	import Base.sin
-	sin(x::Ad) = Ad(sin(x.u), x.up*cos(x.u))
-
-	import Base.cos
-	cos(x::Ad) = Ad(cos(x.u), -x.up*sin(x.u))
-
-	import Base.exp
-	exp(x::Ad) = Ad(exp(x.u), x.up*exp(x.u))
-
-	import Base.log
-	log(x::Ad) = Ad(log(x.u), x.up/x.u)
-
-	import Base.abs
-	abs(x::Ad) = Ad(abs(x.u), x.up*sign(x.u))
+	import Base.mod1 # mod1 is a built-in function
+	mod1(x::Ad, y::Real) = Ad(mod1(x.u, y), x.up)
+	mod2(x::Ad, y::Real) = Ad(mod2(x.u, y), x.up)
 	
-	import Base.sqrt
-	sqrt(x::Ad) = Ad(sqrt(x.u), x.up/(2sqrt(x.u)))
+	mod21(x::Ad, y::Real) = Ad(mod21(x.u, y), x.up)
 	
-	=#
+	# Differentiating operator (1D and 2D)
 	
 	function differentiate(f, a) 
 		y = f(Ad(a, one(a)))
