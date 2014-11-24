@@ -72,9 +72,13 @@ module AutoDiff
 	
 	import Base.mod1 # mod1 is a built-in function
 	mod1(x::Ad, y::Real) = Ad(mod1(x.u, y), x.up)
+	
 	mod2(x::Ad, y::Real) = Ad(mod2(x.u, y), x.up)
 	
 	mod21(x::Ad, y::Real) = Ad(mod21(x.u, y), x.up)
+	mod22(x::Ad, y::Real) = Ad(mod22(x.u, y), x.up)
+	mod23(x::Ad, y::Real) = Ad(mod23(x.u, y), x.up)
+	mod24(x::Ad, y::Real) = Ad(mod24(x.u, y), x.up)
 	
 	# Differentiating operator (1D and 2D)
 	

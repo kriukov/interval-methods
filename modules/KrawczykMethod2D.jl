@@ -1,5 +1,5 @@
 module KrawczykMethod2D
-	export krawczyk2d, differentiate, Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, K, all_inside, bisect, jacobian, Y, krawczyk2d_internal, mod21, Ad, mod1, mod2
+	export krawczyk2d, differentiate, Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, K, all_inside, bisect, jacobian, Y, krawczyk2d_internal, mod21, Ad, mod1, mod2, mod21, mod22, mod23, mod24
 
 	using IntervalArithmetic
 	using AutoDiff

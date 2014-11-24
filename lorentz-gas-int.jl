@@ -1,3 +1,4 @@
+using IntervalArithmetic
 
 # Perpendicular (z-) component of cross product (scalar quantity) for 2-D vectors: (x cross y) dot e_z
 crossz(x, y) = x[1]*y[2] - x[2]*y[1]
@@ -6,30 +7,34 @@ function collisions(r0, v0, rho, tmax)
 
 	places = Vector[]
 	circles = Vector[]
+	# Put the starting point into the places array
 	push!(places, r0)	
-	#Normalize the speed
+	# Normalize the speed
 	v0 = v0/norm(v0)
 
 	t = 0
-	while t <= tmax
+	while mid(t) <= tmax
 
 		# Arrays of times, n and m corresponding to each intersection in both solutions
 
-		array_t1nm = zeros(Float64, 3000, 3)
+		array_times = zeros(Interval, 3000, 3)
 
 		# Checking the real intersection points
 
 		i = 1
-		for n = -500:500
-			for m = -500:500
-				R = [n,m]
-				# By trial and error, it turned out that only the solution with a "-" before sqrt gave valid data
-				t1 = -dot(v0, r0 - R) - sqrt(complex(rho^2 - (crossz(v0, r0 - R))^2))
+		for n = -50:50
+			for m = -50:50
+				R = [n, m]
+				discr = rho^2 - (crossz(v0, r0 - R))^2
+				# Throw away complex values
+				if discr.lo >= 0
+					t1 = -dot(v0, r0 - R) - sqrt(discr)
+				end
 
-				if abs(crossz(v0, r0 - R)) < rho
-					array_t1nm[i, 1] = t1
-					array_t1nm[i, 2] = n
-					array_t1nm[i, 3] = m
+				if mid(abs(crossz(v0, r0 - R))) < rho
+					array_times[i, 1] = t1
+					array_times[i, 2] = Interval(n)
+					array_times[i, 3] = Interval(m)
 					i = i + 1
 				end
 			end
@@ -40,11 +45,11 @@ function collisions(r0, v0, rho, tmax)
 		tmin1 = Inf
 		n1 = 0
 		m1 = 0
-		for i = 1:size(array_t1nm)[1]-1
-			if (array_t1nm[i, 1] < tmin1) && (array_t1nm[i, 1] > 0)
-				tmin1 = array_t1nm[i, 1]
-				n1 = array_t1nm[i, 2]
-				m1 = array_t1nm[i, 3]
+		for i = 1:size(array_times)[1]-1
+			if (mid(array_times[i, 1]) < mid(tmin1)) && (mid(array_times[i, 1]) > 0)
+				tmin1 = array_times[i, 1]
+				n1 = array_times[i, 2]
+				m1 = array_times[i, 3]
 			end
 		end
 
@@ -53,7 +58,8 @@ function collisions(r0, v0, rho, tmax)
 		mfinal = m1
 
 		# Normal vector at the point of collision
-		N = (r0 + v0*tfinal - [nfinal, mfinal])/norm(r0 + v0*tfinal - [nfinal, mfinal])
+		N0 = r0 + v0*tfinal - [nfinal, mfinal]
+		N = N0/norm(N0)
 
 		# New velocity
 		v1 = v0 - 2*dot(v0, N)*N

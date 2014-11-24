@@ -188,6 +188,7 @@ module IntervalArithmetic
 	diam(x::Interval) = x.hi - x.lo
 	mid(x::Interval) = (x.hi + x.lo)/2
 	mid(x::prec) = x
+	mid(x::Real) = x
 
 	function mig(x::Interval)
 		if belong(0.0, x) == true
@@ -471,6 +472,7 @@ module IntervalArithmetic
 
 	import Base.complex
 	complex(x::Interval) = Interval(complex(x.lo), complex(x.hi))
+	complex(x::MultiDimInterval) = [complex(x[1]), complex(x[2])]
 
 	function *(x::MultiDimInterval, y::Interval)
 		[x[1]*y, x[2]*y]
@@ -508,7 +510,7 @@ module IntervalArithmetic
 		if diam(x) >= y
 			return Interval(0, y)
 		else
-			if belong(ceil(x.lo/y)*y, x)
+			if belong((floor(x.lo/y) + 1)*y, x)
 				return [Interval(0, mod(x.hi, y)), Interval(mod(x.lo, y), y)]
 			else
 				return Interval(mod(x.lo, y), mod(x.hi, y))
@@ -690,6 +692,11 @@ module IntervalArithmetic
 	sin(x::Array{Any, 1}) = map(sin, x)	
 	cos(x::MultiDimInterval) = map(cos, x)
 	cos(x::Array{Any, 1}) = map(cos, x)	
+	
+	import Base.norm
+	norm(x::MultiDimInterval) = sqrt(x[1]^2 + x[2]^2)
+	
+	/(x::Array{Interval, 1}, y::Interval) = [x[1]/y, x[2]/y]
 
 	# Function that makes numbers into thin intervals in arrays
 	function make_intervals(x::Array{prec, 1})
@@ -827,7 +834,8 @@ module IntervalArithmetic
 	
 	-(x::Interval, y::Array{Interval, 1}) = -(y - x)
 
-
+	=#
+	
 	function *(x::Array{Interval, 1}, y::Interval)
 		z = Interval[]
 		for i = 1:length(x)
@@ -837,7 +845,10 @@ module IntervalArithmetic
 	end
 	
 	*(x::Interval, y::Array{Interval, 1}) = y*x
-
+	
+	*(x::Real, y::Array{Interval, 1}) = Interval(x)*y
+	
+	#=
 	function *(x::Array{Any, 1}, y::Array{Any, 1})	
 		z = Any[]
 		for i = 1:length(x)

@@ -39,7 +39,7 @@ h(x, k, n) = T(x, k, n) - x
 
 
 
-# Function to output zeros of n-th order given the K and the limits (x1, x2) and (p1, p2)
+# Functions to output zeros of n-th order given the K and the limits (x1, x2) and (p1, p2)
 #zeros(K, n, x1, x2, p1, p2, precision) = krawczyk2d_mod(x -> h(x, K, n), [Interval(x1, x2), Interval(p1, p2)], precision)
 
 
@@ -56,8 +56,38 @@ function T1(x, k, n)
 	return F(x, k)
 end
 h1(x, k, n) = T1(x, k, n) - x
-g1(x) = h1(x, 0.7, 4)
+
+function T2(x, k, n)
+	F = f2
+	for i = 1:n-1
+		F = compose(F, f2)
+	end
+	return F(x, k)
+end
+h2(x, k, n) = T2(x, k, n) - x
+
+function T3(x, k, n)
+	F = f3
+	for i = 1:n-1
+		F = compose(F, f3)
+	end
+	return F(x, k)
+end
+h3(x, k, n) = T3(x, k, n) - x
+
+function T4(x, k, n)
+	F = f4
+	for i = 1:n-1
+		F = compose(F, f4)
+	end
+	return F(x, k)
+end
+h4(x, k, n) = T4(x, k, n) - x
 
 #zeros1(x1, x2, p1, p2, precision) = krawczyk2d(g1, [Interval(x1, x2), Interval(p1, p2)], precision)
-zeros(k, n, x1, x2, p1, p2, precision) = krawczyk2d(x -> h1(x, k, n), [Interval(x1, x2), Interval(p1, p2)], precision)
+zeros1(k, n, x1, x2, p1, p2, precision) = krawczyk2d(x -> h1(x, k, n), [Interval(x1, x2), Interval(p1, p2)], precision)
+zeros2(k, n, x1, x2, p1, p2, precision) = krawczyk2d(x -> h2(x, k, n), [Interval(x1, x2), Interval(p1, p2)], precision)
+zeros3(k, n, x1, x2, p1, p2, precision) = krawczyk2d(x -> h3(x, k, n), [Interval(x1, x2), Interval(p1, p2)], precision)
+zeros4(k, n, x1, x2, p1, p2, precision) = krawczyk2d(x -> h4(x, k, n), [Interval(x1, x2), Interval(p1, p2)], precision)
 
+println(zeros1(0.8, 2, 0, 2pi, 0, 2pi, 64))
