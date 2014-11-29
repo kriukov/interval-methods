@@ -3,8 +3,9 @@ using IntervalArithmetic
 # Perpendicular (z-) component of cross product (scalar quantity) for 2-D vectors: (x cross y) dot e_z
 crossz(x, y) = x[1]*y[2] - x[2]*y[1]
 
-function collisions(r0, v0, rho, tmax)
+function collisions(r0, v0, rho, tmax, precision=64)
 
+	set_bigfloat_precision(precision)
 	places = Vector[]
 	circles = Vector[]
 	# Put the starting point into the places array
@@ -18,30 +19,36 @@ function collisions(r0, v0, rho, tmax)
 		# Arrays of times, n and m corresponding to each intersection in both solutions
 
 		array_times = zeros(Interval, 3000, 3)
-
-		# Checking the real intersection points
+		#array_times = zeros(Interval, 1, 3)
+		# Populating the array with real intersection points
 
 		i = 1
-		for n = -50:50
-			for m = -50:50
+		for n = -200:200
+			for m = -200:200
 				R = [n, m]
 				discr = rho^2 - (crossz(v0, r0 - R))^2
 				# Throw away complex values
-				if discr.lo >= 0
+				if lo(discr) >= 0
 					t1 = -dot(v0, r0 - R) - sqrt(discr)
 				end
 
 				if mid(abs(crossz(v0, r0 - R))) < rho
+					#push!(array_times[1], t1)
+					#push!(array_times[2], Interval(n))
+					#push!(array_times[3], Interval(m))
+					
 					array_times[i, 1] = t1
 					array_times[i, 2] = Interval(n)
 					array_times[i, 3] = Interval(m)
-					i = i + 1
+					i += 1
 				end
 			end
 		end
 
 		# Extracting the minimum positive time from array
-
+		
+		#@show array_times
+		
 		tmin1 = Inf
 		n1 = 0
 		m1 = 0
@@ -79,7 +86,7 @@ function collisions(r0, v0, rho, tmax)
 		push!(places, r0)
 		push!(circles, [nfinal, mfinal])
 		# Output for Mathematica
-		print("{$(r0[1]), $(r0[2])}, ")
+		print("{$(mid(r0[1])), $(mid(r0[2]))}, ")
 
 	end
 	return places, circles
@@ -91,4 +98,5 @@ function collisions(r0, v0, rho, tmax)
 
 end
 
-#collisions([0.5, 0.1], [0.7, 0], 0.45, 20)
+#collisions([0.5, 0.1], [0.7, 0], 0.15, 20, 128)
+#collisions([Interval(0.5), Interval(0.1)], [Interval(0.7), Interval(0)], 0.15, 20, 128)

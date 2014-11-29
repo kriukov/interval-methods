@@ -14,29 +14,29 @@ end
 function eff(m, b, epsilon)
 	bb = b
 	kn = 0
-	i = 0
+	#i = 0
 	while bb > epsilon && 1 - bb > epsilon
 		if bb < 0.5
-			#println("way 1")
-			(p, q) = frac(m, 2bb)
+			println("way 1")
+			@show (p, q) = frac(m, 2bb)
 		else
-			#println("way 2")
-			(p, q) = frac(m, 2*(1 - bb))
+			println("way 2")
+			@show (p, q) = frac(m, 2*(1 - bb))
 		end
-		#@show bb = m*q + b - ifloor(m*q + b)
-		bb = mod(m*q + b, 1)
+		bb = m*q + b - ifloor(m*q + b)
+		#bb = mod(m*q + b, 1)
 		kn += q
-		i += 1
-		if i >= 3000
+		#i += 1
+		#if i >= 3000
 			#println("cycle break: too many iterations")
-			break
-		end
+			#break
+		#end
 	end
 	#println("cycle ended")
 	q = kn
 	p = ifloor(m*q) + 1
-	#return (q, p)	
-	return i
+	return (q, p)	
+	#return i
 end
 
 function first_collision(x, y, vx, vy, delta)
@@ -68,12 +68,14 @@ function first_collision(x, y, vx, vy, delta)
 	return (q, p)
 end
 
-c = sqrt(1.001) # Irrationalizing coefficient
+#c = sqrt(1.001) # Irrationalizing coefficient
 # Split the 1st quadrant into N = 30 equal angular parts
 # For each n < N, slope is tg(pi n/(2N))
-N = 30
 
-for n = 1:N-1 # Can't have pi/2 - inf slope
+#N = 30
+
+#=
+for n = 1:N-1
 	loops = 0
 	for m = 1:N
 		for b = 1:N
@@ -86,5 +88,22 @@ for n = 1:N-1 # Can't have pi/2 - inf slope
 	end
 	println(n/N, " ", loops/N^2)
 end
+=#
 
-
+#=
+for n = 1:N-1
+	loops = 0
+	@show n
+	for m = 1:N
+		for b = 1:N
+			m = tan(pi*rand()/2)
+			x = eff(m, rand(), n/N*sqrt(1 + m^2))
+			if x == 300
+				loops += 1
+				break
+			end
+		end
+	end
+	println(n/N, " ", loops/N^2)
+end
+=#

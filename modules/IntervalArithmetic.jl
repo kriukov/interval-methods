@@ -188,8 +188,14 @@ module IntervalArithmetic
 	diam(x::Interval) = x.hi - x.lo
 	mid(x::Interval) = (x.hi + x.lo)/2
 	mid(x::prec) = x
+	
 	mid(x::Real) = x
-
+	lo(x::Real) = x
+	hi(x::Real) = x
+	diam(x::Real) = 0
+	rad(x::Real) = 0
+	
+	
 	function mig(x::Interval)
 		if belong(0.0, x) == true
 			return 0
