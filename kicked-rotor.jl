@@ -94,7 +94,7 @@ zeros4(k, n, x1, x2, p1, p2, precision) = krawczyk2d(x -> h4(x, k, n), [Interval
 println(zeros1(0.8, 2, 0, 2pi, 0, 2pi, 64))
 =#
 
-top(x, k, n) = ceil(hi(T(x, k, n)))
+top(x, k, n) = ceil(hi(T(x, k, n))/2pi)*2pi
 
 function zeros(k, n, x1, x2, p1, p2, precision)
 	array_sol = MultiDimInterval[]
