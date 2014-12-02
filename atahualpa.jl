@@ -15,6 +15,20 @@ function eff(m, b, epsilon)
 	bb = b
 	kn = 0
 	#i = 0
+	
+	b1 = b + m*1
+	if (b1 < epsilon)
+		(q, p) =  (1,0) 
+	elseif (1 - b1 < epsilon)
+		(q, p) = (1,1)
+	else
+	b = b1
+	r = (1, b1)
+	end
+	
+	
+	
+	
 	while bb > epsilon && 1 - bb > epsilon
 		if bb < 0.5
 			println("way 1")
@@ -23,8 +37,8 @@ function eff(m, b, epsilon)
 			println("way 2")
 			@show (p, q) = frac(m, 2*(1 - bb))
 		end
-		bb = m*q + b - ifloor(m*q + b)
-		#bb = mod(m*q + b, 1)
+		#bb = m*q + b - ifloor(m*q + bb)
+		bb = mod(m*q + bb, 1)
 		kn += q
 		#i += 1
 		#if i >= 3000
@@ -40,6 +54,8 @@ function eff(m, b, epsilon)
 end
 
 function first_collision(x, y, vx, vy, delta)
+	# Normalize velocity
+	
 	m = vy/vx
 	b = y - m*x
 	if vx > 0 && vy > 0

@@ -85,4 +85,4 @@ function collisions(r0, v0, rho, tmax)
 
 end
 
-#collisions([0.5, 0.1], [0.7, 0], 0.35, 20)
+collisions([0.34, -0.27], [-0.42, 0.23], 0.35, 10)
