@@ -95,9 +95,9 @@ top(x, k, n) = ceil(hi(T(x, k, n))/2pi)*2pi
 function zeros(k, n, x1, x2, p1, p2, precision)
 	array_sol = MultiDimInterval[]
 	a = [Interval(x1, x2), Interval(p1, p2)]
-	for p = 0:top(a, k, n)[1]
-		for q = 0:top(a, k, n)[2]
-			array_sol = vcat(array_sol, krawczyk2d(x -> h(x, k, n) - [p, q], a, precision))
+	for p = 0:top(a, k, n)[1]/2pi
+		for q = 0:top(a, k, n)[2]/2pi
+			array_sol = vcat(array_sol, krawczyk2d(x -> h(x, k, n) - [2pi*p, 2pi*q], a, precision))
 			#push!(array_sol, krawczyk2d(x -> h(x, k, n) - [p, q], a, precision))
 		end
 	end
