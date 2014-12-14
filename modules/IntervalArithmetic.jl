@@ -869,6 +869,12 @@ module IntervalArithmetic
 	.*(x::Interval, y::Real) = Interval(x.lo*y, x.hi*y)
 	
 	=#
+	
+	import Base.floor
+	floor(x::Interval) = floor(x.lo)
+	
+	import Base.norm
+	norm(x::Array{Interval, 1}) = norm(mid(x))
 
 
 # End of module

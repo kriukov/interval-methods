@@ -40,13 +40,13 @@ function crossing(r, v, n, m)
 	elseif number == 3
 		m -= 1
 		return [r1[1], 0.5], d, n, m
-	elseif error("This should not happen")
+	elseif error("Don't know which wall was hit")
 	end
 	
 end
 
 
-
+# Calculates the coordinates of places and of each hit obstacle of the collisions given the time
 function collisions(r0::Vector, v0::Vector, rho::Real, tmax::Real, precision::Integer=64)
 
 	set_bigfloat_precision(precision)
@@ -78,7 +78,7 @@ function collisions(r0::Vector, v0::Vector, rho::Real, tmax::Real, precision::In
 			if discr >= 0
 				t1 = (-dot(v0, r0) - sqrt(discr))/norm(v0)^2
 			end
-		
+			
 			N0 = r0 + v0*t1
 			N = N0/norm(N0)
 			
@@ -91,7 +91,6 @@ function collisions(r0::Vector, v0::Vector, rho::Real, tmax::Real, precision::In
 			push!(circles, [n, m])
 			#print("{$(r1[1] + n), $(r1[2] + m)}, ")
 			
-			#r1 = [mod(r1[1], 1) - 0.5, mod(r1[2], 1) - 0.5]
 			r0, d, n, m = crossing(r1, v1, n, m)
 						
 			# The speed direction will stay the same
@@ -120,4 +119,84 @@ function collisions(r0::Vector, v0::Vector, rho::Real, tmax::Real, precision::In
 end
 
 
+# Calculates the coordinates of obstacles hit at the first collision
+function first_collision(r0::Vector, v0::Vector, rho::Real, precision::Integer=64)
+
+	set_bigfloat_precision(precision)
+	circles = Vector[]
+
+	# Initial square (n, m)
+	n = ifloor(r0[1] + 0.5)
+	m = ifloor(r0[2] + 0.5)
+	
+	# Place the first initial position into square [-0.5, 0.5)^2
+	r0 -= [n, m]
+	
+	if norm(r0) < rho
+		error("The initial position cannot be inside an obstacle")
+	end
+
+
+	while abs(crossz(v0, r0)) > norm(v0)*rho # misses the ball
+
+		v1 = v0
+		r1 = r0
+		
+		# Now hit the wall
+		r0, d, n, m = crossing(r1, v1, n, m)
+					
+		# The speed direction will stay the same
+		v0 = v1
+	
+	end
+	
+	(n, m)
+end
+
+
 #println(collisions([0.4, 0.1], [-0.42, 0.23], 0.3, 20)[1])
+
+#println(collisions([0.4, 0.1], [0.5, 0.5], 0.3, 20)[1])
+
+# For testing Atahualpa's algorithm
+#= with the function collisions()
+for deg = 1:89
+	if deg != 45
+		phi = deg*pi/180
+		v0 = [cos(phi), sin(phi)]
+		println(deg, " ", collisions([0, 0.445], v0, 0.1, 100)[2][1])
+	end
+end
+=#
+
+
+#= with the function first_collision()
+for deg = 1:89
+	if deg != 45
+		phi = deg*pi/180
+		v0 = [cos(phi), sin(phi)]
+		println(deg, " ", first_collision([0, 0.445], v0, 0.1, 100))
+	end
+end
+=#
+
+x = 0
+y = 0.445
+
+function measuring()
+for i = 1:100
+	rho = i/1000
+	for deg = 1:89
+		if deg != 45
+			vx = cos(deg*pi/180)
+			vy = sin(deg*pi/180)
+			#println(rho, " ", deg, " ", first_collision([x, y], [vx, vy], rho))
+			first_collision([x, y], [vx, vy], rho)
+		end
+	end
+end
+end
+
+@time measuring()
+
+# without println: 1.532468791 s

@@ -12,33 +12,19 @@ function frac(alpha, epsilon)
 end
 
 function eff(m, b, epsilon)
-	bb = b
 	kn = 0
 	#i = 0
 	
-	b1 = b + m*1
-	if (b1 < epsilon)
-		(q, p) =  (1,0) 
-	elseif (1 - b1 < epsilon)
-		(q, p) = (1,1)
-	else
-	b = b1
-	r = (1, b1)
-	end
-	
-	
-	
-	
-	while bb > epsilon && 1 - bb > epsilon
-		if bb < 0.5
-			println("way 1")
-			@show (p, q) = frac(m, 2bb)
+	while b > epsilon && 1 - b > epsilon
+		if b < 0.5
+			#println("way 1")
+			(q, p) = frac(m, 2b)
 		else
-			println("way 2")
-			@show (p, q) = frac(m, 2*(1 - bb))
+			#println("way 2")
+			(q, p) = frac(m, 2*(1 - b))
 		end
 		#bb = m*q + b - ifloor(m*q + bb)
-		bb = mod(m*q + bb, 1)
+		b = mod(m*q + b, 1)
 		kn += q
 		#i += 1
 		#if i >= 3000
@@ -53,11 +39,58 @@ function eff(m, b, epsilon)
 	#return i
 end
 
+
+#= piece of code to match m > 1 to analogous m < 1
+		
+	=#
+
+
 function first_collision(x, y, vx, vy, delta)
-	# Normalize velocity
 	
+	# Normalize velocity if it wasn't normalized
+	v = sqrt(vx^2 + vy^2)
+	vx1 = vx/v
+	vy1 = vy/v
+	vx = vx1
+	vy = vy1
+			
 	m = vy/vx
 	b = y - m*x
+
+	#=	
+	if x != 0	
+		if m < 1
+				b1 = m + b # m*1 + b
+			if b1 < delta
+				return (1, 0)
+			elseif 1 - b1 < delta
+				return (1, 1)
+			else
+				b = b1
+				x = 1
+				y = b1
+			end
+		elseif m > 1
+				mp = 1/m
+				bpp = 1 - b/m
+				b1 = mp + bpp
+				if b1 < delta
+					return (0, 1)
+				elseif 1 - b1 < delta
+					return (1, 1)
+				else
+					b = m*(1 - bpp)
+					x = b1 - 1
+					y = 1
+				end	
+		end
+	end
+	=#
+
+	
+
+
+	
 	if vx > 0 && vy > 0
 		(q, p) = eff(m, b, delta)
 		p = ifloor(m*q) + 1
@@ -123,3 +156,59 @@ for n = 1:N-1
 	println(n/N, " ", loops/N^2)
 end
 =#
+
+# Testing
+#=
+r = 0.1
+x = 0
+y = 0.445
+for deg = 1:89
+	if deg != 45
+		vx = cos(deg*pi/180)
+		vy = sin(deg*pi/180)
+		println(deg, " ", first_collision(x, y, vx, vy, r/vx))
+	end
+end
+=#
+
+# Measuring the times
+
+#= This one still gives error due to ContinuedFractions limits. Trying to work around
+function measuring()
+for i = 1:100
+	r = i/1000
+	for j = 1:100
+		for k = 1:100
+			vx = j*sqrt(0.999)
+			vy = k*sqrt(1.002)
+			#println(i, " ", j, " ", k, " ", vy/vx)
+			first_collision(0, 0.445, vx, vy, r/vx)
+		end
+	end
+end
+end
+
+@time measuring()
+=#
+
+x = 0
+y = 0.445
+
+function measuring()
+for i = 1:100
+	r = i/1000
+	for deg = 1:89
+		if deg != 45
+			vx = cos(deg*pi/180)
+			vy = sin(deg*pi/180)
+			#println(r, " ", deg, " ", first_collision(x, y, vx, vy, r/vx))
+			first_collision(x, y, vx, vy, r/vx)
+		end
+	end
+end
+end
+
+@time measuring()
+
+# with println: 112.495258954 s
+# without println: 109.723781459 s

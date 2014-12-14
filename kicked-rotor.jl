@@ -3,23 +3,8 @@
 
 using KrawczykMethod2D
 
-# Function to output the plot points
-
-#= turned off
-for n = 1:40
-	x0 = [2pi*rand(), 2pi*rand()]
-	K = 1.5
-	for i = 1:10000
-		output = T(x0, K, i)
-		println("$(output[1]) $(output[2])")
-	end
-end
-=# 
-
-
-
 # Base function for the kicked rotor, x[1] is x, x[2] is p
-#f(x, k) = mod([x[1] + k*sin(x[1]) + x[2], k*sin(x[1]) + x[2]], 2pi)
+f0(x, k) = mod([x[1] + k*sin(x[1]) + x[2], k*sin(x[1]) + x[2]], 2pi)
 f(x, k) = [x[1] + k*sin(x[1]) + x[2], k*sin(x[1]) + x[2]]
 
 # Function composition while keeping k arbitrary
@@ -33,6 +18,17 @@ function T(x, k, n)
 	end
 	return F(x, k)
 end
+
+
+# T^n (x) function - T(T(T(...T(x)))) n times
+function T0(x, k, n)
+	F = f0
+	for i = 1:n-1
+		F = compose(F, f0)
+	end
+	return F(x, k)
+end
+
 
 # n-periodic points equation
 h(x, k, n) = T(x, k, n) - x
@@ -108,3 +104,20 @@ function zeros(k, n, x1, x2, p1, p2, precision)
 	array_sol_nodupes = unique(array_sol)
 	array_sol_nodupes
 end
+
+# Print out 4-periodic points for k = 0.5
+println(mid(zeros(0.5, 4, 0, 2pi, 0, 2pi, 64)))
+
+
+# Function to output the plot points
+
+#= turned off
+for n = 1:40
+	x0 = [2pi*rand(), 2pi*rand()]
+	k = 0.5
+	for i = 1:10000
+		output = T0(x0, k, i)
+		println("$(output[1]) $(output[2])")
+	end
+end
+=#
