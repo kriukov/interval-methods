@@ -105,19 +105,18 @@ function zeros(k, n, x1, x2, p1, p2, precision)
 	array_sol_nodupes
 end
 
-# Print out 4-periodic points for k = 0.5
-println(mid(zeros(0.5, 4, 0, 2pi, 0, 2pi, 64)))
+# Print out 2-periodic points for k = 1
+#println(mid(zeros(1, 2, 0, 2pi, 0, 2pi, 64)))
 
 
 # Function to output the plot points
 
-#= turned off
+# turned off
 for n = 1:40
 	x0 = [2pi*rand(), 2pi*rand()]
-	k = 0.5
+	k = 1
 	for i = 1:10000
 		output = T0(x0, k, i)
 		println("$(output[1]) $(output[2])")
 	end
 end
-=#
