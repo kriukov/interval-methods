@@ -1,0 +1,146 @@
+## Kicked rotor: periodic orbits calculation
+# x is a vector (x[1], x[2]) = (x, p)
+
+using IntervalArithmetic
+using AutoDiff
+
+
+# Krawczyk code
+
+
+function all_inside(x::MultiDimInterval, y::MultiDimInterval)
+	k = 0
+	for i = 1:length(x)
+		if !inside(x[i], y[i])
+			k += 1
+		end
+	end
+	if k > 0
+		return false
+	else
+		return true
+	end
+end
+
+function bisect(xx::MultiDimInterval)
+ 	if length(xx) != 2
+	error("Only works for 2 at the moment")
+	end
+
+	x, y = xx
+
+	intervals = MultiDimInterval[]
+
+	push!(intervals, [left(x), left(y)])
+	push!(intervals, [left(x), right(y)])
+	push!(intervals, [right(x), left(y)])
+	push!(intervals, [right(x), right(y)])
+
+	intervals
+end
+
+roots_array = MultiDimInterval[]
+tol = 1e-10
+I = [Interval(1) Interval(0); Interval(0) Interval(1)]
+
+# If the jacobian is non-invertible, the SingularException error is returned for Y. We need to choose a slightly different Y then.	
+function Y(f, x)
+	if det(jacobian(f, mid(x))) == 0
+		return make_intervals(inv(jacobian(f, mid(x) + 0.0001*norm(diam(x)))))
+	else
+		return make_intervals(inv(jacobian(f, mid(x))))
+	end	
+end
+#Y(f, x) = make_intervals(inv(jacobian(f, mid(x))))
+
+M(f, x) = I - Y(f, x)*jacobian(f, x)
+K(f, x) = make_intervals(mid(x)) - Y(f, x)*make_intervals(f(mid(x))) + M(f, x)*(x - make_intervals(mid(x)))
+
+function krawczyk2d_internal(f, a::MultiDimInterval, bigprec::Integer)
+
+	set_bigfloat_precision(bigprec)
+	k = 1
+	@show Ka = isect(a, K(f, a))
+	if Ka != false
+
+		d = diam(a)
+		dK = diam(Ka)
+
+		if dK[1] < tol && dK[2] < tol #d == dK
+			if all_inside(Ka, a)
+				println("Unique zero in $Ka")
+				push!(roots_array, Ka)
+			else
+				println("Maybe a zero in $Ka")
+			end
+			k += 1
+		else		
+			k += 1
+			@show krawczyk2d_internal(f, bisect(Ka)[1], bigprec)
+			@show krawczyk2d_internal(f, bisect(Ka)[2], bigprec)
+			@show krawczyk2d_internal(f, bisect(Ka)[3], bigprec)
+			@show krawczyk2d_internal(f, bisect(Ka)[4], bigprec)
+		end
+
+	end
+
+	return roots_array
+end
+
+function krawczyk2d_mod(f, a, bigprec)
+	println("start")
+	x = krawczyk2d_internal(f, a, bigprec)
+	@show typeof(x)
+	if typeof(x) == Array{Interval, 1}
+		@show x
+	elseif typeof(x) == Array{Array{Interval, 1}, 1}
+		for i = 1:length(x)
+			@show krawczyk2d_internal(f, x[i], bigprec)
+		end
+	end
+end
+
+
+
+# Function to output the plot points
+
+#= turned off
+for n = 1:40
+	x0 = [2pi*rand(), 2pi*rand()]
+	K = 1.5
+	for i = 1:10000
+		output = T(x0, K, i)
+		println("$(output[1]) $(output[2])")
+	end
+end
+=# 
+
+
+
+# Base function for the kicked rotor, x[1] is x, x[2] is p
+f(x, k) = mod([x[1] + k*sin(x[1]) + x[2], k*sin(x[1]) + x[2]], 2pi)
+#f(x, k) = [x[1] + K*sin(x[1]) + x[2], K*sin(x[1]) + x[2]]
+
+# Function composition while keeping k arbitrary
+compose(f::Function, g::Function) = (x, k) -> f(g(x, k), k)
+
+# T^n (x) function - T(T(T(...T(x)))) n times
+function T(x, k, n)
+	F = f
+	for i = 1:n-1
+		F = compose(F, f)
+	end
+	return F(x, k)
+end
+
+# n-periodic points equation
+h(x, k, n) = T(x, k, n) - x
+
+g(x) = h(x, 0.7, 4)
+
+# Function to output zeros of n-th order given the K and the limits (x1, x2) and (p1, p2)
+#zeros(K, n, x1, x2, p1, p2, precision) = krawczyk2d_mod(x -> h(x, K, n), [Interval(x1, x2), Interval(p1, p2)], precision)
+zeros2(K, n, x1, x2, p1, p2, precision) = krawczyk2d_mod(g, [Interval(x1, x2), Interval(p1, p2)], precision)
+
+
+

@@ -183,6 +183,7 @@ end
 x = 0
 y = 0.445
 
+#=
 function measuring()
 for i = 1:100
 	rho = i/1000
@@ -198,5 +199,21 @@ end
 end
 
 @time measuring()
-
+=#
 # without println: 1.532468791 s
+
+
+function measuring2()
+	rho = 0.000001
+	for deg = 1:89
+		if deg != 45
+			vx = cos(deg*pi/180)
+			vy = sin(deg*pi/180)
+			col = first_collision([x, y], [vx, vy], rho)
+			println(rho, " ", deg, " ", col)
+			col
+		end
+	end
+end
+
+@time measuring2()
