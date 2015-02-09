@@ -1,7 +1,7 @@
 ## Interval arithmetic
 
 module IntervalArithmetic
-	export Interval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24
+	export Interval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, arcsin, sqrt1
 
 	typealias prec BigFloat
 
@@ -505,6 +505,53 @@ module IntervalArithmetic
 
 	import Base.asin
 	asin(x::Interval) = Interval(asin(x.lo), asin(x.hi))
+	
+	
+	function arcsin(x::Real)
+		if abs(x) <= 1
+			return asin(x)
+		elseif x < -1
+			return -Inf
+		elseif x > 1
+			return Inf
+		end
+	end
+
+	function arcsin(x::Interval)
+		if x.lo >= -1 && x.lo <= 1 && x.hi <= 1 && x.hi >= -1 
+			return Interval(asin(x.lo), asin(x.hi))
+		elseif x.lo < -1 && x.hi <= 1 && x.hi >= -1 
+			return Interval(-Inf, asin(x.hi))
+		elseif x.lo >= -1 && x.lo <= 1 && x.hi > 1
+			return Interval(asin(x.lo), Inf)
+		elseif x.lo < -1 && x.hi > 1
+			return Interval(-Inf, Inf)
+		elseif x.lo < -1 && x.hi < -1 
+			return Interval(-Inf, -Inf)
+		elseif x.lo > 1 && x.hi > 1
+			return Interval(Inf, Inf)		
+		end
+	end
+	
+	function sqrt1(x::Real)
+		if x >= 0
+			return sqrt(x)
+		else
+			return -Inf
+		end
+	end
+	
+	function sqrt1(x::Interval)
+		if x.lo < 0 && x.hi < 0
+			return Interval(-Inf, -Inf)
+		elseif x.lo < 0 && x.hi >= 0
+			return Interval(-Inf, sqrt(x.hi))
+		elseif x.lo >= 0 && x.hi >= 0
+			return sqrt(x)
+		end
+	end
+	
+	
 
 	import Base.acos
 	acos(x::Interval) = Interval(acos(x.hi), acos(x.lo))

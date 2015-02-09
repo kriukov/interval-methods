@@ -49,13 +49,12 @@ end
 
 top(x, k, n) = ceil(hi(T(x, k, n))/2pi)*2pi
 
-function zeros(k, n, x1, x2, p1, p2, precision)
+function roots(k, n, x1, x2, p1, p2, precision)
 	array_sol = MultiDimInterval[]
 	a = [Interval(x1, x2), Interval(p1, p2)]
 	for p = 0:top(a, k, n)[1]/2pi
 		for q = 0:top(a, k, n)[2]/2pi
 			array_sol = vcat(array_sol, krawczyk2d(x -> h(x, k, n) - [2pi*p, 2pi*q], a, precision))
-			#push!(array_sol, krawczyk2d(x -> h(x, k, n) - [p, q], a, precision))
 		end
 	end
 	array_sol_nodupes = unique(array_sol)
@@ -80,70 +79,18 @@ end
 =#
 
 
-function zeros1(k, x1, x2, p1, p2, precision)
-	array_sol = MultiDimInterval[]
-	a = [Interval(x1, x2), Interval(p1, p2)]
-	for p = 0:top(a, k, 1)[1]/2pi
-		for q = 0:top(a, k, 1)[2]/2pi
-			array_sol = vcat(array_sol, krawczyk2d(x -> h(x, k, 1) - [2pi*p, 2pi*q], a, precision))
-		end
-	end
-	array_sol_nodupes = unique(array_sol)
-	array_sol_nodupes
-end
-
-
-function zeros2(k, x1, x2, p1, p2, precision)
-	array_sol = MultiDimInterval[]
-	a = [Interval(x1, x2), Interval(p1, p2)]
-	for p = 0:top(a, k, 2)[1]/2pi
-		for q = 0:top(a, k, 2)[2]/2pi
-			func(x) = x -> (h(x, k, 2) - [2pi*p, 2pi*q])/(h(x, k, 1) - [2pi*p, 2pi*q])
-			array_sol = vcat(array_sol, krawczyk2d(func, a, precision))
-		end
-	end
-	array_sol_nodupes = unique(array_sol)
-	array_sol_nodupes
-end
-
-function zeros3(k, x1, x2, p1, p2, precision)
-	array_sol = MultiDimInterval[]
-	a = [Interval(x1, x2), Interval(p1, p2)]
-	for p = 0:top(a, k, 3)[1]/2pi
-		for q = 0:top(a, k, 3)[2]/2pi
-			array_sol = vcat(array_sol, krawczyk2d(x -> (h(x, k, 3) - [2pi*p, 2pi*q])/((h(x, k, 2) - [2pi*p, 2pi*q])*(h(x, k, 1) - [2pi*p, 2pi*q])), a, precision))
-		end
-	end
-	array_sol_nodupes = unique(array_sol)
-	array_sol_nodupes
-end
-
-function zeros4(k, x1, x2, p1, p2, precision)
-	array_sol = MultiDimInterval[]
-	a = [Interval(x1, x2), Interval(p1, p2)]
-	for p = 0:top(a, k, 4)[1]/2pi
-		for q = 0:top(a, k, 4)[2]/2pi
-			array_sol = vcat(array_sol, krawczyk2d(x -> (h(x, k, 4) - [2pi*p, 2pi*q])/((h(x, k, 3) - [2pi*p, 2pi*q])*(h(x, k, 2) - [2pi*p, 2pi*q])*(h(x, k, 1) - [2pi*p, 2pi*q])), a, precision))
-		end
-	end
-	array_sol_nodupes = unique(array_sol)
-	array_sol_nodupes
-end
-
-#println(mid(zeros2(1, 0, 2pi, 0, 2pi, 64)))
-
-# Print out periodic points for k = 1
+# Print out periodic points for
 
 #=
 println("1-periodic: ")
-println(mid(zeros(1, 1, 0, 2pi, 0, 2pi, 64)))
+println(mid(roots(1, 1, 0, 2pi, 0, 2pi, 64)))
 
 println("2-periodic: ")
-println(mid(zeros(1, 2, 0, 2pi, 0, 2pi, 64)))
+println(mid(roots(1, 2, 0, 2pi, 0, 2pi, 64)))
 
 println("3-periodic: ")
-println(mid(zeros(1, 3, 0, 2pi, 0, 2pi, 64)))
+println(mid(roots(1, 3, 0, 2pi, 0, 2pi, 64)))
 
 println("4-periodic: ")
-println(mid(zeros(1, 4, 0, 2pi, 0, 2pi, 64)))
+println(mid(roots(1, 4, 0, 2pi, 0, 2pi, 64)))
 =#

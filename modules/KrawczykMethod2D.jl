@@ -1,5 +1,5 @@
 module KrawczykMethod2D
-	export krawczyk2d, differentiate, Interval, rad, diam, mid, mig, mag, lo, hi, belong, hd, hull, isect, isectext, K, all_inside, bisect, jacobian, MultiDimInterval, Y, krawczyk2d_internal, mod21, Ad, mod1, mod2, mod21, mod22, mod23, mod24
+	export krawczyk2d, differentiate, Interval, rad, diam, mid, mig, mag, lo, hi, belong, hd, hull, isect, isectext, K, all_inside, bisect, jacobian, MultiDimInterval, Y, krawczyk2d_internal, mod21, Ad, mod1, mod2, mod21, mod22, mod23, mod24, arcsin, sqrt1
 
 	using IntervalArithmetic
 	using AutoDiff
@@ -84,12 +84,6 @@ module KrawczykMethod2D
 				krawczyk2d_internal(f, bisect(Ka)[2], bigprec)
 				krawczyk2d_internal(f, bisect(Ka)[3], bigprec)
 				krawczyk2d_internal(f, bisect(Ka)[4], bigprec)
-			
-				# Code below didn't give any gain in time
-				#@show krawczyk2d_internal(f, [left(Ka[1]), left(Ka[2])], bigprec)
-				#@show krawczyk2d_internal(f, [left(Ka[1]), right(Ka[2])], bigprec)
-				#@show krawczyk2d_internal(f, [right(Ka[1]), left(Ka[2])], bigprec)
-				#@show krawczyk2d_internal(f, [right(Ka[1]), right(Ka[2])], bigprec)
 			end
 
 		end

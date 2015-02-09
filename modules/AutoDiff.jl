@@ -50,6 +50,9 @@ module AutoDiff
 		(:(Base.sin), :(Base.cos)), 
 		(:(Base.cos), :(x->-sin(x))), 
 		(:(Base.tan), :(x->(sec(x))^2)),
+		(:(Base.asin), :(x->1/sqrt(1 - x^2))), 
+		(:(Base.acos), :(x->-1/sqrt(1 - x^2))),
+		(:(Base.atan), :(x->1/(1 + x^2))),  
 		(:(Base.abs), :(Base.sign)),
 		(:(Base.sqrt), :(x->1/(2sqrt(x))))				
 		)
@@ -63,6 +66,18 @@ module AutoDiff
 	# Some more functions
 
 	e^(x::Ad) = Ad(e^x.u, x.up*e^x.u)
+	
+	import IntervalArithmetic.arcsin
+	arcsin(x::Ad) = Ad(arcsin(x.u), x.up/sqrt1(1 - x.u^2))
+	
+	import IntervalArithmetic.sqrt1
+	sqrt1(x::Ad) = Ad(sqrt1(x.u), x.up/(2sqrt1(x.u)))
+	
+	import Base.complex
+	complex(x::Ad) = Ad(x.u, x.up)
+	
+	import Base.one
+	one(x::Ad) = Ad(x.u, x.up)
 	
 	import Base.rem
 	rem(x::Ad, y::Real) = Ad(rem(x.u, y), x.up)
