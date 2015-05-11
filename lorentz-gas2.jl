@@ -1,5 +1,8 @@
+#module ClassicalLorentz
+#export collisions_classical
+
 # Perpendicular (z-) component of cross product (scalar quantity) for 2-D vectors: (x cross y) dot e_z
-set_bigfloat_precision(1024)
+#set_bigfloat_precision(1024)
 crossz(x, y) = x[1]*y[2] - x[2]*y[1]
 
 function crossing(r, v, n, m)
@@ -48,9 +51,10 @@ end
 
 
 # Calculates the coordinates of places and of each hit obstacle of the collisions given the time
-function collisions(r0::Vector, v0::Vector, rho::Real, tmax::Real, precision::Integer=64)
+function collisions_classical(r0::Vector, v0::Vector, rho, tmax, precision::Integer=64)
 
 	set_bigfloat_precision(precision)
+	r0 = big(r0); v0 = big(v0)
 	places = Array{BigFloat, 1}[]
 	circles = Vector[]
 	speeds = Array{BigFloat, 1}[] # Modification to collect speeds too; may be turned off
@@ -61,8 +65,8 @@ function collisions(r0::Vector, v0::Vector, rho::Real, tmax::Real, precision::In
 	push!(times, 0)
 
 	# Initial square (n, m)
-	n = floor(r0[1] + 0.5)
-	m = floor(r0[2] + 0.5)
+	n = ifloor(r0[1] + 0.5)
+	m = ifloor(r0[2] + 0.5)
 	
 	# Place the first initial position into square [-0.5, 0.5)^2
 	r0 -= [n, m]
@@ -164,7 +168,7 @@ end
 #println(collisions([0.4, 0.1], [-0.42, 0.23], 0.3, 20)[1])
 
 #println(collisions([0.4, 0.1], [0.5, 0.5], 0.3, 20)[1])
-#collisions([0, 0.445], [cos(1), sin(1)], 0.05, 20)
+#collisions([0, 0.445], [cos(1), sin(1)], 0.1, 20)
 
 # For testing Atahualpa's algorithm
 #= with the function collisions()
@@ -226,3 +230,6 @@ end
 
 @time measuring2()
 =#
+
+# End of module
+#end

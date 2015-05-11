@@ -55,6 +55,6 @@ end
 #= The problem is that asin() returns complex values in the rectangle (-1,1)*(0,pi/3) and krawczyk2d cannot work like that. It solves for the periodic orbit 1-2-3 only in a very narrow range: e.g., 
 krawczyk2d(g, [Interval(-0.5-0.00001,-0.5+0.00001), Interval(pi/6-0.00001,pi/6+0.00001)])
 as w=-0.5, th=pi/6 is the obvious answer.
-
+=#
 
 

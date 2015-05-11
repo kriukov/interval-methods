@@ -6,9 +6,12 @@ function collisions(r0, v0, rho, tmax)
 
 	places = Vector[]
 	circles = Vector[]
-	push!(places, r0)	
+	speeds = Vector[]
+	push!(places, r0)
+	
 	#Normalize the speed
 	v0 = v0/norm(v0)
+	push!(speeds, v0)
 
 	t = 0
 	while t <= tmax
@@ -72,11 +75,12 @@ function collisions(r0, v0, rho, tmax)
 		
 		push!(places, r0)
 		push!(circles, [nfinal, mfinal])
+		push!(speeds, v0)
 		# Output for Mathematica
 		print("{$(r0[1]), $(r0[2])}, ")
 
 	end
-	return places, circles
+	return places, circles, speeds
 	# Now the location will be
 
 	#r = r0 + v0*(10 - t)
@@ -85,4 +89,4 @@ function collisions(r0, v0, rho, tmax)
 
 end
 
-collisions([0.34, -0.27], [-0.42, 0.23], 0.35, 10)
+#collisions([0.34, -0.27], [-0.42, 0.23], 0.35, 10)
