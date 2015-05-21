@@ -1,11 +1,15 @@
+#module ClassicalLorentz
+#export collisions_classical
+
 # Perpendicular (z-) component of cross product (scalar quantity) for 2-D vectors: (x cross y) dot e_z
+#set_bigfloat_precision(1024)
 crossz(x, y) = x[1]*y[2] - x[2]*y[1]
 
 function crossing(r, v, n, m)
 	# Outputs new position in square [-0.5, 0.5)^2 and updates the numbers of new square
 	
 	# Minimum positive times to nearest crossing - concise formulas p. 48 - 49
-	array_times = Real[]
+	array_times = BigFloat[]
 	k = v[2]/v[1]	
 	for i = 1:2
 		for j = 1:2
@@ -47,17 +51,22 @@ end
 
 
 # Calculates the coordinates of places and of each hit obstacle of the collisions given the time
-function collisions(r0::Vector, v0::Vector, rho::Real, tmax::Real, precision::Integer=64)
+function collisions_classical(r0::Vector, v0::Vector, rho, tmax, precision::Integer=64)
 
 	set_bigfloat_precision(precision)
-	places = Vector[]
+	r0 = big(r0); v0 = big(v0)
+	places = Array{BigFloat, 1}[]
 	circles = Vector[]
+	speeds = Array{BigFloat, 1}[] # Modification to collect speeds too; may be turned off
+	times = BigFloat[]
 	# Put the starting point into the places array
 	push!(places, r0)	
+	push!(speeds, v0)
+	push!(times, 0)
 
 	# Initial square (n, m)
-	n = floor(r0[1] + 0.5)
-	m = floor(r0[2] + 0.5)
+	n = ifloor(r0[1] + 0.5)
+	m = ifloor(r0[2] + 0.5)
 	
 	# Place the first initial position into square [-0.5, 0.5)^2
 	r0 -= [n, m]
@@ -89,6 +98,8 @@ function collisions(r0::Vector, v0::Vector, rho::Real, tmax::Real, precision::In
 			
 			push!(places, r1 + [n, m])
 			push!(circles, [n, m])
+			push!(speeds, v1)
+			push!(times, t)
 			#print("{$(r1[1] + n), $(r1[2] + m)}, ")
 			
 			r0, d, n, m = crossing(r1, v1, n, m)
@@ -115,7 +126,7 @@ function collisions(r0::Vector, v0::Vector, rho::Real, tmax::Real, precision::In
 			t += d/norm(v0)
 		end
 	end
-	return places, circles
+	return places, circles, speeds, times
 end
 
 
@@ -157,6 +168,7 @@ end
 #println(collisions([0.4, 0.1], [-0.42, 0.23], 0.3, 20)[1])
 
 #println(collisions([0.4, 0.1], [0.5, 0.5], 0.3, 20)[1])
+#collisions([0, 0.445], [cos(1), sin(1)], 0.1, 20)
 
 # For testing Atahualpa's algorithm
 #= with the function collisions()
@@ -202,7 +214,7 @@ end
 =#
 # without println: 1.532468791 s
 
-
+#=
 function measuring2()
 	rho = 0.000001
 	for deg = 1:89
@@ -217,3 +229,7 @@ function measuring2()
 end
 
 @time measuring2()
+=#
+
+# End of module
+#end

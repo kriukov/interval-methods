@@ -27,7 +27,7 @@ end
 
 hx(x, a, b, n) = h(x, a, b, n)./g(x, a, b, n)
 
-zeros(a, b, n, x1, x2, p1, p2, precision) = krawczyk2d(x -> h(x, a, b, n), [Interval(x1, x2), Interval(p1, p2)], precision)
+roots(a, b, n, x1, x2, p1, p2, precision) = krawczyk2d(x -> h(x, a, b, n), [Interval(x1, x2), Interval(p1, p2)], precision)
 
 #=
 for i = 1:40
@@ -41,27 +41,27 @@ for i = 1:40
 end
 =#
 
-
+#=
 x0 = [3*(2rand()-1)/2, 3*(2rand()-1)/2]
 for j = 1:1e6
 	output = x0
 	println("$(output[1]) $(output[2])")
 	x0 = f(output, 1.4, 0.3)
 end
-
+=#
 
 #=
 a = 1.4
 b = 0.3
 println("1-periodic: ")
-println(mid(zeros(a, b, 1, -10, 10, -3, 3, 64)))
+println(mid(roots(a, b, 1, -10, 10, -3, 3, 64)))
 
 println("2-periodic: ")
-println(mid(zeros(a, b, 2, -10, 10, -3, 3, 64)))
+println(mid(roots(a, b, 2, -10, 10, -3, 3, 64)))
 
 println("3-periodic: ")
-println(mid(zeros(a, b, 3, -10, 10, -3, 3, 64)))
+println(mid(roots(a, b, 3, -10, 10, -3, 3, 64)))
 
 println("4-periodic: ")
-println(mid(zeros(a, b, 4, -10, 10, -3, 3, 64)))
+println(mid(roots(a, b, 4, -10, 10, -3, 3, 64)))
 =#

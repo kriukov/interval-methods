@@ -1,7 +1,7 @@
 ## Krawczyk method, based on Tucker p. 86
 
 module KrawczykMethod
-	export krawczyk, differentiate, Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, K
+	export krawczyk, differentiate, Interval, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, K, arcsin, sqrt1
 
 	using IntervalArithmetic
 	using AutoDiff

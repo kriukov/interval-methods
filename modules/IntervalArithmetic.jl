@@ -1,880 +1,947 @@
 ## Interval arithmetic
 
 module IntervalArithmetic
-	export Interval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24
+export Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, arcsin, sqrt1
 
-	typealias prec BigFloat
+typealias prec BigFloat
 
+type Interval
 
-	type Interval
+	lo
+	hi
 
-		lo
-		hi
+	function Interval(a, b)
+	    set_rounding(prec, RoundDown)
+	    lo = BigFloat("$a")
 
-		function Interval(a, b)
-		    set_rounding(prec, RoundDown)
-		    lo = BigFloat("$a")
+	    set_rounding(prec, RoundUp)
+	    hi = BigFloat("$b")
 
-		    set_rounding(prec, RoundUp)
-		    hi = BigFloat("$b")
-
-		    new(lo, hi)
-		end
-
+	    new(lo, hi)
 	end
 
-	typealias MultiDimInterval Array{Interval, 1}
+end
 
-	#import MPFR.BigFloat
-	#BigFloat(x::Interval) = Interval(BigFloat(x.lo), BigFloat(x.hi))
+#=
+type ComplexInterval
 
-	# Thin (degenerate) interval and functions zero() and one()
+	lo
+	hi
 
-	Interval(x::Number) = Interval(x, x)
+	function Interval(a, b)
+	    set_rounding(prec, RoundDown)
+	    lo_re = BigFloat("$(real(a))")
+	    lo_im = BigFloat("$(imag(a))")
 
-	# Prevent errors from embedded interval functions
-	Interval(x::Interval) = x
+	    set_rounding(prec, RoundUp)
+	    hi_re = BigFloat("$(real(b))")
+	    hi_im = BigFloat("$(imag(b))")
 
-	import Base.one
-	one(x::Interval) = Interval(1.0)
+	    new(lo_re + im*lo_im, hi_re + im*hi_im)
+	end
 
-	import Base.zero
-	zero(x::Interval) = Interval(0.0)
-	zero(Interval) = Interval(0)
+end
+=#
 
-	# The basic operations on intervals. Left end is rounded down, right end is rounded up.
+typealias MultiDimInterval Array{Interval, 1}
 
-	# Addition
+#import MPFR.BigFloat
+#BigFloat(x::Interval) = Interval(BigFloat(x.lo), BigFloat(x.hi))
 
-	function +(x::Interval, y::Interval)
+# Thin (degenerate) interval and functions zero() and one()
+
+Interval(x::Number) = Interval(x, x)
+
+# Prevent errors from embedded interval functions
+Interval(x::Interval) = x
+
+import Base.one
+one(x::Interval) = Interval(1.0)
+
+import Base.zero
+zero(x::Interval) = Interval(0.0)
+zero(Interval) = Interval(0)
+
+# The basic operations on intervals. Left end is rounded down, right end is rounded up.
+
+# Addition
+
+function +(x::Interval, y::Interval)
+	z1 = with_rounding(prec, RoundDown) do
+		x.lo + y.lo
+	end
+	z2 = with_rounding(prec, RoundUp) do
+		x.hi + y.hi
+	end
+	Interval(z1, z2)
+end
+
++(x::Interval, y::Real) = x + Interval(y)
++(x::Real, y::Interval) = Interval(x) + y
+
+# Subtraction
+
+function -(x::Interval, y::Interval)
+	z1 = with_rounding(prec, RoundDown) do
+x.lo - y.hi
+	end
+	z2 = with_rounding(prec, RoundUp) do
+x.hi - y.lo
+	end
+	Interval(z1, z2)
+end
+
+-(x::Interval) = Interval(-x.hi, -x.lo)
+
+-(x::Interval, y::Real) = x - Interval(y)
+-(x::Real, y::Interval) = Interval(x) - y
+
+# Multiplication
+
+function *(x::Interval, y::Interval)
+	z1 = with_rounding(prec, RoundDown) do
+		min(x.lo*y.lo, x.lo*y.hi, x.hi*y.lo, x.hi*y.hi)
+	end
+	z2 = with_rounding(prec, RoundUp) do
+		max(x.lo*y.lo, x.lo*y.hi, x.hi*y.lo, x.hi*y.hi)
+	end
+	Interval(z1, z2)
+end
+
+*(x::Interval, y::Real) = x*Interval(y)
+*(x::Real, y::Interval) = Interval(x)*y
+
+
+# Division
+
+function /(x::Interval, y::Interval)
+	z1 = with_rounding(prec, RoundDown) do
+		1/y.hi
+	end
+	z2 = with_rounding(prec, RoundUp) do
+		1/y.lo
+	end
+	x*Interval(z1, z2)
+end
+
+/(x::Interval, y::Real) = x/Interval(y)
+/(x::Real, y::Interval) = Interval(x)/y
+
+# Extended division
+
+function //(x::Interval, y::Interval)
+	if belong(0., y) == false
+		return x/y
+	elseif belong(0., x) == true && belong(0, y) == true
+		return Interval(-Inf, Inf)
+	elseif x.hi < 0 && y.lo < y.hi == 0
 		z1 = with_rounding(prec, RoundDown) do
-			x.lo + y.lo
+			x.hi/y.lo
+		end
+		return Interval(z1, Inf)
+	elseif x.hi < 0 && y.lo < 0 < y.hi
+		z1 = with_rounding(prec, RoundDown) do
+			x.hi/y.lo
 		end
 		z2 = with_rounding(prec, RoundUp) do
-			x.hi + y.hi
+			x.hi/y.hi
 		end
-		Interval(z1, z2)
-	end
-
-	+(x::Interval, y::Real) = x + Interval(y)
-	+(x::Real, y::Interval) = Interval(x) + y
-
-	# Subtraction
-
-	function -(x::Interval, y::Interval)
-		z1 = with_rounding(prec, RoundDown) do
-	x.lo - y.hi
-		end
-		z2 = with_rounding(prec, RoundUp) do
-	x.hi - y.lo
-		end
-		Interval(z1, z2)
-	end
-
-	-(x::Interval) = Interval(-x.hi, -x.lo)
-
-	-(x::Interval, y::Real) = x - Interval(y)
-	-(x::Real, y::Interval) = Interval(x) - y
-
-	# Multiplication
-
-	function *(x::Interval, y::Interval)
-		z1 = with_rounding(prec, RoundDown) do
-			min(x.lo*y.lo, x.lo*y.hi, x.hi*y.lo, x.hi*y.hi)
-		end
-		z2 = with_rounding(prec, RoundUp) do
-			max(x.lo*y.lo, x.lo*y.hi, x.hi*y.lo, x.hi*y.hi)
-		end
-		Interval(z1, z2)
-	end
-
-	*(x::Interval, y::Real) = x*Interval(y)
-	*(x::Real, y::Interval) = Interval(x)*y
-
-
-	# Division
-
-	function /(x::Interval, y::Interval)
-		z1 = with_rounding(prec, RoundDown) do
-			1/y.hi
-		end
-		z2 = with_rounding(prec, RoundUp) do
-			1/y.lo
-		end
-		x*Interval(z1, z2)
-	end
-
-	/(x::Interval, y::Real) = x/Interval(y)
-	/(x::Real, y::Interval) = Interval(x)/y
-
-	# Extended division
-
-	function //(x::Interval, y::Interval)
-		if belong(0., y) == false
-			return x/y
-		elseif belong(0., x) == true && belong(0, y) == true
-			return Interval(-Inf, Inf)
-		elseif x.hi < 0 && y.lo < y.hi == 0
-			z1 = with_rounding(prec, RoundDown) do
-				x.hi/y.lo
-			end
-			return Interval(z1, Inf)
-		elseif x.hi < 0 && y.lo < 0 < y.hi
-			z1 = with_rounding(prec, RoundDown) do
-				x.hi/y.lo
-			end
-			z2 = with_rounding(prec, RoundUp) do
-				x.hi/y.hi
-			end
-			return Interval(z1, z2)
-		elseif x.hi < 0 && 0 == y.lo < y.hi
-			z2 = with_rounding(prec, RoundUp) do
-				x.hi/y.hi
-			end
-			return Interval(-Inf, z2)
-		elseif 0 < x.lo && y.lo < y.hi == 0
-			z2 = with_rounding(prec, RoundUp) do
-				x.lo/y.lo
-			end
-			return Interval(-Inf, z2)
-		elseif 0 < x.lo && y.lo < 0 < y.hi
-			z1 = with_rounding(prec, RoundDown) do
-				x.lo/y.hi
-			end
-			z2 = with_rounding(prec, RoundUp) do
-				x.lo/y.lo
-			end
-			return Interval(z1, z2)
-		elseif 0 < x.lo && 0 == y.lo < y.hi
-			z1 = with_rounding(prec, RoundDown) do
-				x.lo/y.hi
-			end
-			return Interval(z1, Inf)
-		elseif belong(0, x) == false && y.lo == 0 && y.hi == 0
-			return error("\nEmpty set: extended division by thin zero")
-		end
-	end		
-	
-
-	## Interval properties
-
-	# Whether the point belongs to the interval: belong(point, interval)
-
-	function belong(p::Real, x::Interval)
-		if p >= x.lo && p <= x.hi
-			return true
-		else 
-			return false
-		end
-	end
-
-	# Whether one interval is inside of the other
-
-	function inside(x::Interval, y::Interval)
-		if x.lo > y.lo && x.hi < y.hi
-			return true
-		else 
-			return false
-		end
-	end
-
-	# Miscellaneous: lower end, higher end, lower (left) half, higher (right) half, bottom, top, radius, diameter, midpoint, mignitude, magnitude, absolute value
-
-	lo(x::Interval) = x.lo
-	hi(x::Interval) = x.hi
-	left(x::Interval) = Interval(x.lo, mid(x))
-	right(x::Interval) = Interval(mid(x), x.hi)
-	rad(x::Interval) = (x.hi - x.lo)/2
-	diam(x::Interval) = x.hi - x.lo
-	mid(x::Interval) = (x.hi + x.lo)/2
-	mid(x::prec) = x
-	
-	mid(x::Real) = x
-	lo(x::Real) = x
-	hi(x::Real) = x
-	diam(x::Real) = 0
-	rad(x::Real) = 0
-	
-	
-	function mig(x::Interval)
-		if belong(0.0, x) == true
-			return 0
-		else return min(abs(x.lo), abs(x.hi))
-		end
-	end
-
-	mag(x::Interval) = max(abs(x.lo), abs(x.hi))
-
-	import Base.abs
-	abs(x::Interval) = Interval(mig(x), mag(x))
-
-
-	# Hausdorff distance
-
-	hd(x::Interval, y::Interval) = max(abs(x.lo - y.lo), abs(x.hi - y.hi))
-
-
-	# "Union" (hull) and intersection
-
-	hull(x::Interval, y::Interval) = Interval(min(x.lo, y.lo), max(x.hi, y.hi))
-
-	function isect(x::Interval, y::Interval)
-		if x.hi < y.lo || y.hi < x.lo
-			return false
-		else 
-		z1 = with_rounding(prec, RoundDown) do
-			max(x.lo, y.lo)
-		end
-		z2 = with_rounding(prec, RoundUp) do
-			min(x.hi, y.hi)
-		end 
 		return Interval(z1, z2)
+	elseif x.hi < 0 && 0 == y.lo < y.hi
+		z2 = with_rounding(prec, RoundUp) do
+			x.hi/y.hi
 		end
-	end
-
-	# Extended intersection (involving extended intervals [a, b] with a > b)
-
-	function isectext(x::Interval, y::Interval)
-		if x.hi < x.lo && y.hi >= y.lo # x is an extended interval and y is a normal one
-			if y.lo <= x.hi && x.lo <= y.hi
-				return [Interval(y.lo, x.hi), Interval(x.lo, y.hi)]
-			elseif y.lo > x.hi && x.lo <= y.hi && y.lo <= x.lo
-				return Interval(x.lo, y.hi)
-			elseif y.lo <= x.hi && x.lo > y.hi && y.hi >= x.hi
-				return Interval(y.lo, x.hi)
-			elseif y.lo > x.hi && x.lo > y.hi
-				return false
-			elseif y.lo <= x.hi && x.lo > y.hi && y.hi < x.hi
-				return y
-			elseif y.lo > x.hi && x.lo <= y.hi && y.lo > x.lo
-				return y
-			end
-		elseif x.hi < x.lo && y.hi < y.lo # both intervals are extended
-			return Interval(max(x.lo, y.lo), min(x.hi, y.hi)) # Returns also an extended interval
-		elseif x.hi >= x.lo && y.hi < y.lo # x normal, y extended
-			return isectext(y, x)
-		elseif x.hi >= x.lo && y.hi >= y.lo # both intervals are normal
-			return isect(x, y)
+		return Interval(-Inf, z2)
+	elseif 0 < x.lo && y.lo < y.hi == 0
+		z2 = with_rounding(prec, RoundUp) do
+			x.lo/y.lo
 		end
-	end
-
-
-	# Integer power
-
-	function ^(x::Interval, n::Integer)
-		if n > 0 && n % 2 == 1
-			return Interval(x.lo^n, x.hi^n)
-		elseif n > 0 && n % 2 == 0
-			return Interval((mig(x))^n, (mag(x))^n)
-		elseif n == 0
-			return Interval(1, 1)
-		elseif n < 0 && belong(0, x) == false
-			return Interval(1/x.hi, 1/x.lo)^(-n)
-		# elseif return println("Error")
+		return Interval(-Inf, z2)
+	elseif 0 < x.lo && y.lo < 0 < y.hi
+		z1 = with_rounding(prec, RoundDown) do
+			x.lo/y.hi
 		end
-	end
-
-
-	# Real power function - taken from https://github.com/dpsanders/ValidatedNumerics.jl
-
-
-
-	macro round_down(expr)
-		quote
-			with_rounding(BigFloat, RoundDown) do
-					$expr
-				end
+		z2 = with_rounding(prec, RoundUp) do
+			x.lo/y.lo
 		end
+		return Interval(z1, z2)
+	elseif 0 < x.lo && 0 == y.lo < y.hi
+		z1 = with_rounding(prec, RoundDown) do
+			x.lo/y.hi
+		end
+		return Interval(z1, Inf)
+	elseif belong(0, x) == false && y.lo == 0 && y.hi == 0
+		return error("\nEmpty set: extended division by thin zero")
 	end
+end		
 
-	macro round_up(expr)
-		quote
-		with_rounding(BigFloat, RoundUp) do
+
+## Interval properties
+
+# Whether the point belongs to the interval: belong(point, interval)
+
+function belong(p::Real, x::Interval)
+	if p >= x.lo && p <= x.hi
+		return true
+	else 
+		return false
+	end
+end
+
+# Whether one interval is inside of the other
+
+function inside(x::Interval, y::Interval)
+	if x.lo > y.lo && x.hi < y.hi
+		return true
+	else 
+		return false
+	end
+end
+
+# Miscellaneous: lower end, higher end, lower (left) half, higher (right) half, bottom, top, radius, diameter, midpoint, mignitude, magnitude, absolute value
+
+lo(x::Interval) = x.lo
+hi(x::Interval) = x.hi
+left(x::Interval) = Interval(x.lo, mid(x))
+right(x::Interval) = Interval(mid(x), x.hi)
+rad(x::Interval) = (x.hi - x.lo)/2
+diam(x::Interval) = x.hi - x.lo
+mid(x::Interval) = (x.hi + x.lo)/2
+mid(x::prec) = x
+
+mid(x::Real) = x
+lo(x::Real) = x
+hi(x::Real) = x
+diam(x::Real) = 0
+rad(x::Real) = 0
+
+
+function mig(x::Interval)
+	if belong(0.0, x) == true
+		return 0
+	else return min(abs(x.lo), abs(x.hi))
+	end
+end
+
+mag(x::Interval) = max(abs(x.lo), abs(x.hi))
+
+import Base.abs
+abs(x::Interval) = Interval(mig(x), mag(x))
+
+
+# Hausdorff distance
+
+hd(x::Interval, y::Interval) = max(abs(x.lo - y.lo), abs(x.hi - y.hi))
+
+
+# "Union" (hull) and intersection
+
+hull(x::Interval, y::Interval) = Interval(min(x.lo, y.lo), max(x.hi, y.hi))
+
+function isect(x::Interval, y::Interval)
+	if x.hi < y.lo || y.hi < x.lo
+		return false
+	else 
+	z1 = with_rounding(prec, RoundDown) do
+		max(x.lo, y.lo)
+	end
+	z2 = with_rounding(prec, RoundUp) do
+		min(x.hi, y.hi)
+	end 
+	return Interval(z1, z2)
+	end
+end
+
+# Extended intersection (involving extended intervals [a, b] with a > b)
+
+function isectext(x::Interval, y::Interval)
+	if x.hi < x.lo && y.hi >= y.lo # x is an extended interval and y is a normal one
+		if y.lo <= x.hi && x.lo <= y.hi
+			return [Interval(y.lo, x.hi), Interval(x.lo, y.hi)]
+		elseif y.lo > x.hi && x.lo <= y.hi && y.lo <= x.lo
+			return Interval(x.lo, y.hi)
+		elseif y.lo <= x.hi && x.lo > y.hi && y.hi >= x.hi
+			return Interval(y.lo, x.hi)
+		elseif y.lo > x.hi && x.lo > y.hi
+			return false
+		elseif y.lo <= x.hi && x.lo > y.hi && y.hi < x.hi
+			return y
+		elseif y.lo > x.hi && x.lo <= y.hi && y.lo > x.lo
+			return y
+		end
+	elseif x.hi < x.lo && y.hi < y.lo # both intervals are extended
+		return Interval(max(x.lo, y.lo), min(x.hi, y.hi)) # Returns also an extended interval
+	elseif x.hi >= x.lo && y.hi < y.lo # x normal, y extended
+		return isectext(y, x)
+	elseif x.hi >= x.lo && y.hi >= y.lo # both intervals are normal
+		return isect(x, y)
+	end
+end
+
+
+# Integer power
+
+function ^(x::Interval, n::Integer)
+	if n > 0 && n % 2 == 1
+		return Interval(x.lo^n, x.hi^n)
+	elseif n > 0 && n % 2 == 0
+		return Interval((mig(x))^n, (mag(x))^n)
+	elseif n == 0
+		return Interval(1, 1)
+	elseif n < 0 && belong(0, x) == false
+		return Interval(1/x.hi, 1/x.lo)^(-n)
+	# elseif return println("Error")
+	end
+end
+
+
+# Real power function - taken from https://github.com/dpsanders/ValidatedNumerics.jl
+
+
+
+macro round_down(expr)
+	quote
+		with_rounding(BigFloat, RoundDown) do
 				$expr
 			end
+	end
+end
+
+macro round_up(expr)
+	quote
+	with_rounding(BigFloat, RoundUp) do
+			$expr
 		end
 	end
+end
 
-	macro round(expr1, expr2)
-		quote
-			Interval(@round_down($expr1), @round_up($expr2))
-		end
+macro round(expr1, expr2)
+	quote
+		Interval(@round_down($expr1), @round_up($expr2))
 	end
+end
 
-	function reciprocal(a::Interval)
-		uno = one(BigFloat)
-		z = zero(BigFloat)
-		if belong(z, a)
-		#if z in a
-			warn("\nInterval in denominator contains 0.")
-			return Interval(-inf(z),inf(z)) # inf(z) returns inf of type of z
-		end
-		@round(uno/a.hi, uno/a.lo)
+function reciprocal(a::Interval)
+	uno = one(BigFloat)
+	z = zero(BigFloat)
+	if belong(z, a)
+	#if z in a
+		warn("\nInterval in denominator contains 0.")
+		return Interval(-inf(z),inf(z)) # inf(z) returns inf of type of z
 	end
+	@round(uno/a.hi, uno/a.lo)
+end
 
-	function ^(a::Interval, x::Real)
-		x == int(x) && return a^(int(x))
-		x < zero(x) && return reciprocal( a^(-x) )
-		x == 0.5*one(x) && return sqrt(a)
-		#
-		z = zero(BigFloat)
-		z > a.hi && error("Undefined operation; Interval is strictly negative and power is not an integer")
-		#
-		xInterv = Interval( x )
-		diam( xInterv ) >= eps(x) && return a^xInterv
-		# xInterv is a thin interval
-		domainPow = Interval(z, big(Inf))
-		aRestricted = isect(a, domainPow)
-		@round(aRestricted.lo^x, aRestricted.hi^x)
+function ^(a::Interval, x::Real)
+	x == int(x) && return a^(int(x))
+	x < zero(x) && return reciprocal( a^(-x) )
+	x == 0.5*one(x) && return sqrt(a)
+	#
+	z = zero(BigFloat)
+	z > a.hi && error("Undefined operation; Interval is strictly negative and power is not an integer")
+	#
+	xInterv = Interval( x )
+	diam( xInterv ) >= eps(x) && return a^xInterv
+	# xInterv is a thin interval
+	domainPow = Interval(z, big(Inf))
+	aRestricted = isect(a, domainPow)
+	@round(aRestricted.lo^x, aRestricted.hi^x)
+end
+
+
+
+
+
+# Interval power - exercise 3.5 from Tucker "Validated Numerics"
+
+function ^(x::Interval, n::Interval)
+	if x.lo > 0
+		z1 = min(x.lo^n.lo, x.lo^n.hi, x.hi^n.lo, x.hi^n.hi)
+		z2 = max(x.lo^n.lo, x.lo^n.hi, x.hi^n.lo, x.hi^n.hi)
+		return Interval(z1, z2)
 	end
+end
 
 
+# Trigonometry
 
+#= COMMENTED OUT: old Tucker definition of sin
+import Base.sin
+function sin(x::Interval)
 
-
-	# Interval power - exercise 3.5 from Tucker "Validated Numerics"
-
-	function ^(x::Interval, n::Interval)
-		if x.lo > 0
-			z1 = min(x.lo^n.lo, x.lo^n.hi, x.hi^n.lo, x.hi^n.hi)
-			z2 = max(x.lo^n.lo, x.lo^n.hi, x.hi^n.lo, x.hi^n.hi)
-			return Interval(z1, z2)
-		end
-	end
-
-
-	# Trigonometry
-
-	#= COMMENTED OUT: old Tucker definition of sin
-	import Base.sin
-	function sin(x::Interval)
-
-		k = 0
-		pcount = 0
-		for k = -1000:1000
-	p = pi/2 + 2pi*k
-	if belong(p, x) == true
-	pcount = pcount + 1
-	end
-		end
-		
-		k = 0
-		qcount = 0
-		for k = -1000:1000
-	q = - pi/2 + 2pi*k
-	if belong(q, x) == true
-	qcount = qcount + 1
-	end
-		end
-		
-		if qcount != 0 && pcount != 0
-			return Interval(-1., 1.)
-		elseif qcount != 0 && pcount == 0
-			return Interval(-1., max(sin(x.lo), sin(x.hi)))
-		elseif qcount == 0 && pcount != 0
-			return Interval(min(sin(x.lo), sin(x.hi)), 1.)
-		elseif qcount == 0 && pcount == 0
-			return Interval(min(sin(x.lo), sin(x.hi)), max(sin(x.lo), sin(x.hi)))
-		end
-	end
-	=#
-
-
-	# Taken from http://jenchienjackchang.com/sample-page/implicit-solid-modeling-using-interval-methods/interval-arithmetic/
-
-	#= Deprecated in favour of the next
-	import Base.sin
-	function sin(x::Interval)
-		if x.lo%2pi >= 0
-			low = x.lo%2pi
-		else low = x.lo%2pi + 2pi
-		end	
-		x1 = Interval(low, low + diam(x))
-		# If the interval has a diameter equal or greater than 2pi or it is an extended interval, return [-1, 1]
-		if diam(x) >= 2pi || x.lo > x.hi
-			return Interval(-1, 1)
-		elseif 0 <= x1.lo <= x1.hi <= pi/2 || 3pi/2 <= x1.lo <= x1.hi <= 5pi/2 || 7pi/2 <= x1.lo <= x1.hi <= 4pi
-				return Interval(sin(x1.lo), sin(x1.hi))
-			elseif pi/2 <= x1.lo <= x1.hi <= 3pi/2 || 5pi/2 <= x1.lo <= x1.hi <= 7pi/2
-				return Interval(sin(x1.hi), sin(x1.lo))
-			elseif (0 <= x1.lo <= pi/2 && pi/2 <= x1.hi <= 3pi/2) || (3pi/2 <= x1.lo <= 5pi/2 && 5pi/2 <= x1.hi <= 7pi/2)
-				return Interval(min(sin(x1.lo), sin(x1.hi)), 1)
-			elseif (pi/2 <= x1.lo <= 3pi/2 && 3pi/2 <= x1.hi <= 5pi/2) || (5pi/2 <= x1.lo <= 7pi/2 && 7pi/2 <= x1.hi <= 4pi)
-				return Interval(-1, max(sin(x1.lo), sin(x1.hi)))
-			elseif (0 <= x1.lo <= pi/2 && 3pi/2 <= x1.hi <= 5pi/2) || (pi/2 <= x1.lo <= 3pi/2 && 5pi/2 <= x1.hi <= 7pi/2) || (3pi/2 <= x1.lo <= 5pi/2 && 7pi/2 <= x1.hi <= 4pi)
-				return Interval(-1, 1)
-			end
-	
-	end
-	=#
-
-	# Using Sanders/Benet sin() from https://github.com/dpsanders/ValidatedNumerics.jl
-	import Base.sin
-	function sin(a::Interval)
-		piHalf = pi*BigFloat("0.5")
-		twoPi = pi*BigFloat("2.0")
-		domainSin = Interval( BigFloat(-1.0), BigFloat(1.0) )
-
-		# Checking the specific case
-		diam(a) >= twoPi && return domainSin
-
-		# Limits within 1 full period of sin(x)
-		# Abbreviations
-		loMod2pi = mod(a.lo, twoPi)
-		hiMod2pi = mod(a.hi, twoPi)
-		loQuartile = floor( loMod2pi / piHalf )
-		hiQuartile = floor( hiMod2pi / piHalf )
-
-		# 20 different cases
-		if loQuartile == hiQuartile # Interval limits in the same quartile
-		    loMod2pi > hiMod2pi && return domainSin
-		    set_rounding(BigFloat, RoundDown)
-		    lo = sin( a.lo )
-		    set_rounding(BigFloat, RoundUp)
-		    hi = sin( a.hi )
-		    set_rounding(BigFloat, RoundNearest)
-		    return Interval( lo, hi )
-		elseif loQuartile == 3 && hiQuartile==0
-		    set_rounding(BigFloat, RoundDown)
-		    lo = sin( a.lo )
-		    set_rounding(BigFloat, RoundUp)
-		    hi = sin( a.hi )
-		    set_rounding(BigFloat, RoundNearest)
-		    return Interval( lo, hi )
-		elseif loQuartile == 1 && hiQuartile==2
-		    set_rounding(BigFloat, RoundDown)
-		    lo = sin( a.hi )
-		    set_rounding(BigFloat, RoundUp)
-		    hi = sin( a.lo )
-		    set_rounding(BigFloat, RoundNearest)
-		    return Interval( lo, hi )
-		elseif ( loQuartile == 0 || loQuartile==3 ) && ( hiQuartile==1 || hiQuartile==2 )
-		    set_rounding(BigFloat, RoundDown)
-		    slo = sin( a.lo )
-		    shi = sin( a.hi )
-		    set_rounding(BigFloat, RoundNearest)
-		    lo = min( slo, shi )
-		    return Interval( lo, BigFloat(1.0) )
-		elseif ( loQuartile == 1 || loQuartile==2 ) && ( hiQuartile==3 || hiQuartile==0 )
-		    set_rounding(BigFloat, RoundUp)
-		    slo = sin( a.lo )
-		    shi = sin( a.hi )
-		    set_rounding(BigFloat, RoundNearest)
-		    hi = max( slo, shi )
-		    return Interval( BigFloat(-1.0), hi )
-		elseif ( loQuartile == 0 && hiQuartile==3 ) || ( loQuartile == 2 && hiQuartile==1 )
-		    return domainSin
-		else
-		    # This should be never reached!
-		    error(string("SOMETHING WENT WRONG in sin.\nThis should have never been reached") )
-		end
-	end
-
-
-	import Base.cos
-	cos(x::Interval) = sin(Interval(x.lo + pi/2, x.hi + pi/2))
-
-	# Miscellaneous
-
-	import Base.complex
-	complex(x::Interval) = Interval(complex(x.lo), complex(x.hi))
-	complex(x::MultiDimInterval) = [complex(x[1]), complex(x[2])]
-
-	function *(x::MultiDimInterval, y::Interval)
-		[x[1]*y, x[2]*y]
-	end
-
-
-	function /(x::Array{Any, 1}, y::Interval)
-		[x[1]/y, x[2]/y]
-	end
-
-	# Equality of two intervals
-	==(a::Interval, b::Interval) = a.lo == b.lo && a.hi == b.hi
-
-	# Monotonic functions
-
-	import Base.exp
-	exp(x::Interval) = Interval(exp(x.lo), exp(x.hi))
-
-	import Base.sqrt
-	sqrt(x::Interval) = Interval(sqrt(x.lo), sqrt(x.hi))
-
-	import Base.log
-	log(x::Interval) = Interval(log(x.lo), log(x.hi))
-
-	import Base.asin
-	asin(x::Interval) = Interval(asin(x.lo), asin(x.hi))
-
-	import Base.acos
-	acos(x::Interval) = Interval(acos(x.hi), acos(x.lo))
-	
-	# Modulo and remainder
-	
-	import Base.mod
-	function mod(x::Interval, y::Real)
-		if diam(x) >= y
-			return Interval(0, y)
-		else
-			if belong((floor(x.lo/y) + 1)*y, x)
-				return [Interval(0, mod(x.hi, y)), Interval(mod(x.lo, y), y)]
-			else
-				return Interval(mod(x.lo, y), mod(x.hi, y))
-			end
-		end
+	k = 0
+	pcount = 0
+	for k = -1000:1000
+p = pi/2 + 2pi*k
+if belong(p, x) == true
+pcount = pcount + 1
+end
 	end
 	
-	import Base.mod1 # mod1 is built-in
-	function mod1(x::Interval, y::Real)
-		z = mod(x, y)
-		if typeof(z) == Interval
-			return z
-		elseif typeof(z) == Array{Interval, 1}
-			return z[1]
-		end
+	k = 0
+	qcount = 0
+	for k = -1000:1000
+q = - pi/2 + 2pi*k
+if belong(q, x) == true
+qcount = qcount + 1
+end
 	end
 	
-	function mod2(x::Interval, y::Real)
-		z = mod(x, y)
-		if typeof(z) == Array{Interval, 1}
-			return z[2]
-		end
+	if qcount != 0 && pcount != 0
+		return Interval(-1., 1.)
+	elseif qcount != 0 && pcount == 0
+		return Interval(-1., max(sin(x.lo), sin(x.hi)))
+	elseif qcount == 0 && pcount != 0
+		return Interval(min(sin(x.lo), sin(x.hi)), 1.)
+	elseif qcount == 0 && pcount == 0
+		return Interval(min(sin(x.lo), sin(x.hi)), max(sin(x.lo), sin(x.hi)))
 	end
-	
-	#= Unfinished; let's use only mod
-	import Base.rem
-	function mod(x::Interval, y::Real)
-		if x.lo >= 0
-			return rem(x, y)
-		elseif x.hi < 0
-			return rem(x, y) + 1
-		else
-			# If 0 belongs to the interval, need more stuff
-		end
-	
-	end
-	=#	
-	
-	## --------- Attempt to introduce interval unions --------------
-	
-	#typealias IntUnion Array{Interval, 1}
-	
-	type IntUnion
-		x::Array{Interval, 1}
-		#=
-		n = 0
-		for i = 1:length(x)
-			for j = 1:length(x)
-				if x[i] != x[j]
-					if isect(x[i], x[j]) != false
-						n += 1
-						error("Badly formed union: elements intersect")						
-					end
-				end
-			end
-		end
-		function IntUnion(x)
-			new x
-		end
-		=#
-		
-	end
-
-	function intunion(x::Interval, y::Interval)
-		if x.hi < y.lo || x.lo > y.hi
-			return [x, y]
-		else
-			return hull(x, y)
-		end
-	end
-	
-	#= COMMENTED OUT - there are better ways
-	function intunion(x::Interval, y::IntUnion)
-	
-		m = 0; n = 0
-		for i = 1:length(y)
-			if belong(x.lo, y[i])
-				m += i
-			end
-			if belong(x.hi, y[i])
-				n += i
-			end		
-		end
-		answer = Interval[]
-		if m != 0 && n != 0
-
-			for i = 1:m-1
-				push!(answer, y[i])
-			end
-			push!(answer, Interval(y[m].lo, y[n].hi))
-			for i = n+1:length(y)
-				push!(answer, y[i])
-			end
-		end
-		return answer
-			answer = Interval[]
-		if m != 0 && n == 0
-
-			for i = 1:m-1
-				push!(answer, y[i])
-			end
-			push!(answer, Interval(y[m].lo, x.hi))
-			k = 0
-			for i = 1:length(y)
-				if y[i].lo > x.hi
-				k = i
-				break
-				end
-			end
-			for i = k+1:length(y)
-				push!(answer, y[i])
-			end
-		end
-		return answer	
-		
-		if m == 0 && n != 0
-			answer = Interval[]
-			k = 0			
-			for i = 1:length(y)
-				if y[i].lo > x.lo
-				k = i
-				break
-				end
-			end
-			for i = 1:k-1
-				push!(answer, y[i])
-			end
-			push!(answer, Interval(y[m].lo, x.hi))
-			for i = n+1:length(y)
-				push!(answer, y[i])
-			end
-		end
-		return answer
-		
-		if m == 0 && n == 0
-			answer = Interval[]
-			k = 0; l = 0
-			for i = 1:length(y)
-				if y[i].lo > x.lo
-				k = i
-				break
-				end
-			end
-			for i = 1:length(y)
-				if y[i].lo > x.hi
-				l = i
-				break
-				end
-			end			
-			for i = 1:k-1
-				push!(answer, y[i])
-			end
-			push!(answer, x)
-			for i = l:length(y)
-				push!(answer, y[i])
-			end
-		end
-		return answer			
-
-	end
-	=#
-	
-	# Still need to deal with arrays output by mod(interval)
+end
+=#
 
 
-	##-------------------------------------------------------
+# Taken from http://jenchienjackchang.com/sample-page/implicit-solid-modeling-using-interval-methods/interval-arithmetic/
 
-	## Interval arithmetic for 2D objects
-
-	lo(x::Array{Interval}) = map(lo, x)
-	hi(x::Array{Interval}) = map(hi, x)
-
-	# Making mid() process 1-D and 2-D interval arrays into arrays of midpoints
-	mid(x::MultiDimInterval) = map(mid, x)
-	mid(x::Array{Interval, 2}) = map(mid, x)
-	mid(x::Array{MultiDimInterval, 1}) = map(mid, x)
-	diam(x::MultiDimInterval) = map(diam, x)
-	sin(x::MultiDimInterval) = map(sin, x)
-	sin(x::Array{Any, 1}) = map(sin, x)	
-	cos(x::MultiDimInterval) = map(cos, x)
-	cos(x::Array{Any, 1}) = map(cos, x)	
-	
-	import Base.norm
-	norm(x::MultiDimInterval) = sqrt(x[1]^2 + x[2]^2)
-	
-	/(x::Array{Interval, 1}, y::Interval) = [x[1]/y, x[2]/y]
-
-	# Function that makes numbers into thin intervals in arrays
-	function make_intervals(x::Array{prec, 1})
-		map(Interval, x)
-	end
-
-
-	function make_intervals(x::Array{prec, 2})
-		y = Interval[]
-		for i = 1:length(x)
-			push!(y, Interval(x[i]))
-		end
-		return reshape(y, (2, 2))
-	end
-
-	# Intersection of 2-D vectors
-	function isect(x::MultiDimInterval, y::MultiDimInterval)
-		z = Interval[]
-		if length(x) == length(y)
-			for i = 1:length(x)
-				if isect(x[i], y[i]) == false
-					return false
-				end
-			end	
-			for i = 1:length(x)
-				push!(z, isect(x[i], y[i]))
-			end
-		else return false
-		end
-		return z
-	end
-
-
-	function isectext(x::MultiDimInterval, y::MultiDimInterval)
-		z = Interval[]
-		if length(x) == length(y)
-			for i = 1:length(x)
-				if isectext(x[i], y[i]) == false
-					return false
-				end
-			end	
-			for i = 1:length(x)
-				push!(z, isectext(x[i], y[i]))
-			end
-		else return false
-		end
-		return z
-	end
-
-	# Determinant of a 2x2 interval matrix
-
-	det2(x::Array{Interval, 2}) = x[1]*x[4] - x[3]*x[2]
-
-	# Definitions for the inverse of an interval matrix
-
-	import Base.one; one(::Type{Interval}) = Interval(1)
-	import Base.real; real(x::Interval) = x
-	import Base.inv; inv(x::Interval) = Interval(1)/x
-	import Base.isless; isless(a::Interval, b::Interval) = a.hi < b.lo
-	
-	# 2D mod
-	
-	import Base.mod
-	function mod(x::MultiDimInterval, y::Real)
-		z1 = mod(x[1], y)
-		z2 = mod(x[2], y)
-		if typeof(z1) == Interval && typeof(z2) == Interval
-			return [z1, z2]
-		elseif typeof(z1) == Array{Interval, 1} && typeof(z2) == Interval
-			A = Array{Interval, 1}[]
-			push!(A, [z1[1], z2])
-			push!(A, [z1[2], z2])
-			return A
-		elseif typeof(z1) == Interval && typeof(z2) == Array{Interval, 1}
-			A = Array{Interval, 1}[]
-			push!(A, [z1, z2[1]])
-			push!(A, [z1, z2[2]])
-			return A			
-		elseif typeof(z1) == Array{Interval, 1} && typeof(z2) == Array{Interval, 1}
-			A = Array{Interval, 1}[]
-			push!(A, [z1[1], z2[1]])
-			push!(A, [z1[2], z2[1]])
-			push!(A, [z1[1], z2[2]])
-			push!(A, [z1[2], z2[2]])
-			return A
-		else error("This should not happen")
-		end
-	end
-
-	mod21(x, y::Real) = [mod1(x[1], y), mod1(x[2], y)] # Deleted x::MultiDimInterval to make it work
-	mod22(x, y::Real) = [mod1(x[1], y), mod2(x[2], y)]
-	mod23(x, y::Real) = [mod2(x[1], y), mod1(x[2], y)]
-	mod24(x, y::Real) = [mod2(x[1], y), mod2(x[2], y)]
-	
-
-	# Experimental: arithmetic operations between intervals and sets of intervals
-	
-	#=
-	
-	function +(x::Array{Interval, 1}, y::Interval)
-		z = Interval[]
-		for i = 1:length(x)
-			push!(z, x[i] + y)
-		end
-		z
-	end
-	
-	function +(x::Array{Any, 1}, y::Interval)
-		z = Any[]
-		for i = 1:length(x)
-			push!(z, x[i] + y)
-		end
-		z
-	end
-	
-	
-	+(x::Interval, y::Array{Interval, 1}) = y + x
-	+(x::Interval, y::Array{Any, 1}) = y + x	
-	
-	function -(x::Array{Interval, 1}, y::Interval)
-		z = Interval[]
-		for i = 1:length(x)
-			push!(z, x[i] - y)
-		end
-		z
+#= Deprecated in favour of the next
+import Base.sin
+function sin(x::Interval)
+	if x.lo%2pi >= 0
+		low = x.lo%2pi
+	else low = x.lo%2pi + 2pi
 	end	
-	
-	function -(x::Array{Any, 1}, y::Interval)
-		z = Any[]
-		for i = 1:length(x)
-			push!(z, x[i] - y)
+	x1 = Interval(low, low + diam(x))
+	# If the interval has a diameter equal or greater than 2pi or it is an extended interval, return [-1, 1]
+	if diam(x) >= 2pi || x.lo > x.hi
+		return Interval(-1, 1)
+	elseif 0 <= x1.lo <= x1.hi <= pi/2 || 3pi/2 <= x1.lo <= x1.hi <= 5pi/2 || 7pi/2 <= x1.lo <= x1.hi <= 4pi
+			return Interval(sin(x1.lo), sin(x1.hi))
+		elseif pi/2 <= x1.lo <= x1.hi <= 3pi/2 || 5pi/2 <= x1.lo <= x1.hi <= 7pi/2
+			return Interval(sin(x1.hi), sin(x1.lo))
+		elseif (0 <= x1.lo <= pi/2 && pi/2 <= x1.hi <= 3pi/2) || (3pi/2 <= x1.lo <= 5pi/2 && 5pi/2 <= x1.hi <= 7pi/2)
+			return Interval(min(sin(x1.lo), sin(x1.hi)), 1)
+		elseif (pi/2 <= x1.lo <= 3pi/2 && 3pi/2 <= x1.hi <= 5pi/2) || (5pi/2 <= x1.lo <= 7pi/2 && 7pi/2 <= x1.hi <= 4pi)
+			return Interval(-1, max(sin(x1.lo), sin(x1.hi)))
+		elseif (0 <= x1.lo <= pi/2 && 3pi/2 <= x1.hi <= 5pi/2) || (pi/2 <= x1.lo <= 3pi/2 && 5pi/2 <= x1.hi <= 7pi/2) || (3pi/2 <= x1.lo <= 5pi/2 && 7pi/2 <= x1.hi <= 4pi)
+			return Interval(-1, 1)
 		end
-		z
-	end		
-	
-	-(x::Interval, y::Array{Interval, 1}) = -(y - x)
 
-	=#
-	
-	function *(x::Array{Interval, 1}, y::Interval)
-		z = Interval[]
-		for i = 1:length(x)
-			push!(z, x[i]*y)
-		end
-		z
+end
+=#
+
+# Using Sanders/Benet sin() from https://github.com/dpsanders/ValidatedNumerics.jl
+import Base.sin
+function sin(a::Interval)
+	piHalf = pi*BigFloat("0.5")
+	twoPi = pi*BigFloat("2.0")
+	domainSin = Interval( BigFloat(-1.0), BigFloat(1.0) )
+
+	# Checking the specific case
+	diam(a) >= twoPi && return domainSin
+
+	# Limits within 1 full period of sin(x)
+	# Abbreviations
+	loMod2pi = mod(a.lo, twoPi)
+	hiMod2pi = mod(a.hi, twoPi)
+	loQuartile = floor( loMod2pi / piHalf )
+	hiQuartile = floor( hiMod2pi / piHalf )
+
+	# 20 different cases
+	if loQuartile == hiQuartile # Interval limits in the same quartile
+	    loMod2pi > hiMod2pi && return domainSin
+	    set_rounding(BigFloat, RoundDown)
+	    lo = sin( a.lo )
+	    set_rounding(BigFloat, RoundUp)
+	    hi = sin( a.hi )
+	    set_rounding(BigFloat, RoundNearest)
+	    return Interval( lo, hi )
+	elseif loQuartile == 3 && hiQuartile==0
+	    set_rounding(BigFloat, RoundDown)
+	    lo = sin( a.lo )
+	    set_rounding(BigFloat, RoundUp)
+	    hi = sin( a.hi )
+	    set_rounding(BigFloat, RoundNearest)
+	    return Interval( lo, hi )
+	elseif loQuartile == 1 && hiQuartile==2
+	    set_rounding(BigFloat, RoundDown)
+	    lo = sin( a.hi )
+	    set_rounding(BigFloat, RoundUp)
+	    hi = sin( a.lo )
+	    set_rounding(BigFloat, RoundNearest)
+	    return Interval( lo, hi )
+	elseif ( loQuartile == 0 || loQuartile==3 ) && ( hiQuartile==1 || hiQuartile==2 )
+	    set_rounding(BigFloat, RoundDown)
+	    slo = sin( a.lo )
+	    shi = sin( a.hi )
+	    set_rounding(BigFloat, RoundNearest)
+	    lo = min( slo, shi )
+	    return Interval( lo, BigFloat(1.0) )
+	elseif ( loQuartile == 1 || loQuartile==2 ) && ( hiQuartile==3 || hiQuartile==0 )
+	    set_rounding(BigFloat, RoundUp)
+	    slo = sin( a.lo )
+	    shi = sin( a.hi )
+	    set_rounding(BigFloat, RoundNearest)
+	    hi = max( slo, shi )
+	    return Interval( BigFloat(-1.0), hi )
+	elseif ( loQuartile == 0 && hiQuartile==3 ) || ( loQuartile == 2 && hiQuartile==1 )
+	    return domainSin
+	else
+	    # This should be never reached!
+	    error(string("SOMETHING WENT WRONG in sin.\nThis should have never been reached") )
 	end
-	
-	*(x::Interval, y::Array{Interval, 1}) = y*x
-	
-	*(x::Real, y::Array{Interval, 1}) = Interval(x)*y
-	
+end
+
+
+import Base.cos
+cos(x::Interval) = sin(Interval(x.lo + pi/2, x.hi + pi/2))
+
+# Miscellaneous
+
+import Base.complex
+complex(x::Interval) = Interval(complex(x.lo), complex(x.hi))
+complex(x::MultiDimInterval) = [complex(x[1]), complex(x[2])]
+
+function *(x::MultiDimInterval, y::Interval)
+	[x[1]*y, x[2]*y]
+end
+
+
+function /(x::Array{Any, 1}, y::Interval)
+	[x[1]/y, x[2]/y]
+end
+
+# Equality of two intervals
+==(a::Interval, b::Interval) = a.lo == b.lo && a.hi == b.hi
+
+# Monotonic functions
+
+import Base.exp
+exp(x::Interval) = Interval(exp(x.lo), exp(x.hi))
+
+import Base.sqrt
+sqrt(x::Interval) = Interval(sqrt(x.lo), sqrt(x.hi))
+
+import Base.log
+log(x::Interval) = Interval(log(x.lo), log(x.hi))
+
+import Base.asin
+asin(x::Interval) = Interval(asin(x.lo), asin(x.hi))
+
+
+function arcsin(x::Real)
+	if abs(x) <= 1
+		return asin(x)
+	elseif x < -1
+		return -Inf
+	elseif x > 1
+		return Inf
+	end
+end
+
+function arcsin(x::Interval)
+	if x.lo >= -1 && x.lo <= 1 && x.hi <= 1 && x.hi >= -1 
+		return Interval(asin(x.lo), asin(x.hi))
+	elseif x.lo < -1 && x.hi <= 1 && x.hi >= -1 
+		return Interval(-Inf, asin(x.hi))
+	elseif x.lo >= -1 && x.lo <= 1 && x.hi > 1
+		return Interval(asin(x.lo), Inf)
+	elseif x.lo < -1 && x.hi > 1
+		return Interval(-Inf, Inf)
+	elseif x.lo < -1 && x.hi < -1 
+		return Interval(-Inf, -Inf)
+	elseif x.lo > 1 && x.hi > 1
+		return Interval(Inf, Inf)		
+	end
+end
+
+function sqrt1(x::Real)
+	if x >= 0
+		return sqrt(x)
+	else
+		return -Inf
+	end
+end
+
+function sqrt1(x::Interval)
+	if x.lo < 0 && x.hi < 0
+		return Interval(-Inf, -Inf)
+	elseif x.lo < 0 && x.hi >= 0
+		return Interval(-Inf, sqrt(x.hi))
+	elseif x.lo >= 0 && x.hi >= 0
+		return sqrt(x)
+	end
+end
+
+
+
+import Base.acos
+acos(x::Interval) = Interval(acos(x.hi), acos(x.lo))
+
+# Modulo and remainder
+
+import Base.mod
+function mod(x::Interval, y::Real)
+	if diam(x) >= y
+		return Interval(0, y)
+	else
+		if belong((floor(x.lo/y) + 1)*y, x)
+			return [Interval(0, mod(x.hi, y)), Interval(mod(x.lo, y), y)]
+		else
+			return Interval(mod(x.lo, y), mod(x.hi, y))
+		end
+	end
+end
+
+import Base.mod1 # mod1 is built-in
+function mod1(x::Interval, y::Real)
+	z = mod(x, y)
+	if typeof(z) == Interval
+		return z
+	elseif typeof(z) == Array{Interval, 1}
+		return z[1]
+	end
+end
+
+function mod2(x::Interval, y::Real)
+	z = mod(x, y)
+	if typeof(z) == Array{Interval, 1}
+		return z[2]
+	end
+end
+
+#= Unfinished; let's use only mod
+import Base.rem
+function mod(x::Interval, y::Real)
+	if x.lo >= 0
+		return rem(x, y)
+	elseif x.hi < 0
+		return rem(x, y) + 1
+	else
+		# If 0 belongs to the interval, need more stuff
+	end
+
+end
+=#	
+
+## --------- Attempt to introduce interval unions --------------
+
+#typealias IntUnion Array{Interval, 1}
+
+type IntUnion
+	x::Array{Interval, 1}
 	#=
-	function *(x::Array{Any, 1}, y::Array{Any, 1})	
-		z = Any[]
-		for i = 1:length(x)
-			for j = 1:length(y)
-				push!(z, i*j)
+	n = 0
+	for i = 1:length(x)
+		for j = 1:length(x)
+			if x[i] != x[j]
+				if isect(x[i], x[j]) != false
+					n += 1
+					error("Badly formed union: elements intersect")						
+				end
 			end
 		end
-		z
 	end
-
-	.*(x::Real, y::Interval) = Interval(x*y.lo, x*y.hi)
-	.*(x::Interval, y::Real) = Interval(x.lo*y, x.hi*y)
-	
+	function IntUnion(x)
+		new x
+	end
 	=#
 	
-	import Base.floor
-	floor(x::Interval) = floor(x.lo)
+end
+
+function intunion(x::Interval, y::Interval)
+	if x.hi < y.lo || x.lo > y.hi
+		return [x, y]
+	else
+		return hull(x, y)
+	end
+end
+
+#= COMMENTED OUT - there are better ways
+function intunion(x::Interval, y::IntUnion)
+
+	m = 0; n = 0
+	for i = 1:length(y)
+		if belong(x.lo, y[i])
+			m += i
+		end
+		if belong(x.hi, y[i])
+			n += i
+		end		
+	end
+	answer = Interval[]
+	if m != 0 && n != 0
+
+		for i = 1:m-1
+			push!(answer, y[i])
+		end
+		push!(answer, Interval(y[m].lo, y[n].hi))
+		for i = n+1:length(y)
+			push!(answer, y[i])
+		end
+	end
+	return answer
+		answer = Interval[]
+	if m != 0 && n == 0
+
+		for i = 1:m-1
+			push!(answer, y[i])
+		end
+		push!(answer, Interval(y[m].lo, x.hi))
+		k = 0
+		for i = 1:length(y)
+			if y[i].lo > x.hi
+			k = i
+			break
+			end
+		end
+		for i = k+1:length(y)
+			push!(answer, y[i])
+		end
+	end
+	return answer	
 	
-	import Base.norm
-	norm(x::Array{Interval, 1}) = norm(mid(x))
+	if m == 0 && n != 0
+		answer = Interval[]
+		k = 0			
+		for i = 1:length(y)
+			if y[i].lo > x.lo
+			k = i
+			break
+			end
+		end
+		for i = 1:k-1
+			push!(answer, y[i])
+		end
+		push!(answer, Interval(y[m].lo, x.hi))
+		for i = n+1:length(y)
+			push!(answer, y[i])
+		end
+	end
+	return answer
+	
+	if m == 0 && n == 0
+		answer = Interval[]
+		k = 0; l = 0
+		for i = 1:length(y)
+			if y[i].lo > x.lo
+			k = i
+			break
+			end
+		end
+		for i = 1:length(y)
+			if y[i].lo > x.hi
+			l = i
+			break
+			end
+		end			
+		for i = 1:k-1
+			push!(answer, y[i])
+		end
+		push!(answer, x)
+		for i = l:length(y)
+			push!(answer, y[i])
+		end
+	end
+	return answer			
+
+end
+=#
+
+# Still need to deal with arrays output by mod(interval)
+
+
+##-------------------------------------------------------
+
+## Interval arithmetic for 2D objects
+
+lo(x::Array{Interval}) = map(lo, x)
+hi(x::Array{Interval}) = map(hi, x)
+
+# Making mid() process 1-D and 2-D interval arrays into arrays of midpoints
+mid(x::MultiDimInterval) = map(mid, x)
+mid(x::Array{Interval, 2}) = map(mid, x)
+mid(x::Array{MultiDimInterval, 1}) = map(mid, x)
+diam(x::MultiDimInterval) = map(diam, x)
+sin(x::MultiDimInterval) = map(sin, x)
+sin(x::Array{Any, 1}) = map(sin, x)	
+cos(x::MultiDimInterval) = map(cos, x)
+cos(x::Array{Any, 1}) = map(cos, x)	
+
+import Base.norm
+norm(x::MultiDimInterval) = sqrt(x[1]^2 + x[2]^2)
+
+/(x::Array{Interval, 1}, y::Interval) = [x[1]/y, x[2]/y]
+
+# Function that makes numbers into thin intervals in arrays
+function make_intervals(x::Array{prec, 1})
+	map(Interval, x)
+end
+
+
+function make_intervals(x::Array{prec, 2})
+	y = Interval[]
+	for i = 1:length(x)
+		push!(y, Interval(x[i]))
+	end
+	return reshape(y, (2, 2))
+end
+
+# Intersection of 2-D vectors
+function isect(x::MultiDimInterval, y::MultiDimInterval)
+	z = Interval[]
+	if length(x) == length(y)
+		for i = 1:length(x)
+			if isect(x[i], y[i]) == false
+				return false
+			end
+		end	
+		for i = 1:length(x)
+			push!(z, isect(x[i], y[i]))
+		end
+	else return false
+	end
+	return z
+end
+
+
+function isectext(x::MultiDimInterval, y::MultiDimInterval)
+	z = Interval[]
+	if length(x) == length(y)
+		for i = 1:length(x)
+			if isectext(x[i], y[i]) == false
+				return false
+			end
+		end	
+		for i = 1:length(x)
+			push!(z, isectext(x[i], y[i]))
+		end
+	else return false
+	end
+	return z
+end
+
+# Determinant of a 2x2 interval matrix
+
+det2(x::Array{Interval, 2}) = x[1]*x[4] - x[3]*x[2]
+
+# Definitions for the inverse of an interval matrix
+
+import Base.one; one(::Type{Interval}) = Interval(1)
+import Base.real; real(x::Interval) = x
+import Base.inv; inv(x::Interval) = Interval(1)/x
+import Base.isless; isless(a::Interval, b::Interval) = a.hi < b.lo
+
+# 2D mod
+
+import Base.mod
+function mod(x::MultiDimInterval, y::Real)
+	z1 = mod(x[1], y)
+	z2 = mod(x[2], y)
+	if typeof(z1) == Interval && typeof(z2) == Interval
+		return [z1, z2]
+	elseif typeof(z1) == Array{Interval, 1} && typeof(z2) == Interval
+		A = Array{Interval, 1}[]
+		push!(A, [z1[1], z2])
+		push!(A, [z1[2], z2])
+		return A
+	elseif typeof(z1) == Interval && typeof(z2) == Array{Interval, 1}
+		A = Array{Interval, 1}[]
+		push!(A, [z1, z2[1]])
+		push!(A, [z1, z2[2]])
+		return A			
+	elseif typeof(z1) == Array{Interval, 1} && typeof(z2) == Array{Interval, 1}
+		A = Array{Interval, 1}[]
+		push!(A, [z1[1], z2[1]])
+		push!(A, [z1[2], z2[1]])
+		push!(A, [z1[1], z2[2]])
+		push!(A, [z1[2], z2[2]])
+		return A
+	else error("This should not happen")
+	end
+end
+
+mod21(x, y::Real) = [mod1(x[1], y), mod1(x[2], y)] # Deleted x::MultiDimInterval to make it work
+mod22(x, y::Real) = [mod1(x[1], y), mod2(x[2], y)]
+mod23(x, y::Real) = [mod2(x[1], y), mod1(x[2], y)]
+mod24(x, y::Real) = [mod2(x[1], y), mod2(x[2], y)]
+
+
+# Experimental: arithmetic operations between intervals and sets of intervals
+
+#=
+
+function +(x::Array{Interval, 1}, y::Interval)
+	z = Interval[]
+	for i = 1:length(x)
+		push!(z, x[i] + y)
+	end
+	z
+end
+
+function +(x::Array{Any, 1}, y::Interval)
+	z = Any[]
+	for i = 1:length(x)
+		push!(z, x[i] + y)
+	end
+	z
+end
+
+
++(x::Interval, y::Array{Interval, 1}) = y + x
++(x::Interval, y::Array{Any, 1}) = y + x	
+
+function -(x::Array{Interval, 1}, y::Interval)
+	z = Interval[]
+	for i = 1:length(x)
+		push!(z, x[i] - y)
+	end
+	z
+end	
+
+function -(x::Array{Any, 1}, y::Interval)
+	z = Any[]
+	for i = 1:length(x)
+		push!(z, x[i] - y)
+	end
+	z
+end		
+
+-(x::Interval, y::Array{Interval, 1}) = -(y - x)
+
+=#
+
+function *(x::Array{Interval, 1}, y::Interval)
+	z = Interval[]
+	for i = 1:length(x)
+		push!(z, x[i]*y)
+	end
+	z
+end
+
+*(x::Interval, y::Array{Interval, 1}) = y*x
+
+*(x::Real, y::Array{Interval, 1}) = Interval(x)*y
+
+#=
+function *(x::Array{Any, 1}, y::Array{Any, 1})	
+	z = Any[]
+	for i = 1:length(x)
+		for j = 1:length(y)
+			push!(z, i*j)
+		end
+	end
+	z
+end
+
+.*(x::Real, y::Interval) = Interval(x*y.lo, x*y.hi)
+.*(x::Interval, y::Real) = Interval(x.lo*y, x.hi*y)
+
+=#
+
+import Base.floor
+floor(x::Interval) = floor(x.lo)
+
+import Base.norm
+norm(x::Array{Interval, 1}) = norm(mid(x))
 
 
 # End of module
