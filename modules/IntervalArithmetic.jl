@@ -1,7 +1,7 @@
 ## Interval arithmetic
 
 module IntervalArithmetic
-export Interval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, arcsin, sqrt1
+export Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, arcsin, sqrt1
 
 typealias prec BigFloat
 
@@ -21,6 +21,27 @@ type Interval
 	end
 
 end
+
+#=
+type ComplexInterval
+
+	lo
+	hi
+
+	function Interval(a, b)
+	    set_rounding(prec, RoundDown)
+	    lo_re = BigFloat("$(real(a))")
+	    lo_im = BigFloat("$(imag(a))")
+
+	    set_rounding(prec, RoundUp)
+	    hi_re = BigFloat("$(real(b))")
+	    hi_im = BigFloat("$(imag(b))")
+
+	    new(lo_re + im*lo_im, hi_re + im*hi_im)
+	end
+
+end
+=#
 
 typealias MultiDimInterval Array{Interval, 1}
 
