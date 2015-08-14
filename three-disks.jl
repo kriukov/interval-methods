@@ -18,7 +18,8 @@ function alpha(n, m)
 		elseif n == 3 && m == 2
 	 		return 5k
 	 	end
-	else error("Invalid parameters: should be 1, 2, 3 and not equal")
+	else 
+	    error("Invalid parameters: should be 1, 2, 3 and not equal")
 	end
 end
 
@@ -32,8 +33,8 @@ function limit2(x, r)
 end
 
 function T(x, n, m, r)
-	wnext = x[1] - r*(x[1]*cos(x[2] - alpha(n, m)) + sqrt(1 - x[1]^2)*sin(x[2] - alpha(n, m)))
-	[wnext, mod(x[2] + float(pi) + asin(x[1]) + asin(wnext), 2pi)]
+	wnext = x[1] - r*(x[1]*cos(x[2] - alpha(n, m)) + sqrt1(1 - x[1]^2)*sin(x[2] - alpha(n, m)))
+	[wnext, mod(x[2] + float(pi) + arcsin(x[1]) + arcsin(wnext), 2pi)]
 end
 
 f(x, r) = T(T(T(x, 1, 2, r), 2, 3, r), 3, 1, r) - x
@@ -55,6 +56,13 @@ end
 #= The problem is that asin() returns complex values in the rectangle (-1,1)*(0,pi/3) and krawczyk2d cannot work like that. It solves for the periodic orbit 1-2-3 only in a very narrow range: e.g., 
 krawczyk2d(g, [Interval(-0.5-0.00001,-0.5+0.00001), Interval(pi/6-0.00001,pi/6+0.00001)])
 as w=-0.5, th=pi/6 is the obvious answer.
+
+(-0.5, 0.5235987755982988)
+
 =#
 
+#krawczyk2d_general(g, [Interval(-0.5-0.01,-0.5+0.021), Interval(pi/6-0.01,pi/6+0.021)])
+
+
+# Solves krawczyk2d(g, [Interval(-0.5-0.0001,-0.5+0.00021), Interval(pi/6-0.001,pi/6+0.00021)]) - domaincheck returns 1
 

@@ -1,7 +1,7 @@
 ## Interval arithmetic
 
 module IntervalArithmetic
-export Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, arcsin, sqrt1
+export Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip, domaincheck2d_c
 
 typealias prec BigFloat
 
@@ -191,12 +191,15 @@ end
 # Whether one interval is inside of the other
 
 function inside(x::Interval, y::Interval)
-	if x.lo > y.lo && x.hi < y.hi
+	if x.lo >= y.lo && x.hi <= y.hi
 		return true
 	else 
 		return false
 	end
 end
+
+inside(x::Real, y::Interval) = belong(x, y)
+inside(x::Interval, y::Real) = belong(y, x)
 
 # Miscellaneous: lower end, higher end, lower (left) half, higher (right) half, bottom, top, radius, diameter, midpoint, mignitude, magnitude, absolute value
 
@@ -252,6 +255,9 @@ function isect(x::Interval, y::Interval)
 	end
 end
 
+isect(x::Real, y::Interval) = isect(Interval(x), y)
+isect(x::Interval, y::Real) = isect(x, Interval(y))
+
 # Extended intersection (involving extended intervals [a, b] with a > b)
 
 function isectext(x::Interval, y::Interval)
@@ -296,9 +302,6 @@ end
 
 
 # Real power function - taken from https://github.com/dpsanders/ValidatedNumerics.jl
-
-
-
 macro round_down(expr)
 	quote
 		with_rounding(BigFloat, RoundDown) do
@@ -334,22 +337,17 @@ end
 
 function ^(a::Interval, x::Real)
 	x == int(x) && return a^(int(x))
-	x < zero(x) && return reciprocal( a^(-x) )
+	x < zero(x) && return reciprocal(a^(-x))
 	x == 0.5*one(x) && return sqrt(a)
-	#
 	z = zero(BigFloat)
 	z > a.hi && error("Undefined operation; Interval is strictly negative and power is not an integer")
-	#
-	xInterv = Interval( x )
-	diam( xInterv ) >= eps(x) && return a^xInterv
+	xInterv = Interval(x)
+	diam(xInterv) >= eps(x) && return a^xInterv
 	# xInterv is a thin interval
 	domainPow = Interval(z, big(Inf))
 	aRestricted = isect(a, domainPow)
 	@round(aRestricted.lo^x, aRestricted.hi^x)
 end
-
-
-
 
 
 # Interval power - exercise 3.5 from Tucker "Validated Numerics"
@@ -526,55 +524,71 @@ log(x::Interval) = Interval(log(x.lo), log(x.hi))
 import Base.asin
 asin(x::Interval) = Interval(asin(x.lo), asin(x.hi))
 
-
-function arcsin(x::Real)
-	if abs(x) <= 1
-		return asin(x)
-	elseif x < -1
-		return -Inf
-	elseif x > 1
-		return Inf
-	end
-end
-
-function arcsin(x::Interval)
-	if x.lo >= -1 && x.lo <= 1 && x.hi <= 1 && x.hi >= -1 
-		return Interval(asin(x.lo), asin(x.hi))
-	elseif x.lo < -1 && x.hi <= 1 && x.hi >= -1 
-		return Interval(-Inf, asin(x.hi))
-	elseif x.lo >= -1 && x.lo <= 1 && x.hi > 1
-		return Interval(asin(x.lo), Inf)
-	elseif x.lo < -1 && x.hi > 1
-		return Interval(-Inf, Inf)
-	elseif x.lo < -1 && x.hi < -1 
-		return Interval(-Inf, -Inf)
-	elseif x.lo > 1 && x.hi > 1
-		return Interval(Inf, Inf)		
-	end
-end
-
-function sqrt1(x::Real)
-	if x >= 0
-		return sqrt(x)
-	else
-		return -Inf
-	end
-end
-
-function sqrt1(x::Interval)
-	if x.lo < 0 && x.hi < 0
-		return Interval(-Inf, -Inf)
-	elseif x.lo < 0 && x.hi >= 0
-		return Interval(-Inf, sqrt(x.hi))
-	elseif x.lo >= 0 && x.hi >= 0
-		return sqrt(x)
-	end
-end
-
-
-
 import Base.acos
 acos(x::Interval) = Interval(acos(x.hi), acos(x.lo))
+
+# Distinguishing clean, unclean and dirty intervals - may be done through metaprogramming
+
+#= Check if x is within the range of function f - unnecessary, domaincheck does a better job
+function is_allowed(f, x)
+    try f(x)
+    catch DomainError
+        return false
+    end
+    return true
+end
+=#
+
+function arcsin(x)
+    domain = Interval(-1, 1)
+    if isect(x, domain) == false
+        throw(DomainError)
+    elseif inside(x, domain)
+        return asin(x)
+    else 
+        throw(ArgumentError)
+    end
+end
+
+function sqrt1(x)
+    domain = Interval(0, Inf)
+    if isect(x, domain) == false
+        throw(DomainError)
+    elseif inside(x, domain)
+        return sqrt(x)
+    else 
+        throw(ArgumentError)
+    end
+end
+
+function domaincheck(f, x) # 1 - clean, 0 - unclean, -1 - dirty, for the functions defined above
+    try f(x)
+    catch y
+        if y == DomainError
+            return -1
+        elseif y == ArgumentError
+            return 0
+        end
+    end
+    return 1
+end
+
+function domaincheck2d(f, x)
+	f1(x) = f(x)[1]
+	f2(x) = f(x)[2]
+	f11(x1) = f1([x1, 0])
+	f12(x2) = f1([0, x2])
+    a = domaincheck(f11, x[1])
+    b = domaincheck(f12, x[2])
+    return min(a, b)
+end
+
+# Workaround
+domaincheck2d_c(f, x) = min(domaincheck(f, x), domaincheck2d(f, x))
+
+# Rotate the 2D rectangle by pi/2
+flip(x::MultiDimInterval) = [x[2], x[1]]
+
 
 # Modulo and remainder
 
