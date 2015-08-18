@@ -22,26 +22,120 @@ type Interval
 
 end
 
-#=
-type ComplexInterval
+## --------- Attempt to introduce interval unions --------------
 
-	lo
-	hi
+# Union of 2 intervals
 
-	function Interval(a, b)
-	    set_rounding(prec, RoundDown)
-	    lo_re = BigFloat("$(real(a))")
-	    lo_im = BigFloat("$(imag(a))")
-
-	    set_rounding(prec, RoundUp)
-	    hi_re = BigFloat("$(real(b))")
-	    hi_im = BigFloat("$(imag(b))")
-
-	    new(lo_re + im*lo_im, hi_re + im*hi_im)
+type IntUnion
+	elem1::Interval
+	elem2::Interval
+	function IntUnion(elem1, elem2)
+	    if isect(elem1, elem2) != false
+		    return hull(elem1, elem2) #error("Badly formed union: elements intersect")						
+	    end
+		new(elem1, elem2)
 	end
+end
+
++(x::IntUnion, y::Interval) = IntUnion(x.elem1 + y, x.elem2 + y)
++(x::Interval, y::IntUnion) = y + x
+-(x::IntUnion, y::Interval) = IntUnion(x.elem1 - y, x.elem2 - y)
+-(x::Interval, y::IntUnion) = - (y - x)
+
+
+#= COMMENTED OUT - there are better ways
+function intunion(x::Interval, y::IntUnion)
+
+	m = 0; n = 0
+	for i = 1:length(y)
+		if belong(x.lo, y[i])
+			m += i
+		end
+		if belong(x.hi, y[i])
+			n += i
+		end		
+	end
+	answer = Interval[]
+	if m != 0 && n != 0
+
+		for i = 1:m-1
+			push!(answer, y[i])
+		end
+		push!(answer, Interval(y[m].lo, y[n].hi))
+		for i = n+1:length(y)
+			push!(answer, y[i])
+		end
+	end
+	return answer
+		answer = Interval[]
+	if m != 0 && n == 0
+
+		for i = 1:m-1
+			push!(answer, y[i])
+		end
+		push!(answer, Interval(y[m].lo, x.hi))
+		k = 0
+		for i = 1:length(y)
+			if y[i].lo > x.hi
+			k = i
+			break
+			end
+		end
+		for i = k+1:length(y)
+			push!(answer, y[i])
+		end
+	end
+	return answer	
+	
+	if m == 0 && n != 0
+		answer = Interval[]
+		k = 0			
+		for i = 1:length(y)
+			if y[i].lo > x.lo
+			k = i
+			break
+			end
+		end
+		for i = 1:k-1
+			push!(answer, y[i])
+		end
+		push!(answer, Interval(y[m].lo, x.hi))
+		for i = n+1:length(y)
+			push!(answer, y[i])
+		end
+	end
+	return answer
+	
+	if m == 0 && n == 0
+		answer = Interval[]
+		k = 0; l = 0
+		for i = 1:length(y)
+			if y[i].lo > x.lo
+			k = i
+			break
+			end
+		end
+		for i = 1:length(y)
+			if y[i].lo > x.hi
+			l = i
+			break
+			end
+		end			
+		for i = 1:k-1
+			push!(answer, y[i])
+		end
+		push!(answer, x)
+		for i = l:length(y)
+			push!(answer, y[i])
+		end
+	end
+	return answer			
 
 end
 =#
+
+# Still need to deal with arrays output by mod(interval)
+
 
 typealias MultiDimInterval Array{Interval, 1}
 
@@ -576,7 +670,7 @@ end
 function domaincheck2d(f, x)
 	f1(x) = f(x)[1]
 	f2(x) = f(x)[2]
-	f11(x1) = f1([x1, 0])
+	f11(x1) = f1([x1, 0]) # 0 is a mistake! needs correction
 	f12(x2) = f1([0, x2])
     a = domaincheck(f11, x[1])
     b = domaincheck(f12, x[2])
@@ -598,7 +692,7 @@ function mod(x::Interval, y::Real)
 		return Interval(0, y)
 	else
 		if belong((floor(x.lo/y) + 1)*y, x)
-			return [Interval(0, mod(x.hi, y)), Interval(mod(x.lo, y), y)]
+			return IntUnion(Interval(0, mod(x.hi, y)), Interval(mod(x.lo, y), y)) #[Interval(0, mod(x.hi, y)), Interval(mod(x.lo, y), y)]
 		else
 			return Interval(mod(x.lo, y), mod(x.hi, y))
 		end
@@ -636,131 +730,6 @@ function mod(x::Interval, y::Real)
 end
 =#	
 
-## --------- Attempt to introduce interval unions --------------
-
-#typealias IntUnion Array{Interval, 1}
-
-type IntUnion
-	x::Array{Interval, 1}
-	#=
-	n = 0
-	for i = 1:length(x)
-		for j = 1:length(x)
-			if x[i] != x[j]
-				if isect(x[i], x[j]) != false
-					n += 1
-					error("Badly formed union: elements intersect")						
-				end
-			end
-		end
-	end
-	function IntUnion(x)
-		new x
-	end
-	=#
-	
-end
-
-function intunion(x::Interval, y::Interval)
-	if x.hi < y.lo || x.lo > y.hi
-		return [x, y]
-	else
-		return hull(x, y)
-	end
-end
-
-#= COMMENTED OUT - there are better ways
-function intunion(x::Interval, y::IntUnion)
-
-	m = 0; n = 0
-	for i = 1:length(y)
-		if belong(x.lo, y[i])
-			m += i
-		end
-		if belong(x.hi, y[i])
-			n += i
-		end		
-	end
-	answer = Interval[]
-	if m != 0 && n != 0
-
-		for i = 1:m-1
-			push!(answer, y[i])
-		end
-		push!(answer, Interval(y[m].lo, y[n].hi))
-		for i = n+1:length(y)
-			push!(answer, y[i])
-		end
-	end
-	return answer
-		answer = Interval[]
-	if m != 0 && n == 0
-
-		for i = 1:m-1
-			push!(answer, y[i])
-		end
-		push!(answer, Interval(y[m].lo, x.hi))
-		k = 0
-		for i = 1:length(y)
-			if y[i].lo > x.hi
-			k = i
-			break
-			end
-		end
-		for i = k+1:length(y)
-			push!(answer, y[i])
-		end
-	end
-	return answer	
-	
-	if m == 0 && n != 0
-		answer = Interval[]
-		k = 0			
-		for i = 1:length(y)
-			if y[i].lo > x.lo
-			k = i
-			break
-			end
-		end
-		for i = 1:k-1
-			push!(answer, y[i])
-		end
-		push!(answer, Interval(y[m].lo, x.hi))
-		for i = n+1:length(y)
-			push!(answer, y[i])
-		end
-	end
-	return answer
-	
-	if m == 0 && n == 0
-		answer = Interval[]
-		k = 0; l = 0
-		for i = 1:length(y)
-			if y[i].lo > x.lo
-			k = i
-			break
-			end
-		end
-		for i = 1:length(y)
-			if y[i].lo > x.hi
-			l = i
-			break
-			end
-		end			
-		for i = 1:k-1
-			push!(answer, y[i])
-		end
-		push!(answer, x)
-		for i = l:length(y)
-			push!(answer, y[i])
-		end
-	end
-	return answer			
-
-end
-=#
-
-# Still need to deal with arrays output by mod(interval)
 
 
 ##-------------------------------------------------------

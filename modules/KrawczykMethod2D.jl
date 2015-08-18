@@ -95,28 +95,36 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
 end
 
 function krawczyk2d_general(f, a::MultiDimInterval, prec::Integer=64)
-sol = MultiDimInterval[]
+sol = Array{Array{Interval, 1}, 1}[]
 
-    function krawczyk2d_general_internal(f, a::MultiDimInterval, prec::Integer=64)
+    function krawczyk2d_general_internal(f, a::MultiDimInterval, prec::Integer)
         
-        tol = 1e-4
-        #while min(diam(a)[1], diam(a)[2]) > tol
-            if domaincheck(f, a) == 1 # 2D!
+        tol = 1e-8
+        if max(diam(a)[1], diam(a)[2]) > tol
+            @show a
+            purity = domaincheck(f, a)
+            if purity == 1 # 2D!
                 println("Clean")
-                @show a
-                push!(sol, krawczyk2d(f, a, prec))
-            elseif domaincheck(f, a) == 0
+                
+                answer = krawczyk2d(f, a, prec)
+                if length(answer) != 0
+                    @show push!(sol, answer)
+                    println("Answer added: now sol = $sol")
+                else
+                    println("Clean but empty")
+                end
+            elseif purity == 0
                 println("Unclean")
                 @show pieces = bisect(a)
                 @show krawczyk2d_general_internal(f, pieces[1], prec)
                 @show krawczyk2d_general_internal(f, pieces[2], prec)
                 @show krawczyk2d_general_internal(f, pieces[3], prec)
                 @show krawczyk2d_general_internal(f, pieces[4], prec)
-            elseif domaincheck(f, a) == -1
+            elseif purity == -1
                 println("Dirty")
                 #break
             end
-        #end
+        end
         return sol
     end
     return krawczyk2d_general_internal(f, a, prec)
