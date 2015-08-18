@@ -1,9 +1,11 @@
+push!(LOAD_PATH, "../modules")
+
 ## Interval purity w.r.t. a test function in 1D and 2D
 
 # Need to use only the functions which have the implementation of ArgumentError (sqrt1, arcsin instead of sqrt, asin)
 
 using IntervalArithmetic
-
+using FactCheck
 # Test function sqrt1(1 - x^2)
 
 
@@ -13,7 +15,7 @@ function test_domains1d(f)
 	x1 = -1.5; x2 = -1.3; x3 = -1; x4 = 0.3; x5 = 0.5; x6 = 1; x7 = 1.3; x8 = 1.5
 
 	clean1 = Interval(x4, x5)
-	clean2 = Interval(x4, x6)
+  clean2 = Interval(x4, x6)
 	clean3 = Interval(x3, x5)
 	clean4 = Interval(x3, x6)
 
@@ -23,17 +25,18 @@ function test_domains1d(f)
 	dirty1 = Interval(x1, x2)
 	dirty2 = Interval(x7, x8)
 
-	@show domaincheck(f, clean1) == 1
-	@show domaincheck(f, clean2) == 1
-	@show domaincheck(f, clean3) == 1
-	@show domaincheck(f, clean4) == 1
+  facts("1D tests") do
+	@fact domaincheck(f, clean1) == 1 --> true
+	@fact domaincheck(f, clean2) == 1 --> true
+	@fact domaincheck(f, clean3) == 1 --> false
+	@fact domaincheck(f, clean4) == 1 --> true
 
-	@show domaincheck(f, unclean1) == 0
-	@show domaincheck(f, unclean2) == 0
+	@fact domaincheck(f, unclean1) == 0 --> true
+	@fact domaincheck(f, unclean2) == 0 --> true
 
-	@show domaincheck(f, dirty1) == -1
-	@show domaincheck(f, dirty2) == -1
-
+	@fact domaincheck(f, dirty1) == -1 --> true
+	@fact domaincheck(f, dirty2) == -1 --> true
+  end
 end
 
 f1(x) = sqrt1(1 - x^2)
@@ -82,11 +85,11 @@ dirty4 = [Interval(1.2, 1.5), Interval(1.2, 1.5)]
 function test_domains2d(f)
 
 	@show domaincheck(f, clean) == 1
-	@show domaincheck(f, unclean1) == 0	
+	@show domaincheck(f, unclean1) == 0
 	@show domaincheck(f, unclean2) == 0
 	@show domaincheck(f, unclean3) == 0
 	@show domaincheck(f, unclean4) == 0
-	@show domaincheck(f, unclean5) == 0	
+	@show domaincheck(f, unclean5) == 0
 	@show domaincheck(f, dirty1) == -1
 	@show domaincheck(f, dirty2) == -1
 	@show domaincheck(f, dirty3) == -1
@@ -100,11 +103,11 @@ test_domains2d(f3)
 function test_domains2d_1(f)
 
 	@show domaincheck2d(f, clean) == 1
-	@show domaincheck2d(f, unclean1) == 0	
+	@show domaincheck2d(f, unclean1) == 0
 	@show domaincheck2d(f, unclean2) == 0
 	@show domaincheck2d(f, unclean3) == 0
 	@show domaincheck2d(f, unclean4) == 0
-	@show domaincheck2d(f, unclean5) == 0	
+	@show domaincheck2d(f, unclean5) == 0
 	@show domaincheck2d(f, dirty1) == -1
 	@show domaincheck2d(f, dirty2) == -1
 	@show domaincheck2d(f, dirty3) == -1
@@ -127,7 +130,7 @@ dirty2 = [Interval(1.2, 2), Interval(1.2, 2.1)]
 
 println("Testing 2D sqrt1(1 - (x[1]*x[2])^2)*arcsin(x[2] - x[1]) with domaincheck....................")
 @show domaincheck(f4, clean1) == 1
-@show domaincheck(f4, clean2) == 1	
+@show domaincheck(f4, clean2) == 1
 @show domaincheck(f4, unclean1) == 0
 @show domaincheck(f4, unclean2) == 0
 @show domaincheck(f4, dirty1) == -1
@@ -136,7 +139,7 @@ println("Testing 2D sqrt1(1 - (x[1]*x[2])^2)*arcsin(x[2] - x[1]) with domainchec
 
 println("Testing 2D sqrt1(1 - (x[1]*x[2])^2)*arcsin(x[2] - x[1]) with domaincheck2d....................")
 @show domaincheck2d(f4, clean1) == 1
-@show domaincheck2d(f4, clean2) == 1	
+@show domaincheck2d(f4, clean2) == 1
 @show domaincheck2d(f4, unclean1) == 0
 @show domaincheck2d(f4, unclean2) == 0
 @show domaincheck2d(f4, dirty1) == -1
@@ -144,7 +147,7 @@ println("Testing 2D sqrt1(1 - (x[1]*x[2])^2)*arcsin(x[2] - x[1]) with domainchec
 
 println("Testing 2D sqrt1(1 - (x[1]*x[2])^2)*arcsin(x[2] - x[1]) with domaincheck2d_c....................")
 @show domaincheck2d_c(f4, clean1) == 1
-@show domaincheck2d_c(f4, clean2) == 1	
+@show domaincheck2d_c(f4, clean2) == 1
 @show domaincheck2d_c(f4, unclean1) == 0
 @show domaincheck2d_c(f4, unclean2) == 0
 @show domaincheck2d_c(f4, dirty1) == -1

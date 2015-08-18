@@ -31,7 +31,7 @@ type IntUnion
 	elem2::Interval
 	function IntUnion(elem1, elem2)
 	    if isect(elem1, elem2) != false
-		    return hull(elem1, elem2) #error("Badly formed union: elements intersect")						
+		    return hull(elem1, elem2) #error("Badly formed union: elements intersect")
 	    end
 		new(elem1, elem2)
 	end
@@ -53,7 +53,7 @@ function intunion(x::Interval, y::IntUnion)
 		end
 		if belong(x.hi, y[i])
 			n += i
-		end		
+		end
 	end
 	answer = Interval[]
 	if m != 0 && n != 0
@@ -85,11 +85,11 @@ function intunion(x::Interval, y::IntUnion)
 			push!(answer, y[i])
 		end
 	end
-	return answer	
-	
+	return answer
+
 	if m == 0 && n != 0
 		answer = Interval[]
-		k = 0			
+		k = 0
 		for i = 1:length(y)
 			if y[i].lo > x.lo
 			k = i
@@ -105,7 +105,7 @@ function intunion(x::Interval, y::IntUnion)
 		end
 	end
 	return answer
-	
+
 	if m == 0 && n == 0
 		answer = Interval[]
 		k = 0; l = 0
@@ -120,7 +120,7 @@ function intunion(x::Interval, y::IntUnion)
 			l = i
 			break
 			end
-		end			
+		end
 		for i = 1:k-1
 			push!(answer, y[i])
 		end
@@ -129,7 +129,7 @@ function intunion(x::Interval, y::IntUnion)
 			push!(answer, y[i])
 		end
 	end
-	return answer			
+	return answer
 
 end
 =#
@@ -267,7 +267,7 @@ function //(x::Interval, y::Interval)
 	elseif belong(0, x) == false && y.lo == 0 && y.hi == 0
 		return error("\nEmpty set: extended division by thin zero")
 	end
-end		
+end
 
 
 ## Interval properties
@@ -277,7 +277,7 @@ end
 function belong(p::Real, x::Interval)
 	if p >= x.lo && p <= x.hi
 		return true
-	else 
+	else
 		return false
 	end
 end
@@ -287,7 +287,7 @@ end
 function inside(x::Interval, y::Interval)
 	if x.lo >= y.lo && x.hi <= y.hi
 		return true
-	else 
+	else
 		return false
 	end
 end
@@ -338,13 +338,13 @@ hull(x::Interval, y::Interval) = Interval(min(x.lo, y.lo), max(x.hi, y.hi))
 function isect(x::Interval, y::Interval)
 	if x.hi < y.lo || y.hi < x.lo
 		return false
-	else 
+	else
 	z1 = with_rounding(prec, RoundDown) do
 		max(x.lo, y.lo)
 	end
 	z2 = with_rounding(prec, RoundUp) do
 		min(x.hi, y.hi)
-	end 
+	end
 	return Interval(z1, z2)
 	end
 end
@@ -469,7 +469,7 @@ if belong(p, x) == true
 pcount = pcount + 1
 end
 	end
-	
+
 	k = 0
 	qcount = 0
 	for k = -1000:1000
@@ -478,7 +478,7 @@ if belong(q, x) == true
 qcount = qcount + 1
 end
 	end
-	
+
 	if qcount != 0 && pcount != 0
 		return Interval(-1., 1.)
 	elseif qcount != 0 && pcount == 0
@@ -500,7 +500,7 @@ function sin(x::Interval)
 	if x.lo%2pi >= 0
 		low = x.lo%2pi
 	else low = x.lo%2pi + 2pi
-	end	
+	end
 	x1 = Interval(low, low + diam(x))
 	# If the interval has a diameter equal or greater than 2pi or it is an extended interval, return [-1, 1]
 	if diam(x) >= 2pi || x.lo > x.hi
@@ -636,31 +636,32 @@ end
 function arcsin(x)
     domain = Interval(-1, 1)
     if isect(x, domain) == false
-        throw(DomainError)
+        throw(DomainError())
     elseif inside(x, domain)
         return asin(x)
-    else 
-        throw(ArgumentError)
+    else
+        throw(ArgumentError(""))
     end
 end
 
 function sqrt1(x)
     domain = Interval(0, Inf)
     if isect(x, domain) == false
-        throw(DomainError)
+        throw(DomainError())
     elseif inside(x, domain)
         return sqrt(x)
-    else 
-        throw(ArgumentError)
+    else
+        throw(ArgumentError(""))
     end
 end
 
 function domaincheck(f, x) # 1 - clean, 0 - unclean, -1 - dirty, for the functions defined above
     try f(x)
     catch y
-        if y == DomainError
+    #@show y
+        if isa(y, DomainError)
             return -1
-        elseif y == ArgumentError
+        elseif isa(y, ArgumentError)
             return 0
         end
     end
@@ -728,7 +729,7 @@ function mod(x::Interval, y::Real)
 	end
 
 end
-=#	
+=#
 
 
 
@@ -745,9 +746,9 @@ mid(x::Array{Interval, 2}) = map(mid, x)
 mid(x::Array{MultiDimInterval, 1}) = map(mid, x)
 diam(x::MultiDimInterval) = map(diam, x)
 sin(x::MultiDimInterval) = map(sin, x)
-sin(x::Array{Any, 1}) = map(sin, x)	
+sin(x::Array{Any, 1}) = map(sin, x)
 cos(x::MultiDimInterval) = map(cos, x)
-cos(x::Array{Any, 1}) = map(cos, x)	
+cos(x::Array{Any, 1}) = map(cos, x)
 
 import Base.norm
 norm(x::MultiDimInterval) = sqrt(x[1]^2 + x[2]^2)
@@ -776,7 +777,7 @@ function isect(x::MultiDimInterval, y::MultiDimInterval)
 			if isect(x[i], y[i]) == false
 				return false
 			end
-		end	
+		end
 		for i = 1:length(x)
 			push!(z, isect(x[i], y[i]))
 		end
@@ -793,7 +794,7 @@ function isectext(x::MultiDimInterval, y::MultiDimInterval)
 			if isectext(x[i], y[i]) == false
 				return false
 			end
-		end	
+		end
 		for i = 1:length(x)
 			push!(z, isectext(x[i], y[i]))
 		end
@@ -830,7 +831,7 @@ function mod(x::MultiDimInterval, y::Real)
 		A = Array{Interval, 1}[]
 		push!(A, [z1, z2[1]])
 		push!(A, [z1, z2[2]])
-		return A			
+		return A
 	elseif typeof(z1) == Array{Interval, 1} && typeof(z2) == Array{Interval, 1}
 		A = Array{Interval, 1}[]
 		push!(A, [z1[1], z2[1]])
@@ -870,7 +871,7 @@ end
 
 
 +(x::Interval, y::Array{Interval, 1}) = y + x
-+(x::Interval, y::Array{Any, 1}) = y + x	
++(x::Interval, y::Array{Any, 1}) = y + x
 
 function -(x::Array{Interval, 1}, y::Interval)
 	z = Interval[]
@@ -878,7 +879,7 @@ function -(x::Array{Interval, 1}, y::Interval)
 		push!(z, x[i] - y)
 	end
 	z
-end	
+end
 
 function -(x::Array{Any, 1}, y::Interval)
 	z = Any[]
@@ -886,7 +887,7 @@ function -(x::Array{Any, 1}, y::Interval)
 		push!(z, x[i] - y)
 	end
 	z
-end		
+end
 
 -(x::Interval, y::Array{Interval, 1}) = -(y - x)
 
@@ -905,7 +906,7 @@ end
 *(x::Real, y::Array{Interval, 1}) = Interval(x)*y
 
 #=
-function *(x::Array{Any, 1}, y::Array{Any, 1})	
+function *(x::Array{Any, 1}, y::Array{Any, 1})
 	z = Any[]
 	for i = 1:length(x)
 		for j = 1:length(y)
