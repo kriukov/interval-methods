@@ -1,5 +1,5 @@
 module KrawczykMethod2D
-export krawczyk2d, differentiate, Interval, rad, diam, mid, mig, mag, lo, hi, belong, hd, hull, isect, isectext, K, all_inside, bisect, jacobian, MultiDimInterval, Y, krawczyk2d_internal, mod21, Ad, mod1, mod2, mod21, mod22, mod23, mod24, arcsin, sqrt1, krawczyk2d_general
+export krawczyk2d, differentiate, Interval, rad, diam, mid, mig, mag, lo, hi, belong, hd, hull, isect, isectext, K, all_inside, bisect, jacobian, MultiDimInterval, Y, krawczyk2d_internal, mod21, Ad, mod1, mod2, mod21, mod22, mod23, mod24, arcsin, sqrt1, krawczyk2d_general, domaincheck, domaincheck2d
 
 using IntervalArithmetic
 using AutoDiff
@@ -35,15 +35,6 @@ function bisect(xx::MultiDimInterval)
 	push!(intervals, [right(x), right(y)])
 
 	intervals
-end
-
-# Check if x is within the range of function f
-function is_allowed(f, x)
-    try f(x)
-    catch DomainError
-        return false
-    end
-    return true
 end
 
 function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
@@ -104,19 +95,39 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
 end
 
 function krawczyk2d_general(f, a::MultiDimInterval, prec::Integer=64)
-    tol = 1e-10
-    while max(diam(a)[1], diam(a)[2]) > tol
-        if is_allowed(f, a) == true
-            return krawczyk2d(f, a, prec)
-        else
-            @show pieces = bisect(a)
-            krawczyk2d_general(f, pieces[1], prec)
-            krawczyk2d_general(f, pieces[2], prec)
-            krawczyk2d_general(f, pieces[3], prec)
-            krawczyk2d_general(f, pieces[4], prec)
-        end
-    end
+sol = Array{Array{Interval, 1}, 1}[]
 
+    function krawczyk2d_general_internal(f, a::MultiDimInterval, prec::Integer)
+        
+        tol = 1e-8
+        if max(diam(a)[1], diam(a)[2]) > tol
+            @show a
+            purity = domaincheck(f, a)
+            if purity == 1 # 2D!
+                println("Clean")
+                
+                answer = krawczyk2d(f, a, prec)
+                if length(answer) != 0
+                    @show push!(sol, answer)
+                    println("Answer added: now sol = $sol")
+                else
+                    println("Clean but empty")
+                end
+            elseif purity == 0
+                println("Unclean")
+                @show pieces = bisect(a)
+                @show krawczyk2d_general_internal(f, pieces[1], prec)
+                @show krawczyk2d_general_internal(f, pieces[2], prec)
+                @show krawczyk2d_general_internal(f, pieces[3], prec)
+                @show krawczyk2d_general_internal(f, pieces[4], prec)
+            elseif purity == -1
+                println("Dirty")
+                #break
+            end
+        end
+        return sol
+    end
+    return krawczyk2d_general_internal(f, a, prec)
 end
 
 #end of module
