@@ -1,5 +1,3 @@
-push!(LOAD_PATH, "../modules")
-
 ## Interval purity w.r.t. a test function in 1D and 2D
 
 # Need to use only the functions which have the implementation of ArgumentError (sqrt1, arcsin instead of sqrt, asin)
@@ -7,8 +5,6 @@ push!(LOAD_PATH, "../modules")
 using IntervalArithmetic
 using FactCheck
 # Test function sqrt1(1 - x^2)
-
-
 
 function test_domains1d(f)
 
@@ -28,7 +24,7 @@ function test_domains1d(f)
   facts("1D tests") do
 	@fact domaincheck(f, clean1) == 1 --> true
 	@fact domaincheck(f, clean2) == 1 --> true
-	@fact domaincheck(f, clean3) == 1 --> false
+	@fact domaincheck(f, clean3) == 1 --> true
 	@fact domaincheck(f, clean4) == 1 --> true
 
 	@fact domaincheck(f, unclean1) == 0 --> true
@@ -144,14 +140,6 @@ println("Testing 2D sqrt1(1 - (x[1]*x[2])^2)*arcsin(x[2] - x[1]) with domainchec
 @show domaincheck2d(f4, unclean2) == 0
 @show domaincheck2d(f4, dirty1) == -1
 @show domaincheck2d(f4, dirty2) == -1
-
-println("Testing 2D sqrt1(1 - (x[1]*x[2])^2)*arcsin(x[2] - x[1]) with domaincheck2d_c....................")
-@show domaincheck2d_c(f4, clean1) == 1
-@show domaincheck2d_c(f4, clean2) == 1
-@show domaincheck2d_c(f4, unclean1) == 0
-@show domaincheck2d_c(f4, unclean2) == 0
-@show domaincheck2d_c(f4, dirty1) == -1
-@show domaincheck2d_c(f4, dirty2) == -1
 
 println("Testing arcsin(x - y)............................")
 f5(x) = arcsin(x[1] - x[2])

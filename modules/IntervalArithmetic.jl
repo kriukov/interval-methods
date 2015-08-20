@@ -1,7 +1,7 @@
 ## Interval arithmetic
 
 module IntervalArithmetic
-export Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip, domaincheck2d_c
+export Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip
 
 typealias prec BigFloat
 
@@ -678,11 +678,15 @@ function domaincheck2d(f, x)
     return min(a, b)
 end
 
-# Workaround
-domaincheck2d_c(f, x) = min(domaincheck(f, x), domaincheck2d(f, x))
+# Workaround - removed
+#domaincheck2d_c(f, x) = min(domaincheck(f, x), domaincheck2d(f, x))
 
 # Rotate the 2D rectangle by pi/2
 flip(x::MultiDimInterval) = [x[2], x[1]]
+
+# Macro to split a 2D functions
+
+
 
 
 # Modulo and remainder
