@@ -668,6 +668,7 @@ function domaincheck(f, x) # 1 - clean, 0 - unclean, -1 - dirty, for the functio
     return 1
 end
 
+# Check 1D function of 2D argument
 function domaincheck2d(f, x)
 	f1(x) = f(x)[1]
 	f2(x) = f(x)[2]
