@@ -1,5 +1,5 @@
 module KrawczykMethod2D
-export krawczyk2d, differentiate, Interval, rad, diam, mid, mig, mag, lo, hi, belong, hd, hull, isect, isectext, K, all_inside, bisect, jacobian, MultiDimInterval, Y, krawczyk2d_internal, mod21, Ad, mod1, mod2, mod21, mod22, mod23, mod24, arcsin, sqrt1, krawczyk2d_general, domaincheck, domaincheck2d
+export krawczyk2d, differentiate, Interval, rad, diam, mid, mig, mag, lo, hi, belong, hd, hull, isect, isectext, K, all_inside, bisect, jacobian, MultiDimInterval, make_intervals, Y, krawczyk2d_internal, mod21, Ad, mod1, mod2, mod21, mod22, mod23, mod24, arcsin, sqrt1, krawczyk2d_general, domaincheck, domaincheck2d, arcsin_d, sqrt_d, krawczyk2d_loose
 
 using IntervalArithmetic
 using AutoDiff
@@ -22,7 +22,7 @@ end
 
 function bisect(xx::MultiDimInterval)
  	if length(xx) != 2
-	error("Only works for 2 at the moment")
+	    error("Only works for 2 at the moment")
 	end
 
 	x, y = xx
@@ -71,7 +71,8 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
 		    dK = diam(Ka)
 
 		    if dK[1] < tol && dK[2] < tol #d == dK
-			    if all_inside(Ka, a)
+		        
+			    if all_inside(Ka, a) && all_inside(f(Ka), [Interval(-tol, tol), Interval(-tol, tol)])
 				    println("Unique zero in $Ka")
 				    push!(roots_array, Ka)
 			    else
@@ -94,6 +95,7 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
     return krawczyk2d_internal(f, a, bigprec)
 end
 
+# Version of krawczyk2d with purity (probably deprecated)
 function krawczyk2d_general(f, a::MultiDimInterval, prec::Integer=64)
 sol = Array{Array{Interval, 1}, 1}[]
 
@@ -128,6 +130,67 @@ sol = Array{Array{Interval, 1}, 1}[]
         return sol
     end
     return krawczyk2d_general_internal(f, a, prec)
+end
+
+# Version of krawczyk2d with loose evaluation
+function krawczyk2d_loose(f, a::MultiDimInterval, bigprec::Integer=64)
+
+    roots_array = MultiDimInterval[]
+
+    set_bigfloat_precision(bigprec)
+    tol = 1e-10
+
+    I = [Interval(1) Interval(0); Interval(0) Interval(1)]
+
+    # If the jacobian is non-invertible, the SingularException error is returned for Y. We need to choose a slightly different Y then.	
+    function Y(f, x)
+	    if det(jacobian(f, mid(x))) == 0
+		    return make_intervals(inv(jacobian(f, mid(x) + 0.0001*norm(diam(x)))))
+	    else
+		    return make_intervals(inv(jacobian(f, mid(x))))
+	    end	
+    end
+
+    M(f, x) = I - Y(f, x)*jacobian(f, x)
+    K(f, x) = make_intervals(mid(x)) - Y(f, x)*make_intervals(f(mid(x))) + M(f, x)*(x - make_intervals(mid(x)))
+
+    k = 1
+    i = 0
+    
+    function krawczyk2d_internal_loose(f, a::MultiDimInterval, bigprec::Integer)
+        
+	    Ka = isect(a, K(f, a))
+	    if Ka != false
+
+		    d = diam(a)
+		    dK = diam(Ka)
+
+		    if dK[1] < tol && dK[2] < tol && i <= 20 #d == dK 
+		        i += 1
+			    if all_inside(Ka, a)
+			        
+			        println("Iteration #$i")
+				    println("Unique zero in $Ka")
+				    @show push!(roots_array, Ka)
+			    else
+			        println("Iteration #$i")
+				    println("Maybe a zero in $Ka")
+			    end
+			    k += 1
+		    else		
+			    k += 1
+			    @show krawczyk2d_internal_loose(f, bisect(Ka)[1], bigprec)
+			    @show krawczyk2d_internal_loose(f, bisect(Ka)[2], bigprec)
+			    @show krawczyk2d_internal_loose(f, bisect(Ka)[3], bigprec)
+			    @show krawczyk2d_internal_loose(f, bisect(Ka)[4], bigprec)
+		    end
+
+	    end
+
+	    return roots_array
+    end
+
+    return krawczyk2d_internal_loose(f, a, bigprec)
 end
 
 #end of module

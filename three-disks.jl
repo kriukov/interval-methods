@@ -76,7 +76,8 @@ T(ans, 3, 1, 3)
 
 x = [Interval(-4.97340331337152747313e-01,-4.97340331336701637922e-01),Interval(5.29098775596043253229e-01,5.29098775596494362702e-01)]
 
-ftest1(x) = [arcsin(x[1] - x[2]) - float(pi)/2, sqrt1(x[1] + x[2]) - 3]
+ftest1(x) = [arcsin_d(x[1] - x[2]) - float(pi)/2, sqrt_d(x[1] + x[2]) - 3]
 krawczyk2d_general(ftest1, [Interval(-3, 8), Interval(-2, 7)])
+krawczyk2d(ftest1, [Interval(-3, 8), Interval(-2, 7)])
 
 =#

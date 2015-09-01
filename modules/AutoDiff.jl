@@ -73,6 +73,13 @@ arcsin(x::Ad) = Ad(arcsin(x.u), x.up/sqrt1(1 - x.u^2))
 import IntervalArithmetic.sqrt1
 sqrt1(x::Ad) = Ad(sqrt1(x.u), x.up/(2sqrt1(x.u)))
 
+import IntervalArithmetic.arcsin_d
+arcsin_d(x::Ad) = Ad(arcsin_d(x.u), x.up/sqrt_d(1 - x.u^2))
+
+import IntervalArithmetic.sqrt_d
+sqrt_d(x::Ad) = Ad(sqrt_d(x.u), x.up/(2sqrt_d(x.u)))
+
+
 import Base.complex
 complex(x::Ad) = Ad(x.u, x.up)
 

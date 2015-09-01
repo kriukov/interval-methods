@@ -1,7 +1,7 @@
 ## Interval arithmetic
 
 module IntervalArithmetic
-export Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip
+export Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip, arcsin_d, sqrt_d
 
 typealias prec BigFloat
 
@@ -668,6 +668,7 @@ function domaincheck(f, x) # 1 - clean, 0 - unclean, -1 - dirty, for the functio
     return 1
 end
 
+# Check 1D function of 2D argument
 function domaincheck2d(f, x)
 	f1(x) = f(x)[1]
 	f2(x) = f(x)[2]
@@ -684,9 +685,29 @@ end
 # Rotate the 2D rectangle by pi/2
 flip(x::MultiDimInterval) = [x[2], x[1]]
 
-# Macro to split a 2D functions
+# Macro to split a 2D functions?
 
+# Loose evaluation
 
+function sqrt_d(x)
+	domain = Interval(0, Inf)
+	y = isect(x, domain)
+	if y != false
+		return sqrt(y)
+	else
+		return Interval(NaN, NaN)
+	end
+end
+
+function arcsin_d(x)
+	domain = Interval(-1, 1)
+	y = isect(x, domain)
+	if y != false
+		return asin(y)
+	else
+		return Interval(NaN, NaN)
+	end
+end	
 
 
 # Modulo and remainder
@@ -772,6 +793,9 @@ function make_intervals(x::Array{prec, 2})
 	end
 	return reshape(y, (2, 2))
 end
+
+make_intervals(x::Array{Interval, 1}) = x
+make_intervals(x::Array{Interval, 2}) = x
 
 # Intersection of 2-D vectors
 function isect(x::MultiDimInterval, y::MultiDimInterval)
