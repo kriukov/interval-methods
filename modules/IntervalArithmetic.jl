@@ -695,7 +695,7 @@ function sqrt_d(x)
 	if y != false
 		return sqrt(y)
 	else
-		return Interval(NaN, NaN)
+		return Interval(Inf, -Inf)
 	end
 end
 
@@ -705,7 +705,7 @@ function arcsin_d(x)
 	if y != false
 		return asin(y)
 	else
-		return Interval(NaN, NaN)
+		return Interval(Inf, -Inf)
 	end
 end	
 

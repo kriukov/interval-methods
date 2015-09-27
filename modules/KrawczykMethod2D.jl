@@ -1,5 +1,5 @@
 module KrawczykMethod2D
-export krawczyk2d, differentiate, Interval, rad, diam, mid, mig, mag, lo, hi, belong, hd, hull, isect, isectext, K, all_inside, bisect, jacobian, MultiDimInterval, make_intervals, Y, krawczyk2d_internal, mod21, Ad, mod1, mod2, mod21, mod22, mod23, mod24, arcsin, sqrt1, krawczyk2d_general, domaincheck, domaincheck2d, arcsin_d, sqrt_d, krawczyk2d_loose
+export krawczyk2d, differentiate, Interval, rad, diam, mid, mig, mag, lo, hi, belong, hd, hull, isect, isectext, K, all_inside, left, right, bisect, jacobian, MultiDimInterval, make_intervals, Y, krawczyk2d_internal, mod21, Ad, mod1, mod2, mod21, mod22, mod23, mod24, arcsin, sqrt1, krawczyk2d_general, domaincheck, domaincheck2d, arcsin_d, sqrt_d, krawczyk2d_loose
 
 using IntervalArithmetic
 using AutoDiff
@@ -49,30 +49,40 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
 
     # If the jacobian is non-invertible, the SingularException error is returned for Y. We need to choose a slightly different Y then.	
     function Y(f, x)
-	    if det(jacobian(f, mid(x))) == 0
-		    return make_intervals(inv(jacobian(f, mid(x) + 0.0001*norm(diam(x)))))
+        midx = mid(x)
+	    if det(jacobian(f, midx)) == 0
+		    return make_intervals(inv(jacobian(f, midx + 0.0001*norm(diam(x)))))
 	    else
-		    return make_intervals(inv(jacobian(f, mid(x))))
+		    return make_intervals(inv(jacobian(f, midx)))
 	    end	
     end
     #Y(f, x) = make_intervals(inv(jacobian(f, mid(x))))
 
     M(f, x) = I - Y(f, x)*jacobian(f, x)
-    K(f, x) = make_intervals(mid(x)) - Y(f, x)*make_intervals(f(mid(x))) + M(f, x)*(x - make_intervals(mid(x)))
+    
+    function K(f, x)
+        midx = mid(x)
+        intmidx = make_intervals(midx)
+        intmidx - Y(f, x)*make_intervals(f(midx)) + M(f, x)*(x - intmidx)
+    end
+    #K(f, x) = make_intervals(mid(x)) - Y(f, x)*make_intervals(f(mid(x))) + M(f, x)*(x - make_intervals(mid(x)))
 
     k = 1
 
     function krawczyk2d_internal(f, a::MultiDimInterval, bigprec::Integer)
 
 	    Ka = isect(a, K(f, a))
+	    if all_inside(a, K(f, a))
+	        println("Krawczyk result covers initial interval")
+	    end
 	    if Ka != false
 
-		    d = diam(a)
+		    #d = diam(a)
 		    dK = diam(Ka)
 
 		    if dK[1] < tol && dK[2] < tol #d == dK
 		        
-			    if all_inside(Ka, a) && all_inside(f(Ka), [Interval(-tol, tol), Interval(-tol, tol)])
+			    if all_inside(Ka, a) #&& all_inside(f(Ka), [Interval(-tol, tol), Interval(-tol, tol)])
 				    println("Unique zero in $Ka")
 				    push!(roots_array, Ka)
 			    else
@@ -81,10 +91,11 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
 			    k += 1
 		    else		
 			    k += 1
-			    krawczyk2d_internal(f, bisect(Ka)[1], bigprec)
-			    krawczyk2d_internal(f, bisect(Ka)[2], bigprec)
-			    krawczyk2d_internal(f, bisect(Ka)[3], bigprec)
-			    krawczyk2d_internal(f, bisect(Ka)[4], bigprec)
+			    bisect_list = bisect(Ka)
+			    krawczyk2d_internal(f, bisect_list[1], bigprec)
+			    krawczyk2d_internal(f, bisect_list[2], bigprec)
+			    krawczyk2d_internal(f, bisect_list[3], bigprec)
+			    krawczyk2d_internal(f, bisect_list[4], bigprec)
 		    end
 
 	    end
@@ -111,7 +122,7 @@ sol = Array{Array{Interval, 1}, 1}[]
                 answer = krawczyk2d(f, a, prec)
                 if length(answer) != 0
                     @show push!(sol, answer)
-                    println("Answer added: now sol = $sol")
+                    error("Answer added: now sol = $sol")
                 else
                     println("Clean but empty")
                 end
@@ -138,13 +149,13 @@ function krawczyk2d_loose(f, a::MultiDimInterval, bigprec::Integer=64)
     roots_array = MultiDimInterval[]
 
     set_bigfloat_precision(bigprec)
-    tol = 1e-10
+    tol = 1e-6
 
     I = [Interval(1) Interval(0); Interval(0) Interval(1)]
 
     # If the jacobian is non-invertible, the SingularException error is returned for Y. We need to choose a slightly different Y then.	
     function Y(f, x)
-	    if det(jacobian(f, mid(x))) == 0
+	    if det(jacobian(f, mid(x))) == Interval(0)
 		    return make_intervals(inv(jacobian(f, mid(x) + 0.0001*norm(diam(x)))))
 	    else
 		    return make_intervals(inv(jacobian(f, mid(x))))
@@ -159,19 +170,23 @@ function krawczyk2d_loose(f, a::MultiDimInterval, bigprec::Integer=64)
     
     function krawczyk2d_internal_loose(f, a::MultiDimInterval, bigprec::Integer)
         
-	    Ka = isect(a, K(f, a))
-	    if Ka != false
+        @show a
+        #Ka = isect(a, K(f, a))
+        @show K1 = K(f, a)
+	    @show Ka = isect(a, K1)
+	    if Ka != false # !isnan(K1[1].lo) && !isnan(K1[1].hi) && !isnan(K1[2].lo) && !isnan(K1[2].hi)
 
-		    d = diam(a)
+		    #d = diam(a)
 		    dK = diam(Ka)
 
-		    if dK[1] < tol && dK[2] < tol && i <= 20 #d == dK 
+		    if dK[1] < tol && dK[2] < tol  #&& i <= 20 # && Ka != a #d == dK 
 		        i += 1
-			    if all_inside(Ka, a)
+			    if all_inside(Ka, a) #&& all_inside(f(Ka), [Interval(-tol, tol), Interval(-tol, tol)])
 			        
 			        println("Iteration #$i")
 				    println("Unique zero in $Ka")
 				    @show push!(roots_array, Ka)
+				    error("Found root: $(Ka)")
 			    else
 			        println("Iteration #$i")
 				    println("Maybe a zero in $Ka")
@@ -179,13 +194,20 @@ function krawczyk2d_loose(f, a::MultiDimInterval, bigprec::Integer=64)
 			    k += 1
 		    else		
 			    k += 1
-			    @show krawczyk2d_internal_loose(f, bisect(Ka)[1], bigprec)
-			    @show krawczyk2d_internal_loose(f, bisect(Ka)[2], bigprec)
-			    @show krawczyk2d_internal_loose(f, bisect(Ka)[3], bigprec)
-			    @show krawczyk2d_internal_loose(f, bisect(Ka)[4], bigprec)
+			    #@show if 
+			    #if (dK[1] > tol || dK[2] > tol) && (isnan(K1[1].lo) && isnan(K1[1].hi) && isnan(K1[2].lo) && isnan(K1[2].hi))
+			    bisect_list = bisect(Ka)
+			    krawczyk2d_internal_loose(f, bisect_list[1], bigprec)
+			    krawczyk2d_internal_loose(f, bisect_list[2], bigprec)
+			    krawczyk2d_internal_loose(f, bisect_list[3], bigprec)
+			    krawczyk2d_internal_loose(f, bisect_list[4], bigprec)
+			    #end
+			    #end
 		    end
-
+                  
 	    end
+	    
+	    #end
 
 	    return roots_array
     end
