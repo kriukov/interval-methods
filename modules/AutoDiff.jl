@@ -11,6 +11,7 @@ end
 Ad(c) = Ad(c, zero(c))
 
 # Arithmetic between two Ad
+import Base.+, Base.-, Base.*, Base./
 +(x::Ad, y::Ad) = Ad(x.u + y.u, x.up + y.up)
 -(x::Ad, y::Ad) = Ad(x.u - y.u, x.up - y.up)
 *(x::Ad, y::Ad) = Ad(x.u*y.u, x.u*y.up + y.u*x.up)
@@ -22,6 +23,7 @@ end
 
 # Power; two functions for power because it is less costly
 # Commented out because it gave errors
+import Base.^
 ^(x::Ad, a::Integer)= Ad(x.u^a, a*x.u^(a-1)*x.up)
 
 function ^(x::Ad, a::Real)

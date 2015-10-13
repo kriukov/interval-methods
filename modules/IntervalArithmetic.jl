@@ -12,10 +12,12 @@ type Interval
 
 	function Interval(a, b)
 	    set_rounding(prec, RoundDown)
-	    lo = BigFloat("$a")
+	    #lo = BigFloat("$a")
+	    lo = parse(BigFloat, "$a")
 
 	    set_rounding(prec, RoundUp)
-	    hi = BigFloat("$b")
+	    #hi = BigFloat("$b")
+	    hi = parse(BigFloat, "$b")
 
 	    new(lo, hi)
 	end
@@ -37,6 +39,8 @@ type IntUnion
 	end
 end
 
+import Base.+
+import Base.-
 +(x::IntUnion, y::Interval) = IntUnion(x.elem1 + y, x.elem2 + y)
 +(x::Interval, y::IntUnion) = y + x
 -(x::IntUnion, y::Interval) = IntUnion(x.elem1 - y, x.elem2 - y)
@@ -192,6 +196,7 @@ end
 
 # Multiplication
 
+import Base.*
 function *(x::Interval, y::Interval)
 	z1 = with_rounding(prec, RoundDown) do
 		min(x.lo*y.lo, x.lo*y.hi, x.hi*y.lo, x.hi*y.hi)
@@ -208,6 +213,7 @@ end
 
 # Division
 
+import Base./
 function /(x::Interval, y::Interval)
 	z1 = with_rounding(prec, RoundDown) do
 		1/y.hi
@@ -223,6 +229,7 @@ end
 
 # Extended division
 
+import Base.//
 function //(x::Interval, y::Interval)
 	if belong(0., y) == false
 		return x/y
@@ -381,6 +388,7 @@ end
 
 # Integer power
 
+import Base.^
 function ^(x::Interval, n::Integer)
 	if n > 0 && n % 2 == 1
 		return Interval(x.lo^n, x.hi^n)
@@ -523,8 +531,10 @@ end
 # Using Sanders/Benet sin() from https://github.com/dpsanders/ValidatedNumerics.jl
 import Base.sin
 function sin(a::Interval)
-	piHalf = pi*BigFloat("0.5")
-	twoPi = pi*BigFloat("2.0")
+	#piHalf = pi*BigFloat("0.5")
+	piHalf = pi*parse(BigFloat, "0.5")
+	#twoPi = pi*BigFloat("2.0")
+	twoPi = pi*parse(BigFloat, "2.0")
 	domainSin = Interval( BigFloat(-1.0), BigFloat(1.0) )
 
 	# Checking the specific case
@@ -602,6 +612,7 @@ function /(x::Array{Any, 1}, y::Interval)
 end
 
 # Equality of two intervals
+import Base.==
 ==(a::Interval, b::Interval) = a.lo == b.lo && a.hi == b.hi
 
 # Monotonic functions
