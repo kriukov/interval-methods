@@ -61,7 +61,8 @@ as w=-0.5, th=pi/6 is the obvious answer.
 
 =#
 
-krawczyk2d_general(g, [Interval(-0.5-0.01,-0.5+0.021), Interval(pi/6-0.01,pi/6+0.021)])
+#krawczyk2d_general(g, [Interval(-0.5-0.01,-0.5+0.021), Interval(pi/6-0.01,pi/6+0.021)])
+krawczyk2d_general(g, [Interval(-0.5-0.1,-0.5+0.21), Interval(pi/6-0.1,pi/6+0.21)])
 
 
 # Solves krawczyk2d(g, [Interval(-0.5-0.0001,-0.5+0.00021), Interval(pi/6-0.001,pi/6+0.00021)]) - domaincheck returns 1

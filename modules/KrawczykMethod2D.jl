@@ -72,9 +72,9 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
     function krawczyk2d_internal(f, a::MultiDimInterval, bigprec::Integer)
 
 	    Ka = isect(a, K(f, a))
-	    if all_inside(a, K(f, a))
-	        println("Krawczyk result covers initial interval")
-	    end
+	    #if all_inside(a, K(f, a))
+	    #    println("Krawczyk result covers initial interval")
+	    #end
 	    if Ka != false
 
 		    #d = diam(a)
@@ -152,11 +152,15 @@ function krawczyk2d_loose(f, a::MultiDimInterval, bigprec::Integer=64)
     tol = 1e-6
 
     I = [Interval(1) Interval(0); Interval(0) Interval(1)]
-
+    mdelta = [Interval(1e-5) Interval(1e-5); Interval(1e-5) Interval(1e-5)]
+    
+    intdet(M) = M[1]*M[4] - M[2]*M[3]
+    
     # If the jacobian is non-invertible, the SingularException error is returned for Y. We need to choose a slightly different Y then.	
     function Y(f, x)
-	    if det(jacobian(f, mid(x))) == Interval(0)
-		    return make_intervals(inv(jacobian(f, mid(x) + 0.0001*norm(diam(x)))))
+	    if intdet(jacobian(f, mid(x))) == Interval(0)
+		    #return make_intervals(inv(jacobian(f, mid(x) + 0.0001*norm(diam(x)))))
+		    return make_intervals(inv(jacobian(f, mid(x)) + mdelta))
 	    else
 		    return make_intervals(inv(jacobian(f, mid(x))))
 	    end	
@@ -169,10 +173,12 @@ function krawczyk2d_loose(f, a::MultiDimInterval, bigprec::Integer=64)
     i = 0
     
     function krawczyk2d_internal_loose(f, a::MultiDimInterval, bigprec::Integer)
-        
-        @show a
+
         #Ka = isect(a, K(f, a))
         @show K1 = K(f, a)
+        #if K1[1].lo == -Inf && K1[1].hi == Inf &&K1[2].lo == -Inf && K1[2].hi == Inf
+        #    K1 = [Interval(-1e9, 1e9), Interval(-1e9, 1e9)]
+        #end
 	    @show Ka = isect(a, K1)
 	    if Ka != false # !isnan(K1[1].lo) && !isnan(K1[1].hi) && !isnan(K1[2].lo) && !isnan(K1[2].hi)
 
@@ -181,12 +187,12 @@ function krawczyk2d_loose(f, a::MultiDimInterval, bigprec::Integer=64)
 
 		    if dK[1] < tol && dK[2] < tol  #&& i <= 20 # && Ka != a #d == dK 
 		        i += 1
-			    if all_inside(Ka, a) #&& all_inside(f(Ka), [Interval(-tol, tol), Interval(-tol, tol)])
+			    if all_inside(Ka, a) && all_inside(f(Ka), [Interval(-tol, tol), Interval(-tol, tol)])
 			        
 			        println("Iteration #$i")
 				    println("Unique zero in $Ka")
 				    @show push!(roots_array, Ka)
-				    error("Found root: $(Ka)")
+				    #error("Found root: $(Ka)")
 			    else
 			        println("Iteration #$i")
 				    println("Maybe a zero in $Ka")
