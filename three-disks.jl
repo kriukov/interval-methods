@@ -62,6 +62,7 @@ as w=-0.5, th=pi/6 is the obvious answer.
 =#
 
 #krawczyk2d_general(g, [Interval(-0.5-0.01,-0.5+0.021), Interval(pi/6-0.01,pi/6+0.021)])
+krawczyk2d_general(g, [Interval(-0.5-0.1,-0.5+0.21), Interval(pi/6-0.1,pi/6+0.21)])
 
 
 # Solves krawczyk2d(g, [Interval(-0.5-0.0001,-0.5+0.00021), Interval(pi/6-0.001,pi/6+0.00021)]) - domaincheck returns 1
@@ -76,8 +77,11 @@ T(ans, 3, 1, 3)
 
 x = [Interval(-4.97340331337152747313e-01,-4.97340331336701637922e-01),Interval(5.29098775596043253229e-01,5.29098775596494362702e-01)]
 
-ftest1(x) = [arcsin_d(x[1] - x[2]) - float(pi)/2, sqrt_d(x[1] + x[2]) - 3]
-krawczyk2d_general(ftest1, [Interval(-3, 8), Interval(-2, 7)])
-krawczyk2d(ftest1, [Interval(-3, 8), Interval(-2, 7)])
+using KrawczykMethod2D; ftest1(x) = [arcsin_d(x[1] - x[2]) - float(pi)/2, sqrt_d(x[1] + x[2]) - 3]; krawczyk2d_loose(ftest1, [Interval(3, 8), Interval(2, 7)])
+
+using KrawczykMethod2D; ftest1(x) = [sqrt_d(x[1] + x[2]) - 3, arcsin_d(x[1] - x[2]) - float(pi)/2]; krawczyk2d_loose(ftest1, [Interval(3, 8), Interval(2, 7)])
+
+using KrawczykMethod2D; f1(x) = arcsin_d(x[1] - x[2]) - float(pi)/2; f2(x) = sqrt_d(x[1] + x[2]) - 3; krawczyk2d_loose(f1, f2, [Interval(3, 8), Interval(2, 7)])
+
 
 =#
