@@ -3,6 +3,7 @@ export krawczyk2d, differentiate, Interval, rad, diam, mid, mig, mag, lo, hi, be
 
 using IntervalArithmetic
 using AutoDiff
+using PurityIntervals
 
 println("Syntax: krawczyk2d(function, [Interval(lo, hi), Interval(lo, hi)], precision [default is 64])")
 
