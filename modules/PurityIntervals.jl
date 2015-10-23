@@ -8,6 +8,10 @@ type PurityInterval
     flag::Int
 end
 
+# 1 = full domain ("clean");
+# 0 = partially defined ("unclean")
+# -1 = undefined ("dirty")
+
 PurityInterval(x) = PurityInterval(x, 1)
 
 import Base.+, Base.-, Base.*, Base./
