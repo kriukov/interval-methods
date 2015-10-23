@@ -88,6 +88,7 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
 				    push!(roots_array, Ka)
 			    else
 				    println("Maybe a zero in $Ka")
+				    push!(roots_array, Ka)
 			    end
 			    k += 1
 		    else		
@@ -109,37 +110,79 @@ end
 
 # Version of krawczyk2d with purity (probably deprecated)
 function krawczyk2d_general(f, a::MultiDimInterval, prec::Integer=64)
-sol = Array{Array{Interval, 1}, 1}[]
+    #sol = Array{Array{Interval, 1}, 1}[]
+
+    roots_array = MultiDimInterval[]
+
+    set_bigfloat_precision(prec)
+    tol = 1e-10
+
+    I = [Interval(1) Interval(0); Interval(0) Interval(1)]
+    
+    intdet(M) = M[1]*M[4] - M[2]*M[3]
+
+    # If the jacobian is non-invertible, the SingularException error is returned for Y. We need to choose a slightly different Y then.	
+    function Y(f, x)
+        midx = mid(x)
+	    if intdet(jacobian(f, midx)) == Interval(0) || intdet(jacobian(f, midx)) == Interval(Inf) || intdet(jacobian(f, midx)) == Interval(-Inf)
+		    return make_intervals(inv(jacobian(f, mid(x + [Interval(0.0001), Interval(0.0002)]))))
+	    else
+		    return make_intervals(inv(jacobian(f, midx)))
+	    end	
+    end
+
+    M(f, x) = I - Y(f, x)*jacobian(f, x)
+    
+    # Krawczyk operator
+    function K(f, x)
+        midx = mid(x)
+        intmidx = make_intervals(midx)
+        intmidx - Y(f, x)*make_intervals(f(midx)) + M(f, x)*(x - intmidx)
+    end
 
     function krawczyk2d_general_internal(f, a::MultiDimInterval, prec::Integer)
+               
+        @show a
+        @show diam(a)
+        @show Ka = isect(a, K(f, a))
+        if Ka != false
         
-        tol = 1e-8
-        if max(diam(a)[1], diam(a)[2]) > tol
-            @show a
-            purity = domaincheck(f, a)
-            if purity == 1 # 2D!
+            p = f([PurityInterval(a[1]), PurityInterval(a[2])])
+            purity = min(p[1].flag, p[2].flag)
+            
+            if purity == 1
                 println("Clean")
                 
-                answer = krawczyk2d(f, a, prec)
-                if length(answer) != 0
-                    @show push!(sol, answer)
-                    error("Answer added: now sol = $sol")
-                else
-                    println("Clean but empty")
-                end
+                @show dK = diam(Ka)
+       		    if dK[1] < tol && dK[2] < tol #d == dK
+		            
+			        if all_inside(Ka, a) #&& all_inside(f(Ka), [Interval(-tol, tol), Interval(-tol, tol)])
+				        println("Unique zero in $Ka")
+				        push!(roots_array, Ka)
+			        else
+				        println("Maybe a zero in $Ka")
+				        push!(roots_array, Ka)
+			        end
+		        else		
+			        bisect_list = bisect(Ka)
+			        krawczyk2d_general_internal(f, bisect_list[1], prec)
+			        krawczyk2d_general_internal(f, bisect_list[2], prec)
+			        krawczyk2d_general_internal(f, bisect_list[3], prec)
+			        krawczyk2d_general_internal(f, bisect_list[4], prec)
+		        end
             elseif purity == 0
                 println("Unclean")
-                @show pieces = bisect(a)
-                @show krawczyk2d_general_internal(f, pieces[1], prec)
-                @show krawczyk2d_general_internal(f, pieces[2], prec)
-                @show krawczyk2d_general_internal(f, pieces[3], prec)
-                @show krawczyk2d_general_internal(f, pieces[4], prec)
+                pieces = bisect(Ka)
+                krawczyk2d_general_internal(f, pieces[1], prec)
+                krawczyk2d_general_internal(f, pieces[2], prec)
+                krawczyk2d_general_internal(f, pieces[3], prec)
+                krawczyk2d_general_internal(f, pieces[4], prec)
             elseif purity == -1
                 println("Dirty")
                 #break
             end
         end
-        return sol
+        return roots_array
     end
     return krawczyk2d_general_internal(f, a, prec)
 end

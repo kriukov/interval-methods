@@ -22,4 +22,7 @@ krawczyk2d_loose(f, a)
 #f0(x) = [sqrt_d(x[1]) - 1, sqrt_d(2x[2]) - 2]
 # True root: [1, 2]
 
-
+using KrawczykMethod2D
+f(x) = [arcsin_d(x[1] - x[2]) - float(pi)/2, sqrt_d(x[1] + x[2]) - 3]
+a = [Interval(3, 8), Interval(3, 7)]
+krawczyk2d_general(f, a)
