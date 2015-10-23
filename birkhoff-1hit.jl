@@ -37,10 +37,12 @@ end
 function T(x, n, m, r)
 	ω, θ = x
 
-	wnext = ω - r*(ω*cos(θ - alpha(n, m)) + √(1 - ω^2)*sin(θ - alpha(n, m)))
-	θnext = mod(θ + big(pi) + asin(ω) + asin(wnext), 2π)
+	ω_next = ω - r*(ω*cos(θ - alpha(n, m)) + √(1 - ω^2)*sin(θ - alpha(n, m)))
+	#θ_next = mod(θ + big(pi) + asin(ω) + asin(ω_next), 2π)
+	θ_next = θ + big(pi) + asin(ω) + asin(ω_next)
 
-	[wnext, θnext]
+
+	[ω_next, θ_next]
 end
 
 
@@ -96,7 +98,7 @@ function plot_band(f)
 
 end
 
-plot_band(f12)
-plot_band(f13)
+#plot_band(f12)
+#plot_band(f13)
 
-#plot_band(twice_123)
+plot_band(twice_123)
