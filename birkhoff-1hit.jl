@@ -62,11 +62,25 @@ function twice_123(x0)
 
 end
 
+function twice_123(x0)
+	x1 = T(x0, 1, 2, distance_between_centers)
+	x2 = T(x1, 2, 3, distance_between_centers)
 
-function plot_band(f)
+	x2
+
+end
+
+function iterate_1231(x0)
+	x1 = T(x0, 1, 2, distance_between_centers)
+	x2 = T(x1, 2, 3, distance_between_centers)
+	x3 = T(x2, 3, 1, distance_between_centers)
+	x3
+end
+
+
+function plot_band(f, N)
 
 	# Split the phase space w = [-1, 1], th = [0, pi/3] into 30x30 rectangles
-	N = 30
 	rw = Interval(-0.95, 0.95)
 	rth = Interval(0.05, float(pi)/3-0.05)
 	deltaw = diam(rw/N)
@@ -75,8 +89,8 @@ function plot_band(f)
 	points = Array{BigFloat, 1}[]
 	purities = Int[]
 
-	for i = 1:30
-		for j = 1:30
+	for i = 1:N
+		for j = 1:N
 			rect = [rw.lo + i*deltaw - Interval(0, deltaw), rth.lo + j*deltath - Interval(0, deltath)]
 			p = purity(f, rect)
 			#println([rect, p])
@@ -101,4 +115,4 @@ end
 #plot_band(f12)
 #plot_band(f13)
 
-plot_band(twice_123)
+#plot_band(twice_123, 100)

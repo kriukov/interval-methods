@@ -531,6 +531,9 @@ end
 # Using Sanders/Benet sin() from https://github.com/dpsanders/ValidatedNumerics.jl
 import Base.sin
 function sin(a::Interval)
+	if a == Interval(Inf, Inf)
+		return Interval(Inf, Inf)
+	end
 	#piHalf = pi*BigFloat("0.5")
 	piHalf = pi*parse(BigFloat, "0.5")
 	#twoPi = pi*BigFloat("2.0")
@@ -588,7 +591,7 @@ function sin(a::Interval)
 	    return domainSin
 	else
 	    # This should be never reached!
-	    error(string("SOMETHING WENT WRONG in sin.\nThis should have never been reached") )
+	    error(string("SOMETHING WENT WRONG in sin.\nThis should have never been reached\nArgument: $a") )
 	end
 end
 
@@ -718,7 +721,7 @@ function arcsin_d(x)
 	else
 		return Interval(Inf, -Inf)
 	end
-end	
+end
 
 
 # Modulo and remainder
