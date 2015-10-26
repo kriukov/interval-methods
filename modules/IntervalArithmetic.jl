@@ -1,7 +1,7 @@
 ## Interval arithmetic
 
 module IntervalArithmetic
-export Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip, arcsin_d, sqrt_d
+export Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, all_inside, bisect, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip, arcsin_d, sqrt_d
 
 typealias prec BigFloat
 
@@ -890,6 +890,40 @@ mod22(x, y::Real) = [mod1(x[1], y), mod2(x[2], y)]
 mod23(x, y::Real) = [mod2(x[1], y), mod1(x[2], y)]
 mod24(x, y::Real) = [mod2(x[1], y), mod2(x[2], y)]
 
+
+# Bisection procedure (moved from KrawczykMethod2D)
+
+function bisect(xx::MultiDimInterval)
+ 	if length(xx) != 2
+	    error("Only works for 2 at the moment")
+	end
+
+	x, y = xx
+
+	intervals = MultiDimInterval[]
+
+	push!(intervals, [left(x), left(y)])
+	push!(intervals, [left(x), right(y)])
+	push!(intervals, [right(x), left(y)])
+	push!(intervals, [right(x), right(y)])
+
+	intervals
+end
+
+# Multidimensional inside() (moved from KrawczykMethod2D)
+function all_inside(x::MultiDimInterval, y::MultiDimInterval)
+	k = 0
+	for i = 1:length(x)
+		if !inside(x[i], y[i])
+			k += 1
+		end
+	end
+	if k > 0
+		return false
+	else
+		return true
+	end
+end
 
 # Experimental: arithmetic operations between intervals and sets of intervals
 

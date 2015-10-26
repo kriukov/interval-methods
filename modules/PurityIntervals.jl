@@ -23,10 +23,6 @@ for op in (:+, :-, :*, :/)
 	end
 end
 
-#import IntervalArithmetic.sqrt_d
-#sqrt_d(x::PurityInterval) = PurityInterval(sqrt_d(x.interval), domaincheck(sqrt1, x.interval))
-#import IntervalArithmetic.arcsin_d
-#arcsin_d(x::PurityInterval) = PurityInterval(arcsin_d(x.interval), domaincheck(arcsin, x.interval))
 import Base.sin
 sin(x::PurityInterval) = PurityInterval(sin(x.interval), x.flag)
 import Base.cos

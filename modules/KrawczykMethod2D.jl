@@ -7,37 +7,6 @@ using PurityIntervals
 
 println("Syntax: krawczyk2d(function, [Interval(lo, hi), Interval(lo, hi)], precision [default is 64])")
 
-function all_inside(x::MultiDimInterval, y::MultiDimInterval)
-	k = 0
-	for i = 1:length(x)
-		if !inside(x[i], y[i])
-			k += 1
-		end
-	end
-	if k > 0
-		return false
-	else
-		return true
-	end
-end
-
-function bisect(xx::MultiDimInterval)
- 	if length(xx) != 2
-	    error("Only works for 2 at the moment")
-	end
-
-	x, y = xx
-
-	intervals = MultiDimInterval[]
-
-	push!(intervals, [left(x), left(y)])
-	push!(intervals, [left(x), right(y)])
-	push!(intervals, [right(x), left(y)])
-	push!(intervals, [right(x), right(y)])
-
-	intervals
-end
-
 function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
 
     roots_array = MultiDimInterval[]
