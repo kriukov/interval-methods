@@ -1,37 +1,6 @@
 using IntervalArithmetic
 using AutoDiff
 
-function all_inside(x::MultiDimInterval, y::MultiDimInterval)
-	k = 0
-	for i = 1:length(x)
-		if !inside(x[i], y[i])
-			k += 1
-		end
-	end
-	if k > 0
-		return false
-	else
-		return true
-	end
-end
-
-function bisect(xx::MultiDimInterval)
- 	if length(xx) != 2
-	    error("Only works for 2 at the moment")
-	end
-
-	x, y = xx
-
-	intervals = MultiDimInterval[]
-
-	push!(intervals, [left(x), left(y)])
-	push!(intervals, [left(x), right(y)])
-	push!(intervals, [right(x), left(y)])
-	push!(intervals, [right(x), right(y)])
-
-	intervals
-end
-
 intdet(M) = M[1]*M[4] - M[2]*M[3]
 
 bigprec=64
@@ -78,4 +47,9 @@ B = [Interval(0, 3) Interval(5,6); Interval(7, 8) Interval(9,11)]
 det(B)
 
 B11 = Interval(0, 0); B12 = Interval(5,6); B21 = Interval(7, 8); B22 = Interval(9,11)
+
+using KrawczykMethod2D; f(x) = [asin(x[1] - x[2]) - float(pi)/2, sqrt(x[1] + x[2]) - 3]; a = [Interval(3, 8), Interval(3, 7)]; krawczyk2d_general(f, a)
+
+
+#krawczyk2d detects "unique zero" in a = [IntervalArithmetic.Interval(4.00146484375000000000,4.00170898437500000000),IntervalArithmetic.Interval(3.00170898437500000000,3.00195312500000000000)]. The interval is clean, but it is not a zero!
 

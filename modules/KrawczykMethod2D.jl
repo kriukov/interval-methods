@@ -1,5 +1,5 @@
 module KrawczykMethod2D
-export krawczyk2d, differentiate, Interval, rad, diam, mid, mig, mag, lo, hi, belong, hd, hull, isect, isectext, K, all_inside, left, right, bisect, jacobian, MultiDimInterval, make_intervals, Y, krawczyk2d_internal, mod21, Ad, mod1, mod2, mod21, mod22, mod23, mod24, arcsin, sqrt1, krawczyk2d_general, domaincheck, domaincheck2d, arcsin_d, sqrt_d, krawczyk2d_loose
+export krawczyk2d, differentiate, Interval, rad, diam, mid, mig, mag, lo, hi, belong, hd, hull, isect, isectext, K, all_inside, left, right, bisect, jacobian, MultiDimInterval, make_intervals, Y, krawczyk2d_internal, mod21, Ad, mod1, mod2, mod21, mod22, mod23, mod24, arcsin, sqrt1, krawczyk2d_purity, domaincheck, domaincheck2d, arcsin_d, sqrt_d, krawczyk2d_loose, purity
 
 using IntervalArithmetic
 using AutoDiff
@@ -12,7 +12,7 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
     roots_array = MultiDimInterval[]
 
     set_bigfloat_precision(bigprec)
-    #tol = (1e-10)*eps(BigFloat)
+
     tol = 1e-10
 
     I = [Interval(1) Interval(0); Interval(0) Interval(1)]
@@ -42,12 +42,9 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
     function krawczyk2d_internal(f, a::MultiDimInterval, bigprec::Integer)
 
 	    Ka = isect(a, K(f, a))
-	    #if all_inside(a, K(f, a))
-	    #    println("Krawczyk result covers initial interval")
-	    #end
+
 	    if Ka != false
 
-		    #d = diam(a)
 		    dK = diam(Ka)
 
 		    if dK[1] < tol && dK[2] < tol #d == dK
@@ -62,11 +59,10 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
 			    k += 1
 		    else		
 			    k += 1
-			    bisect_list = bisect(Ka)
-			    krawczyk2d_internal(f, bisect_list[1], bigprec)
-			    krawczyk2d_internal(f, bisect_list[2], bigprec)
-			    krawczyk2d_internal(f, bisect_list[3], bigprec)
-			    krawczyk2d_internal(f, bisect_list[4], bigprec)
+			    pieces = bisect(Ka)
+			    for i = 1:4
+			        krawczyk2d_internal(f, pieces[i], bigprec)
+			    end
 		    end
 
 	    end
@@ -77,23 +73,24 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
     return krawczyk2d_internal(f, a, bigprec)
 end
 
-# Version of krawczyk2d with purity (probably deprecated)
-function krawczyk2d_general(f, a::MultiDimInterval, prec::Integer=64)
+# Version of krawczyk2d with purity
+function krawczyk2d_purity(f, a::MultiDimInterval, prec::Integer=64)
     #sol = Array{Array{Interval, 1}, 1}[]
 
     roots_array = MultiDimInterval[]
 
     set_bigfloat_precision(prec)
-    tol = 1e-10
+    tol = 1e-4
 
     I = [Interval(1) Interval(0); Interval(0) Interval(1)]
     
-    intdet(M) = M[1]*M[4] - M[2]*M[3]
+    intdet(A) = A[1]*A[4] - A[2]*A[3]
 
     # If the jacobian is non-invertible, the SingularException error is returned for Y. We need to choose a slightly different Y then.	
     function Y(f, x)
         midx = mid(x)
-	    if intdet(jacobian(f, midx)) == Interval(0) || intdet(jacobian(f, midx)) == Interval(Inf) || intdet(jacobian(f, midx)) == Interval(-Inf)
+        D = intdet(jacobian(f, midx))
+	    if D == Interval(0) || D == Interval(Inf) || D == Interval(-Inf)
 		    return make_intervals(inv(jacobian(f, mid(x + [Interval(0.0001), Interval(0.0002)]))))
 	    else
 		    return make_intervals(inv(jacobian(f, midx)))
@@ -109,52 +106,44 @@ function krawczyk2d_general(f, a::MultiDimInterval, prec::Integer=64)
         intmidx - Y(f, x)*make_intervals(f(midx)) + M(f, x)*(x - intmidx)
     end
 
-    function krawczyk2d_general_internal(f, a::MultiDimInterval, prec::Integer)
-               
-        @show a
-        @show diam(a)
-        @show Ka = isect(a, K(f, a))
-        if Ka != false
-        
-            p = f([PurityInterval(a[1]), PurityInterval(a[2])])
-            purity = min(p[1].flag, p[2].flag)
-            
-            if purity == 1
+    function krawczyk2d_purity_internal(f, a::MultiDimInterval, prec::Integer)
+
+        @show p = purity(f, a)
+
+        if p != -1
+            if p == 1
                 println("Clean")
+                @show a
+                krawczyk2d(f, a, prec)
+            elseif p == 0
                 
-                @show dK = diam(Ka)
-       		    if dK[1] < tol && dK[2] < tol #d == dK
-		            
-			        if all_inside(Ka, a) #&& all_inside(f(Ka), [Interval(-tol, tol), Interval(-tol, tol)])
-				        println("Unique zero in $Ka")
-				        push!(roots_array, Ka)
-			        else
-				        println("Maybe a zero in $Ka")
-				        push!(roots_array, Ka)
-			        end
-		        else		
-			        bisect_list = bisect(Ka)
-			        krawczyk2d_general_internal(f, bisect_list[1], prec)
-			        krawczyk2d_general_internal(f, bisect_list[2], prec)
-			        krawczyk2d_general_internal(f, bisect_list[3], prec)
-			        krawczyk2d_general_internal(f, bisect_list[4], prec)
-		        end
-            elseif purity == 0
                 println("Unclean")
-                pieces = bisect(Ka)
-                krawczyk2d_general_internal(f, pieces[1], prec)
-                krawczyk2d_general_internal(f, pieces[2], prec)
-                krawczyk2d_general_internal(f, pieces[3], prec)
-                krawczyk2d_general_internal(f, pieces[4], prec)
-            elseif purity == -1
-                println("Dirty")
-                #break
+                if max(diam(a)[1], diam(a)[2]) < tol
+                    @show a
+                    #if all_inside(f(a), [Interval(-tol, tol), Interval(-tol, tol)])
+                    #    println("Unique zero in $a")
+			        #    push!(roots_array, a)
+			        #end
+			        println("Krawczyk could not properly identify zeros here")
+			    else
+                
+                    @show pieces = bisect(a)
+                    for i = 1:4
+                        krawczyk2d_purity_internal(f, pieces[i], prec)
+                    end
+                end
             end
         end
+
         return roots_array
     end
-    return krawczyk2d_general_internal(f, a, prec)
+    return krawczyk2d_purity_internal(f, a, prec)
 end
+
+
+
+
+##### Deprecated
 
 # Version of krawczyk2d with loose evaluation
 function krawczyk2d_loose(f, a::MultiDimInterval, bigprec::Integer=64)
@@ -233,6 +222,9 @@ function krawczyk2d_loose(f, a::MultiDimInterval, bigprec::Integer=64)
 
     return krawczyk2d_internal_loose(f, a, bigprec)
 end
+
+
+
 
 #end of module
 end

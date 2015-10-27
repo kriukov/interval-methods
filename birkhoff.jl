@@ -158,6 +158,25 @@ function plot_band_bisection(f, rect, tol)
     points, purities
 end
 
+function plot_band_bisection_dirty(f, rect, tol)
+    limitrect(rect) = max(diam(rect)[1], diam(rect)[2]) < tol
+    p = purity(f, rect)
+    if p == 1 || p == -1
+        push!(points, rect)
+        push!(purities, p)
+    elseif p == 0
+        if limitrect(rect)
+            push!(points, rect)
+            push!(purities, p)
+        else
+            pieces = bisect(rect)
+            for i = 1:4
+                plot_band_bisection_dirty(f, pieces[i], tol)
+            end
+        end
+    end
+    points, purities
+end
 
 # Using midpoints of rectangles! It works
 #=
@@ -167,22 +186,15 @@ y = [Float64(xx[2]) for xx in pts]
 plot(y, x, "o")
 =#
 
-# Bad code for drawing rectangles
-
-#using PyCall
-#@pyimport matplotlib.patches as patch
-
-function draw_rect(x, y, dx, dy)
-    cfig = figure()
-    ax = cfig[:add_subplot](1,1,1)
-    #ax[:set_aspect]("equal")
-    #c = patch.Circle([0.5,0.5],0.4,fc="blue",ec="red",linewidth=.5,zorder=0)
-    c = patch.Rectangle([x, y], dx, dy, fc="blue",ec="red",linewidth=.5,zorder=0)
-    ax[:add_artist](c)
-    cfig[:savefig]("rect.png")
+# Function to draw rectangles
+using PyCall
+@pyimport matplotlib.patches as patches
+rectangle = patches.Rectangle
+function draw_rectangle(x, y, xwidth, ywidth, color="grey")
+    ax = gca()
+    ax[:add_patch](rectangle((x, y), xwidth, ywidth, facecolor=color, alpha=0.5))
 end
 
-# This stuff worked (although without showing, only saving) but now it gives me a blank space. Resorting to WM for plotting :(
 
 #=
 plot_band_bisection(x -> path(x, [1, 2]), rect, 1e-3)
@@ -190,11 +202,38 @@ println(points)
 println(purities)
 =#
 
-result = plot_band_bisection(x -> path(x, [1, 2]), rect, 1e-2)
+#result = plot_band_bisection(x -> path(x, [1, 2]), rect, 1e-2)
 
 # Printing output for WM
-
+#=
 for i = 1:length(result[1])
     println("$(result[1][i][1].lo) $(result[1][i][1].hi) $(result[1][i][2].lo) $(result[1][i][2].hi) $(result[2][i])")
 end
+=#
+
+#= 
+points, purities = plot_band_bisection(x -> path(x, [1, 2]), rect, 1e-2)
+
+for i = 1:length(points)
+    if purities[i] == 0
+        draw_rectangle(points[i][2].lo, points[i][1].lo, diam(points[i][2]), diam(points[i][1]), "green")
+    elseif purities[i] == 1
+        draw_rectangle(points[i][2].lo, points[i][1].lo, diam(points[i][2]), diam(points[i][1]), "blue")
+    end
+end
+axis([0, pi/3, -1, 1])
+=#
+
+
+points, purities = plot_band_bisection_dirty(x -> path(x, [1, 2]), rect, 1e-3)
+for i = 1:length(points)
+    if purities[i] == 0
+        draw_rectangle(points[i][2].lo, points[i][1].lo, diam(points[i][2]), diam(points[i][1]), "green")
+    elseif purities[i] == 1
+        draw_rectangle(points[i][2].lo, points[i][1].lo, diam(points[i][2]), diam(points[i][1]), "blue")
+    elseif purities[i] == -1
+        draw_rectangle(points[i][2].lo, points[i][1].lo, diam(points[i][2]), diam(points[i][1]), "red")
+    end
+end
+axis([0, pi/3, -1, 1])
 
