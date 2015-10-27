@@ -17,19 +17,19 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
 
     I = [Interval(1) Interval(0); Interval(0) Interval(1)]
 
-    # If the jacobian is non-invertible, the SingularException error is returned for Y. We need to choose a slightly different Y then.	
+    # If the jacobian is non-invertible, the SingularException error is returned for Y. We need to choose a slightly different Y then.
     function Y(f, x)
         midx = mid(x)
 	    if det(jacobian(f, midx)) == 0
 		    return make_intervals(inv(jacobian(f, midx + 0.0001*norm(diam(x)))))
 	    else
 		    return make_intervals(inv(jacobian(f, midx)))
-	    end	
+	    end
     end
     #Y(f, x) = make_intervals(inv(jacobian(f, mid(x))))
 
     M(f, x) = I - Y(f, x)*jacobian(f, x)
-    
+
     function K(f, x)
         midx = mid(x)
         intmidx = make_intervals(midx)
@@ -48,7 +48,7 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
 		    dK = diam(Ka)
 
 		    if dK[1] < tol && dK[2] < tol #d == dK
-		        
+
 			    if all_inside(Ka, a) #&& all_inside(f(Ka), [Interval(-tol, tol), Interval(-tol, tol)])
 				    println("Unique zero in $Ka")
 				    push!(roots_array, Ka)
@@ -57,7 +57,7 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
 				    push!(roots_array, Ka)
 			    end
 			    k += 1
-		    else		
+		    else
 			    k += 1
 			    pieces = bisect(Ka)
 			    for i = 1:4
@@ -74,19 +74,18 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
 end
 
 # Version of krawczyk2d with purity
-function krawczyk2d_purity(f, a::MultiDimInterval, prec::Integer=64)
+function krawczyk2d_purity(f, a::MultiDimInterval, prec::Integer=64, tol=1e-4)
     #sol = Array{Array{Interval, 1}, 1}[]
 
     roots_array = MultiDimInterval[]
 
     set_bigfloat_precision(prec)
-    tol = 1e-4
 
     I = [Interval(1) Interval(0); Interval(0) Interval(1)]
-    
+
     intdet(A) = A[1]*A[4] - A[2]*A[3]
 
-    # If the jacobian is non-invertible, the SingularException error is returned for Y. We need to choose a slightly different Y then.	
+    # If the jacobian is non-invertible, the SingularException error is returned for Y. We need to choose a slightly different Y then.
     function Y(f, x)
         midx = mid(x)
         D = intdet(jacobian(f, midx))
@@ -94,11 +93,11 @@ function krawczyk2d_purity(f, a::MultiDimInterval, prec::Integer=64)
 		    return make_intervals(inv(jacobian(f, mid(x + [Interval(0.0001), Interval(0.0002)]))))
 	    else
 		    return make_intervals(inv(jacobian(f, midx)))
-	    end	
+	    end
     end
 
     M(f, x) = I - Y(f, x)*jacobian(f, x)
-    
+
     # Krawczyk operator
     function K(f, x)
         midx = mid(x)
@@ -116,17 +115,17 @@ function krawczyk2d_purity(f, a::MultiDimInterval, prec::Integer=64)
                 @show a
                 krawczyk2d(f, a, prec)
             elseif p == 0
-                
-                println("Unclean")
+
+                #println("Unclean")
                 if max(diam(a)[1], diam(a)[2]) < tol
-                    @show a
+                    #@show a
                     #if all_inside(f(a), [Interval(-tol, tol), Interval(-tol, tol)])
                     #    println("Unique zero in $a")
 			        #    push!(roots_array, a)
 			        #end
-			        println("Krawczyk could not properly identify zeros here")
+			        #println("Krawczyk could not properly identify zeros here")
 			    else
-                
+
                     @show pieces = bisect(a)
                     for i = 1:4
                         krawczyk2d_purity_internal(f, pieces[i], prec)
@@ -155,17 +154,17 @@ function krawczyk2d_loose(f, a::MultiDimInterval, bigprec::Integer=64)
 
     I = [Interval(1) Interval(0); Interval(0) Interval(1)]
     mdelta = [Interval(1e-5) Interval(1e-5); Interval(1e-5) Interval(1e-5)]
-    
+
     intdet(M) = M[1]*M[4] - M[2]*M[3]
-    
-    # If the jacobian is non-invertible, the SingularException error is returned for Y. We need to choose a slightly different Y then.	
+
+    # If the jacobian is non-invertible, the SingularException error is returned for Y. We need to choose a slightly different Y then.
     function Y(f, x)
 	    if intdet(jacobian(f, mid(x))) == Interval(0)
 		    #return make_intervals(inv(jacobian(f, mid(x) + 0.0001*norm(diam(x)))))
 		    return make_intervals(inv(jacobian(f, mid(x)) + mdelta))
 	    else
 		    return make_intervals(inv(jacobian(f, mid(x))))
-	    end	
+	    end
     end
 
     M(f, x) = I - Y(f, x)*jacobian(f, x)
@@ -173,7 +172,7 @@ function krawczyk2d_loose(f, a::MultiDimInterval, bigprec::Integer=64)
 
     k = 1
     i = 0
-    
+
     function krawczyk2d_internal_loose(f, a::MultiDimInterval, bigprec::Integer)
 
         #Ka = isect(a, K(f, a))
@@ -187,10 +186,10 @@ function krawczyk2d_loose(f, a::MultiDimInterval, bigprec::Integer=64)
 		    #d = diam(a)
 		    dK = diam(Ka)
 
-		    if dK[1] < tol && dK[2] < tol  #&& i <= 20 # && Ka != a #d == dK 
+		    if dK[1] < tol && dK[2] < tol  #&& i <= 20 # && Ka != a #d == dK
 		        i += 1
 			    if all_inside(Ka, a) && all_inside(f(Ka), [Interval(-tol, tol), Interval(-tol, tol)])
-			        
+
 			        println("Iteration #$i")
 				    println("Unique zero in $Ka")
 				    @show push!(roots_array, Ka)
@@ -200,9 +199,9 @@ function krawczyk2d_loose(f, a::MultiDimInterval, bigprec::Integer=64)
 				    println("Maybe a zero in $Ka")
 			    end
 			    k += 1
-		    else		
+		    else
 			    k += 1
-			    #@show if 
+			    #@show if
 			    #if (dK[1] > tol || dK[2] > tol) && (isnan(K1[1].lo) && isnan(K1[1].hi) && isnan(K1[2].lo) && isnan(K1[2].hi))
 			    bisect_list = bisect(Ka)
 			    krawczyk2d_internal_loose(f, bisect_list[1], bigprec)
@@ -212,9 +211,9 @@ function krawczyk2d_loose(f, a::MultiDimInterval, bigprec::Integer=64)
 			    #end
 			    #end
 		    end
-                  
+
 	    end
-	    
+
 	    #end
 
 	    return roots_array
@@ -228,4 +227,3 @@ end
 
 #end of module
 end
-
