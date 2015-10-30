@@ -4,7 +4,7 @@ export PurityInterval, purity
 using IntervalArithmetic
 
 type PurityInterval
-    interval::Interval
+    interval#::Interval
     flag::Int
 end
 

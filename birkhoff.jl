@@ -1,6 +1,7 @@
 using IntervalArithmetic
 using AutoDiff
 using PurityIntervals
+using KrawczykMethod2D
 
 # The vector x = [ω, θ] in Birkhoff mapping
 
@@ -36,8 +37,8 @@ function T(x, n, m, r)
 	ω, θ = x
 
 	ω_next = ω - r*(ω*cos(θ - alpha(n, m)) + √(1 - ω^2)*sin(θ - alpha(n, m)))
-	#θ_next = mod(θ + big(pi) + asin(ω) + asin(ω_next), 2π)
-	θ_next = θ + big(pi) + asin(ω) + asin(ω_next)
+	θ_next = mod(θ + big(pi) + asin(ω) + asin(ω_next), 2π)
+	#θ_next = θ + big(pi) + asin(ω) + asin(ω_next)
 
 	[ω_next, θ_next]
 end
@@ -224,7 +225,7 @@ end
 axis([0, pi/3, -1, 1])
 =#
 
-
+#=
 points, purities = plot_band_bisection_dirty(x -> path(x, [1, 2]), rect, 1e-3)
 for i = 1:length(points)
     if purities[i] == 0
@@ -236,4 +237,22 @@ for i = 1:length(points)
     end
 end
 axis([0, pi/3, -1, 1])
+=#
 
+
+f(x) = path(x, [1, 2, 3, 1]) - x
+krawczyk2d_purity(f, rect)
+
+
+# Using the multi-step way because after modification of KrawczykMethod2D mod still produces error in convert()
+#=
+top(x) = ceil(hi(f(x))/2pi)*2pi
+array_sol = MultiDimInterval[]
+for p = 0:top(rect)[1]/2pi
+	for q = 0:top(rect)[2]/2pi
+		array_sol = vcat(array_sol, krawczyk2d_purity(x -> f(x) - [2pi*p, 2pi*q], a))
+	end
+end
+array_sol_nodupes = unique(array_sol)
+array_sol_nodupes
+=#

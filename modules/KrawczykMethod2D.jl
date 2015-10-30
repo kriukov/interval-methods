@@ -106,27 +106,40 @@ function krawczyk2d_purity(f, a::MultiDimInterval, prec::Integer=64, tol=1e-4)
     end
 
     function krawczyk2d_purity_internal(f, a::MultiDimInterval, prec::Integer)
-
+        @show a
         @show p = purity(f, a)
 
         if p != -1
             if p == 1
                 println("Clean")
-                @show a
+                if typeof(a[1]) == IntUnion && typeof(a[2]) == Interval
+                krawczyk2d(f, [a[1].elem1, a[2]], prec)
+                krawczyk2d(f, [a[1].elem2, a[2]], prec)
+                elseif typeof(a[1]) == Interval && typeof(a[2]) == IntUnion
+                krawczyk2d(f, [a[1], a[2].elem1], prec)
+                krawczyk2d(f, [a[1], a[2].elem2], prec)
+                elseif typeof(a[1]) == IntUnion && typeof(a[2]) == IntUnion
+                krawczyk2d(f, [a[1].elem1, a[2].elem1], prec)
+                krawczyk2d(f, [a[1].elem2, a[2].elem1], prec)
+                krawczyk2d(f, [a[1].elem1, a[2].elem2], prec)
+                krawczyk2d(f, [a[1].elem2, a[2].elem2], prec)
+                else
                 krawczyk2d(f, a, prec)
+                end
+                
+                
             elseif p == 0
 
-                #println("Unclean")
+                println("Unclean")
                 if max(diam(a)[1], diam(a)[2]) < tol
                     #@show a
                     #if all_inside(f(a), [Interval(-tol, tol), Interval(-tol, tol)])
                     #    println("Unique zero in $a")
 			        #    push!(roots_array, a)
 			        #end
-			        #println("Krawczyk could not properly identify zeros here")
+			        println("Krawczyk could not properly identify zeros here: tolerance reached at unclean")
 			    else
-
-                    @show pieces = bisect(a)
+                    pieces = bisect(a)
                     for i = 1:4
                         krawczyk2d_purity_internal(f, pieces[i], prec)
                     end

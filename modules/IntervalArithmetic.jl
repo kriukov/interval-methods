@@ -39,13 +39,6 @@ type IntUnion
 	end
 end
 
-import Base.+
-import Base.-
-+(x::IntUnion, y::Interval) = IntUnion(x.elem1 + y, x.elem2 + y)
-+(x::Interval, y::IntUnion) = y + x
--(x::IntUnion, y::Interval) = IntUnion(x.elem1 - y, x.elem2 - y)
--(x::Interval, y::IntUnion) = - (y - x)
-
 
 #= COMMENTED OUT - there are better ways
 function intunion(x::Interval, y::IntUnion)
@@ -1002,6 +995,27 @@ floor(x::Interval) = floor(x.lo)
 
 import Base.norm
 norm(x::Array{Interval, 1}) = norm(mid(x))
+
+# Functions of IntUnion
+import Base.+, Base.-, Base.*, Base./
++(x::IntUnion, y::Interval) = IntUnion(x.elem1 + y, x.elem2 + y)
++(x::Interval, y::IntUnion) = y + x
+-(x::IntUnion, y::Interval) = IntUnion(x.elem1 - y, x.elem2 - y)
+-(x::Interval, y::IntUnion) = - (y - x)
+*(x::IntUnion, y::Interval) = IntUnion(x.elem1*y, x.elem2*y)
+*(x::Interval, y::IntUnion) = y * x
+/(x::IntUnion, y::Interval) = IntUnion(x.elem1/y, x.elem2/y)
+/(x::Interval, y::IntUnion) = IntUnion(x/y.elem1, x/y.elem2)
+
+for func in (:exp, :log, :sin, :cos, :tan, :asin, :acos, :atan, :abs, :sqrt)
+    @eval begin
+        function $func(x::IntUnion)
+            IntUnion($func(x.elem1), $func(x.elem2))
+        end
+    end
+end
+
+mod(x::IntUnion, y) = IntUnion(mod(x.elem1, y), mod(x.elem2, y))
 
 
 # End of module
