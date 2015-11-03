@@ -33,16 +33,73 @@ function T(x, n, m, r)
 end
 =#
 
+# Attempting to give out arrays of answers instead of IntUnions
 function T(x, n, m, r)
 	ω, θ = x
 
 	ω_next = ω - r*(ω*cos(θ - alpha(n, m)) + √(1 - ω^2)*sin(θ - alpha(n, m)))
 	θ_next = mod(θ + big(pi) + asin(ω) + asin(ω_next), 2π)
 	#θ_next = θ + big(pi) + asin(ω) + asin(ω_next)
-
-	[ω_next, θ_next]
+	
+    #[ω_next, θ_next]
+    
+    if typeof(θ_next) == Interval
+    	return [ω_next, θ_next]
+	elseif typeof(θ_next) == IntUnion
+		sol = MultiDimInterval[]
+		push!(sol, [ω_next, θ_next.elem1])
+		push!(sol, [ω_next, θ_next.elem2])
+		return sol
+	end		
 end
 
+function T(x::Array{MultiDimInterval, 1}, n, m, r)
+	sol = MultiDimInterval[]
+	for i = 1:length(x)
+		push!(sol, T(x[i], n, m, r))
+	end
+	return sol
+end
+
+
+#= Gives error: MethodError: `T` has no method matching T(::Array{PurityIntervals.PurityInterval,1}, ::Int32, ::Int32, ::Float64)
+function T(x::Array{Any, 1}, n, m, r)
+    res1 = T([x[1], x[2].elem1], n, m, r)
+    res2 = T([x[1], x[2].elem2], n, m, r)
+    
+    if typeof(res1[2]) == Interval && typeof(res2[2]) == Interval
+        return [IntUnion(res1[1], res2[1]), IntUnion(res1[2], res2[2])]
+    elseif typeof(res1[2]) == IntUnion && typeof(res2[2]) == Interval
+        sol = Array{Any, 1}[]
+        push!(sol, [IntUnion(res1[1], res2[1]), IntUnion(res1[2].elem1, res2[2])])
+        push!(sol, [IntUnion(res1[1], res2[1]), IntUnion(res1[2].elem2, res2[2])])        
+        return sol
+    elseif typeof(res1[2]) == Interval && typeof(res2[2]) == IntUnion
+        sol = Array{Any, 1}[]
+        push!(sol, [IntUnion(res1[1], res2[1]), IntUnion(res1[2], res2[2].elem1)])
+        push!(sol, [IntUnion(res1[1], res2[1]), IntUnion(res1[2], res2[2].elem2)])        
+        return sol
+    elseif typeof(res1[2]) == IntUnion && typeof(res2[2]) == IntUnion
+        sol = Array{Any, 1}[]
+        push!(sol, [IntUnion(res1[1], res2[1]), IntUnion(res1.elem1[2], res2[2].elem1)])
+        push!(sol, [IntUnion(res1[1], res2[1]), IntUnion(res1.elem2[2], res2[2].elem2)])        
+        return sol
+    end
+end
+=#
+
+# After the modification above, it still shows the same error
+
+#=
+function T(x::Array{PurityInterval, 1}, n, m, r)
+	sol = MultiDimInterval[]
+	for i = 1:length(x)
+		xi = x[i]
+		push!(sol, PurityInterval(T(xi, n, m, r), purity(xi -> T(xi, n, m, r), xi)))
+	end
+	return sol
+end
+=#
 
 using PyPlot
 
@@ -241,18 +298,7 @@ axis([0, pi/3, -1, 1])
 
 
 f(x) = path(x, [1, 2, 3, 1]) - x
-krawczyk2d_purity(f, rect)
+#krawczyk2d_purity(f, rect)
 
 
-# Using the multi-step way because after modification of KrawczykMethod2D mod still produces error in convert()
-#=
-top(x) = ceil(hi(f(x))/2pi)*2pi
-array_sol = MultiDimInterval[]
-for p = 0:top(rect)[1]/2pi
-	for q = 0:top(rect)[2]/2pi
-		array_sol = vcat(array_sol, krawczyk2d_purity(x -> f(x) - [2pi*p, 2pi*q], a))
-	end
-end
-array_sol_nodupes = unique(array_sol)
-array_sol_nodupes
-=#
+

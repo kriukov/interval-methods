@@ -24,115 +24,6 @@ type Interval
 
 end
 
-## --------- Attempt to introduce interval unions --------------
-
-# Union of 2 intervals
-
-type IntUnion
-	elem1::Interval
-	elem2::Interval
-	function IntUnion(elem1, elem2)
-	    if isect(elem1, elem2) != false
-		    return hull(elem1, elem2) #error("Badly formed union: elements intersect")
-	    end
-		new(elem1, elem2)
-	end
-end
-
-
-#= COMMENTED OUT - there are better ways
-function intunion(x::Interval, y::IntUnion)
-
-	m = 0; n = 0
-	for i = 1:length(y)
-		if belong(x.lo, y[i])
-			m += i
-		end
-		if belong(x.hi, y[i])
-			n += i
-		end
-	end
-	answer = Interval[]
-	if m != 0 && n != 0
-
-		for i = 1:m-1
-			push!(answer, y[i])
-		end
-		push!(answer, Interval(y[m].lo, y[n].hi))
-		for i = n+1:length(y)
-			push!(answer, y[i])
-		end
-	end
-	return answer
-		answer = Interval[]
-	if m != 0 && n == 0
-
-		for i = 1:m-1
-			push!(answer, y[i])
-		end
-		push!(answer, Interval(y[m].lo, x.hi))
-		k = 0
-		for i = 1:length(y)
-			if y[i].lo > x.hi
-			k = i
-			break
-			end
-		end
-		for i = k+1:length(y)
-			push!(answer, y[i])
-		end
-	end
-	return answer
-
-	if m == 0 && n != 0
-		answer = Interval[]
-		k = 0
-		for i = 1:length(y)
-			if y[i].lo > x.lo
-			k = i
-			break
-			end
-		end
-		for i = 1:k-1
-			push!(answer, y[i])
-		end
-		push!(answer, Interval(y[m].lo, x.hi))
-		for i = n+1:length(y)
-			push!(answer, y[i])
-		end
-	end
-	return answer
-
-	if m == 0 && n == 0
-		answer = Interval[]
-		k = 0; l = 0
-		for i = 1:length(y)
-			if y[i].lo > x.lo
-			k = i
-			break
-			end
-		end
-		for i = 1:length(y)
-			if y[i].lo > x.hi
-			l = i
-			break
-			end
-		end
-		for i = 1:k-1
-			push!(answer, y[i])
-		end
-		push!(answer, x)
-		for i = l:length(y)
-			push!(answer, y[i])
-		end
-	end
-	return answer
-
-end
-=#
-
-# Still need to deal with arrays output by mod(interval)
-
 
 typealias MultiDimInterval Array{Interval, 1}
 
@@ -156,7 +47,7 @@ zero(Interval) = Interval(0)
 # The basic operations on intervals. Left end is rounded down, right end is rounded up.
 
 # Addition
-
+import Base.+, Base.-
 function +(x::Interval, y::Interval)
 	z1 = with_rounding(prec, RoundDown) do
 		x.lo + y.lo
@@ -458,40 +349,6 @@ end
 
 # Trigonometry
 
-#= COMMENTED OUT: old Tucker definition of sin
-import Base.sin
-function sin(x::Interval)
-
-	k = 0
-	pcount = 0
-	for k = -1000:1000
-p = pi/2 + 2pi*k
-if belong(p, x) == true
-pcount = pcount + 1
-end
-	end
-
-	k = 0
-	qcount = 0
-	for k = -1000:1000
-q = - pi/2 + 2pi*k
-if belong(q, x) == true
-qcount = qcount + 1
-end
-	end
-
-	if qcount != 0 && pcount != 0
-		return Interval(-1., 1.)
-	elseif qcount != 0 && pcount == 0
-		return Interval(-1., max(sin(x.lo), sin(x.hi)))
-	elseif qcount == 0 && pcount != 0
-		return Interval(min(sin(x.lo), sin(x.hi)), 1.)
-	elseif qcount == 0 && pcount == 0
-		return Interval(min(sin(x.lo), sin(x.hi)), max(sin(x.lo), sin(x.hi)))
-	end
-end
-=#
-
 
 # Taken from http://jenchienjackchang.com/sample-page/implicit-solid-modeling-using-interval-methods/interval-arithmetic/
 
@@ -588,7 +445,6 @@ function sin(a::Interval)
 	end
 end
 
-
 import Base.cos
 cos(x::Interval) = sin(Interval(x.lo + pi/2, x.hi + pi/2))
 
@@ -628,7 +484,8 @@ asin(x::Interval) = Interval(asin(x.lo), asin(x.hi))
 import Base.acos
 acos(x::Interval) = Interval(acos(x.hi), acos(x.lo))
 
-# Distinguishing clean, unclean and dirty intervals - may be done through metaprogramming
+
+# Old function for the first version of purity and loose evaluation
 
 #= Check if x is within the range of function f - unnecessary, domaincheck does a better job
 function is_allowed(f, x)
@@ -686,14 +543,6 @@ function domaincheck2d(f, x)
     return min(a, b)
 end
 
-# Workaround - removed
-#domaincheck2d_c(f, x) = min(domaincheck(f, x), domaincheck2d(f, x))
-
-# Rotate the 2D rectangle by pi/2
-flip(x::MultiDimInterval) = [x[2], x[1]]
-
-# Macro to split a 2D functions?
-
 # Loose evaluation
 
 function sqrt_d(x)
@@ -715,6 +564,8 @@ function arcsin_d(x)
 		return Interval(Inf, -Inf)
 	end
 end
+
+
 
 
 # Modulo and remainder
@@ -787,11 +638,13 @@ norm(x::MultiDimInterval) = sqrt(x[1]^2 + x[2]^2)
 
 /(x::Array{Interval, 1}, y::Interval) = [x[1]/y, x[2]/y]
 
+# Rotate the 2D rectangle by pi/2
+flip(x::MultiDimInterval) = [x[2], x[1]]
+
 # Function that makes numbers into thin intervals in arrays
 function make_intervals(x::Array{prec, 1})
 	map(Interval, x)
 end
-
 
 function make_intervals(x::Array{prec, 2})
 	y = Interval[]
@@ -820,7 +673,6 @@ function isect(x::MultiDimInterval, y::MultiDimInterval)
 	end
 	return z
 end
-
 
 function isectext(x::MultiDimInterval, y::MultiDimInterval)
 	z = Interval[]
@@ -996,6 +848,50 @@ floor(x::Interval) = floor(x.lo)
 import Base.norm
 norm(x::Array{Interval, 1}) = norm(mid(x))
 
+
+
+## --------- Interval unions -----------
+
+# Union of 2 intervals
+
+
+type IntUnion
+	elem1::Interval
+	elem2::Interval
+	function IntUnion(elem1, elem2)
+	    if isect(elem1, elem2) != false
+		    return hull(elem1, elem2) #error("Badly formed union: elements intersect")
+	    end
+		new(elem1, elem2)
+	end
+end
+
+#=
+type IntUnion
+	union::Array{Interval, 1}
+	function IntUnion(union)
+        new_union = Interval[]
+	    
+	    while new_union != union
+	    new_union = Interval[]
+	    for i = 1:length(union)
+	        for j = i:length(union)
+	         
+	            if isect(union[i], union[j]) != false
+		            @show push!(new_union, hull(union[i], union[j]))
+		        else
+		            @show push!(new_union, union[i])
+	            end
+	        
+	        end
+	    end
+	    union = unique(new_union)
+	    end
+		new(union)
+	end
+end
+=#
+
 # Functions of IntUnion
 import Base.+, Base.-, Base.*, Base./
 +(x::IntUnion, y::Interval) = IntUnion(x.elem1 + y, x.elem2 + y)
@@ -1016,6 +912,23 @@ for func in (:exp, :log, :sin, :cos, :tan, :asin, :acos, :atan, :abs, :sqrt)
 end
 
 mod(x::IntUnion, y) = IntUnion(mod(x.elem1, y), mod(x.elem2, y))
+
+function isect(x::Interval, y::IntUnion)
+    s1 = isect(x, y.elem1)
+    s2 = isect(x, y.elem2)
+    if s1 != false && s2 != false
+        return IntUnion(s1, s2)
+    elseif s1 != false && s2 == false
+        return s1
+    elseif s1 == false && s2 != false
+        return s2
+    else
+        return false
+    end
+end
+
+isect(x::IntUnion, y::Interval) = isect(y, x)
+#isect(x::IntUnion, y::IntUnion) = IntUnion()
 
 
 # End of module
