@@ -26,31 +26,14 @@ function alpha(n, m)
 	end
 end
 
-#=
-function T(x, n, m, r)
-	wnext = ω - r*(ω*cos(θ - alpha(n, m)) + sqrt_d(1 - ω^2)*sin(θ - alpha(n, m)))
-	[wnext, mod(θ + float(pi) + arcsin_d(x[1]) + arcsin_d(wnext), 2pi)]
-end
-=#
-
-# Attempting to give out arrays of answers instead of IntUnions
 function T(x, n, m, r)
 	ω, θ = x
-
+    #@show x, n, m 
 	ω_next = ω - r*(ω*cos(θ - alpha(n, m)) + √(1 - ω^2)*sin(θ - alpha(n, m)))
 	θ_next = mod(θ + big(pi) + asin(ω) + asin(ω_next), 2π)
 	#θ_next = θ + big(pi) + asin(ω) + asin(ω_next)
 	
-    #[ω_next, θ_next]
-    
-    if typeof(θ_next) == Interval
-    	return [ω_next, θ_next]
-	elseif typeof(θ_next) == IntUnion
-		sol = MultiDimInterval[]
-		push!(sol, [ω_next, θ_next.elem1])
-		push!(sol, [ω_next, θ_next.elem2])
-		return sol
-	end		
+    [ω_next, θ_next]
 end
 
 function T(x::Array{MultiDimInterval, 1}, n, m, r)
@@ -104,34 +87,6 @@ end
 using PyPlot
 
 distance_between_centers = 6.
-
-#= These functions have been replaced by path()
-f12(x) = T(x, 1, 2, distance_between_centers)
-f13(x) = T(x, 1, 3, distance_between_centers)
-
-function twice_123(x0)
-	x1 = T(x0, 1, 2, distance_between_centers)
-	x2 = T(x1, 2, 3, distance_between_centers)
-
-	x2
-
-end
-
-function twice_123(x0)
-	x1 = T(x0, 1, 2, distance_between_centers)
-	x2 = T(x1, 2, 3, distance_between_centers)
-
-	x2
-
-end
-
-function iterate_1231(x0)
-	x1 = T(x0, 1, 2, distance_between_centers)
-	x2 = T(x1, 2, 3, distance_between_centers)
-	x3 = T(x2, 3, 1, distance_between_centers)
-	x3
-end
-=#
 
 # x = [ω, θ] and n is array of path points, e.g. [1, 2, 3, 1, 3]
 function path(x, n)
@@ -298,7 +253,9 @@ axis([0, pi/3, -1, 1])
 
 
 f(x) = path(x, [1, 2, 3, 1]) - x
-#krawczyk2d_purity(f, rect)
+a = [Interval(-0.5-0.001, -0.5+0.001), Interval(pi/6-0.001, pi/6+0.001)]
 
+#krawczyk2d_purity(f, rect, 64, 1e-2)
+krawczyk2d_purity(f, a, 64, 1e-4)
 
 

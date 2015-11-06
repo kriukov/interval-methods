@@ -76,9 +76,7 @@ end
 # Version of krawczyk2d with purity
 function krawczyk2d_purity(f, a::MultiDimInterval, prec::Integer=64, tol=1e-4)
     #sol = Array{Array{Interval, 1}, 1}[]
-
-    roots_array = MultiDimInterval[]
-
+    roots_array = Array{MultiDimInterval, 1}[]
     set_bigfloat_precision(prec)
 
     I = [Interval(1) Interval(0); Interval(0) Interval(1)]
@@ -106,27 +104,17 @@ function krawczyk2d_purity(f, a::MultiDimInterval, prec::Integer=64, tol=1e-4)
     end
 
     function krawczyk2d_purity_internal(f, a::MultiDimInterval, prec::Integer)
+        
         @show a
         @show p = purity(f, a)
 
         if p != -1
             if p == 1
                 println("Clean")
-                if typeof(a[1]) == IntUnion && typeof(a[2]) == Interval
-                krawczyk2d(f, [a[1].elem1, a[2]], prec)
-                krawczyk2d(f, [a[1].elem2, a[2]], prec)
-                elseif typeof(a[1]) == Interval && typeof(a[2]) == IntUnion
-                krawczyk2d(f, [a[1], a[2].elem1], prec)
-                krawczyk2d(f, [a[1], a[2].elem2], prec)
-                elseif typeof(a[1]) == IntUnion && typeof(a[2]) == IntUnion
-                krawczyk2d(f, [a[1].elem1, a[2].elem1], prec)
-                krawczyk2d(f, [a[1].elem2, a[2].elem1], prec)
-                krawczyk2d(f, [a[1].elem1, a[2].elem2], prec)
-                krawczyk2d(f, [a[1].elem2, a[2].elem2], prec)
-                else
-                krawczyk2d(f, a, prec)
+                roots = krawczyk2d(f, a, prec)
+                if length(roots) > 0
+                    push!(roots_array, roots)
                 end
-                
                 
             elseif p == 0
 
@@ -137,7 +125,7 @@ function krawczyk2d_purity(f, a::MultiDimInterval, prec::Integer=64, tol=1e-4)
                     #    println("Unique zero in $a")
 			        #    push!(roots_array, a)
 			        #end
-			        println("Krawczyk could not properly identify zeros here: tolerance reached at unclean")
+			        print_with_color(:blue, "Krawczyk could not properly identify zeros here: tolerance reached at unclean\n")
 			    else
                     pieces = bisect(a)
                     for i = 1:4

@@ -384,6 +384,9 @@ function sin(a::Interval)
 	if a == Interval(Inf, Inf)
 		return Interval(Inf, Inf)
 	end
+	if isnan(a.lo) || isnan(a.hi)
+	    return Interval(NaN, NaN)
+	end
 	#piHalf = pi*BigFloat("0.5")
 	piHalf = pi*parse(BigFloat, "0.5")
 	#twoPi = pi*BigFloat("2.0")
@@ -572,11 +575,14 @@ end
 
 import Base.mod
 function mod(x::Interval, y::Real)
+    if x == Interval(Inf, Inf)
+        return Interval(Inf, Inf)
+    end
 	if diam(x) >= y
 		return Interval(0, y)
 	else
 		if belong((floor(x.lo/y) + 1)*y, x)
-			return IntUnion(Interval(0, mod(x.hi, y)), Interval(mod(x.lo, y), y)) #[Interval(0, mod(x.hi, y)), Interval(mod(x.lo, y), y)]
+			return IntUnion([Interval(0, mod(x.hi, y)), Interval(mod(x.lo, y), y)]) #[Interval(0, mod(x.hi, y)), Interval(mod(x.lo, y), y)]
 		else
 			return Interval(mod(x.lo, y), mod(x.hi, y))
 		end
@@ -852,7 +858,7 @@ norm(x::Array{Interval, 1}) = norm(mid(x))
 
 ## --------- Interval unions -----------
 
-# Union of 2 intervals
+#= Union of 2 intervals - old version
 
 
 type IntUnion
@@ -865,34 +871,10 @@ type IntUnion
 		new(elem1, elem2)
 	end
 end
-
-#=
-type IntUnion
-	union::Array{Interval, 1}
-	function IntUnion(union)
-        new_union = Interval[]
-	    
-	    while new_union != union
-	    new_union = Interval[]
-	    for i = 1:length(union)
-	        for j = i:length(union)
-	         
-	            if isect(union[i], union[j]) != false
-		            @show push!(new_union, hull(union[i], union[j]))
-		        else
-		            @show push!(new_union, union[i])
-	            end
-	        
-	        end
-	    end
-	    union = unique(new_union)
-	    end
-		new(union)
-	end
-end
 =#
 
-# Functions of IntUnion
+
+#=
 import Base.+, Base.-, Base.*, Base./
 +(x::IntUnion, y::Interval) = IntUnion(x.elem1 + y, x.elem2 + y)
 +(x::Interval, y::IntUnion) = y + x
@@ -926,10 +908,124 @@ function isect(x::Interval, y::IntUnion)
         return false
     end
 end
+=#
 
-isect(x::IntUnion, y::Interval) = isect(y, x)
+#isect(x::IntUnion, y::Interval) = isect(y, x)
 #isect(x::IntUnion, y::IntUnion) = IntUnion()
 
+# Base.unique() doesn't work for interval arrays. This extension is not the most efficient (we don't have to check equality with all elements above, just stop at the first equal).
+import Base.unique
+function unique(x::Array{Interval, 1})
+    x1 = Interval[]
+    for i = 1:length(x)
+        k = 0
+        for j = i+1:length(x)
+            k += (x[j] == x[i])            
+        end
+        if k == 0
+            push!(x1, x[i])
+        end
+    end
+    x1
+end
+
+## Arbitrary IntUnion
+
+type IntUnion
+	union::Array{Interval, 1}
+	function IntUnion(x)
+	    new(unique(x))
+	end
+end
+
+# Four arithmetic operations on IntUnions
+import Base.+, Base.-, Base.*, Base./
+for func in (:+, :-, :*, :/)
+    @eval begin
+        function $func(x::IntUnion, y::IntUnion)
+            res = Interval[]
+            for i = 1:length(x.union)
+                for j = 1:length(y.union)
+                    push!(res, $func(x.union[i], y.union[j]))
+                end
+            end
+            return IntUnion(res)
+        end
+    end
+end
+
+for func in (:exp, :log, :sin, :cos, :tan, :asin, :acos, :atan, :abs, :sqrt)
+    @eval begin
+        function $func(x::IntUnion)
+            IntUnion(map($func, x.union))
+        end
+    end
+end
+
++(x::IntUnion, y) = x + IntUnion([Interval(y)])
++(x, y::IntUnion) = y + x
+-(x::IntUnion) = IntUnion(-x.union)
+-(x::IntUnion, y) = x - IntUnion([Interval(y)])
+-(x, y::IntUnion) = - (y - x)
+*(x::IntUnion, y) = x*IntUnion([Interval(y)])
+*(x, y::IntUnion) = y*x
+/(x::IntUnion, y) = x/IntUnion([Interval(y)])
+/(x, y::IntUnion) = 1/(y/x)
+
+function isect(x::IntUnion, y::IntUnion)
+    res = Interval[]
+    for i = 1:length(x.union)
+        for j = 1:length(y.union)
+            isect_ij = isect(x.union[i], y.union[j])
+            if isect_ij != false
+                push!(res, isect_ij)
+            end
+        end
+    end
+    if length(res) == 0
+        return false
+    else
+        return IntUnion(res)
+    end
+end
+
+isect(x::IntUnion, y::Interval) = isect(x, IntUnion([y]))
+isect(x::Interval, y::IntUnion) = isect(y, x)
+
+function inside(x::IntUnion, y::Interval)
+    k = 0
+    for i = 1:length(x.union)
+        k += !inside(x.union[i], y)
+    end
+    if k > 0
+        return false
+    else 
+        return true
+    end
+end
+
+function mod(x::IntUnion, y)
+    res = Interval[]
+    for i = 1:length(x.union)
+        res_element = mod(x.union[i], y)
+        if typeof(res_element) == Interval
+            push!(res, res_element)
+        elseif typeof(res_element) == IntUnion
+            push!(res, res_element.union[1])
+            push!(res, res_element.union[2])
+        end            
+    end
+    IntUnion(res)
+end
+
+import Base.isnan
+function isnan(x::Interval)
+    if isnan(x.lo) || isnan(x.hi)
+        return true
+    else 
+        return false
+    end
+end
 
 # End of module
 end

@@ -12,7 +12,16 @@ end
 # 0 = partially defined ("unclean")
 # -1 = undefined ("dirty")
 
-PurityInterval(x) = PurityInterval(x, 1)
+function PurityInterval(x)
+    if !isnan(x)
+        return PurityInterval(x, 1)
+    else
+        return PurityInterval(x, -1)
+    end
+end
+
+
+#PurityInterval(x::IntUnion) = IntUnion(map(PurityInterval, x.union))
 
 import Base.+, Base.-, Base.*, Base./
 for op in (:+, :-, :*, :/)
