@@ -45,32 +45,6 @@ function T(x::Array{MultiDimInterval, 1}, n, m, r)
 end
 
 
-#= Gives error: MethodError: `T` has no method matching T(::Array{PurityIntervals.PurityInterval,1}, ::Int32, ::Int32, ::Float64)
-function T(x::Array{Any, 1}, n, m, r)
-    res1 = T([x[1], x[2].elem1], n, m, r)
-    res2 = T([x[1], x[2].elem2], n, m, r)
-    
-    if typeof(res1[2]) == Interval && typeof(res2[2]) == Interval
-        return [IntUnion(res1[1], res2[1]), IntUnion(res1[2], res2[2])]
-    elseif typeof(res1[2]) == IntUnion && typeof(res2[2]) == Interval
-        sol = Array{Any, 1}[]
-        push!(sol, [IntUnion(res1[1], res2[1]), IntUnion(res1[2].elem1, res2[2])])
-        push!(sol, [IntUnion(res1[1], res2[1]), IntUnion(res1[2].elem2, res2[2])])        
-        return sol
-    elseif typeof(res1[2]) == Interval && typeof(res2[2]) == IntUnion
-        sol = Array{Any, 1}[]
-        push!(sol, [IntUnion(res1[1], res2[1]), IntUnion(res1[2], res2[2].elem1)])
-        push!(sol, [IntUnion(res1[1], res2[1]), IntUnion(res1[2], res2[2].elem2)])        
-        return sol
-    elseif typeof(res1[2]) == IntUnion && typeof(res2[2]) == IntUnion
-        sol = Array{Any, 1}[]
-        push!(sol, [IntUnion(res1[1], res2[1]), IntUnion(res1.elem1[2], res2[2].elem1)])
-        push!(sol, [IntUnion(res1[1], res2[1]), IntUnion(res1.elem2[2], res2[2].elem2)])        
-        return sol
-    end
-end
-=#
-
 # After the modification above, it still shows the same error
 
 #=
@@ -100,7 +74,7 @@ function path(x, n)
     x
 end
 
-
+# Non-bisection inefficient plotting
 function plot_band(f, N)
 
 	# Split the phase space w = [-1, 1], th = [0, pi/3] into 30x30 rectangles
@@ -145,6 +119,7 @@ rect = [Interval(-0.999, 0.999), Interval(0.001, big(pi)/3-0.001)]
 points = Array{Interval, 1}[]
 purities = Int[]
 
+# More efficient plotting without dirty rectangles
 function plot_band_bisection(f, rect, tol)
     limitrect(rect) = max(diam(rect)[1], diam(rect)[2]) < tol
     p = purity(f, rect)
@@ -171,6 +146,7 @@ function plot_band_bisection(f, rect, tol)
     points, purities
 end
 
+# Plotting that includes dirty rectangles
 function plot_band_bisection_dirty(f, rect, tol)
     limitrect(rect) = max(diam(rect)[1], diam(rect)[2]) < tol
     p = purity(f, rect)
@@ -224,9 +200,11 @@ for i = 1:length(result[1])
 end
 =#
 
-#= 
-points, purities = plot_band_bisection(x -> path(x, [1, 2]), rect, 1e-2)
 
+
+#= Draw domain of T[...] without dirty
+
+points, purities = plot_band_bisection(x -> path(x, [1, 2]), rect, 1e-2)
 for i = 1:length(points)
     if purities[i] == 0
         draw_rectangle(points[i][2].lo, points[i][1].lo, diam(points[i][2]), diam(points[i][1]), "green")
@@ -235,8 +213,10 @@ for i = 1:length(points)
     end
 end
 axis([0, pi/3, -1, 1])
+savefig("T12-domain.pdf")
 =#
 
+# Draw domain of T12 with dirty
 #=
 points, purities = plot_band_bisection_dirty(x -> path(x, [1, 2]), rect, 1e-3)
 for i = 1:length(points)
@@ -252,10 +232,52 @@ axis([0, pi/3, -1, 1])
 =#
 
 
-f(x) = path(x, [1, 2, 3, 1]) - x
-a = [Interval(-0.5-0.001, -0.5+0.001), Interval(pi/6-0.001, pi/6+0.001)]
+#f(x) = path(x, [1, 2, 3, 1]) - x
+#a = [Interval(-0.5-0.001, -0.5+0.001), Interval(pi/6-0.001, pi/6+0.001)]
 
-#krawczyk2d_purity(f, rect, 64, 1e-2)
-krawczyk2d_purity(f, a, 64, 1e-4)
+#f(x) = path(x, [1, 2, 3, 1, 3, 1]) - x
 
+#krawczyk2d_purity(f, rect, 64, 1e-4)
+#krawczyk2d_purity(f, a, 64, 1e-4)
+
+#rect = [Interval(-0.95, 0.95), Interval(0.05, big(pi)/3-0.05)]
+#rect = [Interval(-0.51, -0.02), Interval(0.05, big(pi)/6-0.05)]
+#krawczyk2d_purity(f, rect, 64, 1e-4)
+
+# Draw the image/range
+#points, purities = plot_band_bisection(x -> path(x, [1, 2, 3, 1]), rect, 5e-5)
+points0 = readdlm("points.dat")
+points = MultiDimInterval[]
+for i = 1:length(points0)
+    push!(points, eval(parse(points0[i])))
+end
+
+purities = readdlm("purities.dat")
+
+for i = 1:length(points)
+    if purities[i] == 1
+        @show point_image = path(points[i], [1, 2, 3, 1])
+        if typeof(point_image[1]) == Interval && typeof(point_image[2]) == Interval
+            draw_rectangle(point_image[2].lo, point_image[1].lo, diam(point_image[2]), diam(point_image[1]), "blue")
+        elseif typeof(point_image[1]) == Interval && typeof(point_image[2]) == IntUnion
+            for i = 1:length(point_image[2].union)
+                draw_rectangle(point_image[2].union[i].lo, point_image[1].lo, diam(point_image[2].union[i]), diam(point_image[1]), "blue")
+            end
+        elseif typeof(point_image[1]) == IntUnion && typeof(point_image[2]) == Interval
+            for i = 1:length(point_image[1].union)
+                draw_rectangle(point_image[2].lo, point_image[1].union[i].lo, diam(point_image[2]), diam(point_image[1].union[i]), "blue")
+            end
+        elseif typeof(point_image[1]) == IntUnion && typeof(point_image[2]) == IntUnion
+            for i = 1:length(point_image[1].union)
+                for j = 1:length(point_image[2].union)
+                    draw_rectangle(point_image[2].union[j].lo, point_image[1].union[i].lo, diam(point_image[2].union[j]), diam(point_image[1].union[i]), "blue")
+                end
+            end
+        end
+    end
+end
+axis([0, 2pi, -1, 1])
+
+
+#savefig("T1231-range.pdf")
 

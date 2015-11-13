@@ -923,9 +923,11 @@ function unique(x::Array{Interval, 1})
             k += (x[j] == x[i])            
         end
         if k == 0
+            #@show x[i]
             push!(x1, x[i])
         end
     end
+    #@show length(x1)
     x1
 end
 
