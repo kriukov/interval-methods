@@ -32,12 +32,17 @@ for op in (:+, :-, :*, :/)
 	end
 end
 
+-(x::PurityInterval) = PurityInterval(-x.interval, x.flag)
+
+PurityInterval(x::PurityInterval, y::Int) = PurityInterval(x.interval, min(y, x.flag))
+
 import Base.sin
 sin(x::PurityInterval) = PurityInterval(sin(x.interval), x.flag)
 import Base.cos
 cos(x::PurityInterval) = PurityInterval(cos(x.interval), x.flag)
 import Base.mod
 mod(x::PurityInterval, y::Real) = PurityInterval(mod(x.interval, y), x.flag)
+
 
 # On "empty-set" interval [Inf, Inf]: if you try to do [Inf, -Inf], then its subtraction may yield the whole real line!
 
@@ -78,6 +83,10 @@ function purity(f, x::MultiDimInterval)
 	min(p[1].flag, p[2].flag)
 end
 
+function purity(f, x::Array{MultiDimInterval, 1})
+	p = f([PurityInterval(x[1]), PurityInterval(x[2])])
+	min(p[1].flag, p[2].flag)
+end
 
 
 # end of module

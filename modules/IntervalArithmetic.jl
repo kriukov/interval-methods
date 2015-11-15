@@ -1,7 +1,7 @@
 ## Interval arithmetic
 
 module IntervalArithmetic
-export Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, all_inside, bisect, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip, arcsin_d, sqrt_d
+export Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, all_inside, bisect, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip, arcsin_d, sqrt_d, normsq
 
 typealias prec BigFloat
 
@@ -487,7 +487,6 @@ asin(x::Interval) = Interval(asin(x.lo), asin(x.hi))
 import Base.acos
 acos(x::Interval) = Interval(acos(x.hi), acos(x.lo))
 
-
 # Old function for the first version of purity and loose evaluation
 
 #= Check if x is within the range of function f - unnecessary, domaincheck does a better job
@@ -642,7 +641,14 @@ cos(x::Array{Any, 1}) = map(cos, x)
 import Base.norm
 norm(x::MultiDimInterval) = sqrt(x[1]^2 + x[2]^2)
 
-/(x::Array{Interval, 1}, y::Interval) = [x[1]/y, x[2]/y]
+normsq(x) = x[1]^2 + x[2]^2
+
+import Base.dot
+dot(x::MultiDimInterval, y::MultiDimInterval) = x[1]*y[1] + x[2]*y[2]
+
+*(x::MultiDimInterval, y::Interval) = [x[1]*y, x[2]*y]
+*(x::Interval, y::MultiDimInterval) = y*x
+/(x::MultiDimInterval, y::Interval) = [x[1]/y, x[2]/y]
 
 # Rotate the 2D rectangle by pi/2
 flip(x::MultiDimInterval) = [x[2], x[1]]
@@ -663,7 +669,7 @@ end
 make_intervals(x::Array{Interval, 1}) = x
 make_intervals(x::Array{Interval, 2}) = x
 
-# Intersection of 2-D vectors
+# Intersection of 2-D rectangles
 function isect(x::MultiDimInterval, y::MultiDimInterval)
 	z = Interval[]
 	if length(x) == length(y)
@@ -1028,6 +1034,15 @@ function isnan(x::Interval)
         return false
     end
 end
+
+function isnan(x::MultiDimInterval)
+    if isnan(x[1].lo) || isnan(x[1].hi) || isnan(x[2].lo) || isnan(x[2].hi)
+        return true
+    else
+        return false
+    end
+end
+
 
 # End of module
 end
