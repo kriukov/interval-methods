@@ -34,6 +34,7 @@ end
 
 -(x::PurityInterval) = PurityInterval(-x.interval, x.flag)
 
+# Embedding a PurityInterval into a PurityInterval should be idempotent
 PurityInterval(x::PurityInterval, y::Int) = PurityInterval(x.interval, min(y, x.flag))
 
 import Base.sin

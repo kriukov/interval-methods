@@ -49,16 +49,16 @@ end
 
 function trajectory(x, v, c, maxsteps, prec=64)
     set_bigfloat_precision(prec)
-    #=places = MultiDimInterval[]
+    places = MultiDimInterval[]
     disks = Int[]
     speeds = MultiDimInterval[]
     times = Interval[]
-    =#
+    #=
     places = Any[]
     disks = Any[]
     speeds = Any[]
     times = Any[]
-    
+    =#
     n = length(c)
     step = 1
     t0 = Interval(0)
@@ -106,16 +106,114 @@ function trajectory(x, v, c, maxsteps, prec=64)
         @show v1 = v - [2*(v[1]*N[1] + v[2]*N[2])*N[1], 2*(v[1]*N[1] + v[2]*N[2])*N[2]]
         @show t0 += t_minpos
 
-        #= push!(places, x1)
+        push!(places, x1)
         push!(disks, disk)
         push!(speeds, v1)
         push!(times, t0)
-        =#
+
         x = x1
         v = v1
         step += 1
     end
-    return x #places, disks, speeds, times
+    return places, disks, speeds, times
+end
+
+
+function collision_purity(x, v, c, tol, prec=64)
+    set_bigfloat_precision(prec)
+    n = length(c)
+    step = 1
+    t0 = Interval(0)
+    rectangles = MultiDimInterval[]
+    disks = Int[]
+    
+    function collision_purity_internal(x, v, c)
+        B = Union{Interval, PurityInterval}[]
+        C = Union{Interval, PurityInterval}[]
+        t = PurityInterval[]
+
+        for i = 1:n
+            #push!(B, dot(x - c[i], v))
+            push!(B, (x[1] - c[i][1])*v[1] + (x[2] - c[i][2])*v[2])
+            push!(C, normsq(x - c[i]) - 1)
+            push!(t, (-B[i] - sqrt(PurityInterval(B[i]^2 - normsq(v)*C[i], 1))/normsq(v)))
+        end
+        
+        # We obtained an array of times to disks with the corresponding purities. Regardless of the purity, if the interval is fully negative, it means that the corresponding disk is behind.
+        
+        # Finding time intervals with p = 1
+        k = 0
+        for i = 1:n
+            if t[i].flag == 1 && t[i].interval.lo >= 0
+                k = i
+                break
+            end    
+        end
+        
+        # If found such an interval, record it and the disk which is hit with certainty from this interval. If not, bisect the original rectangle and repeat the function
+        if k > 0
+            @show push!(rectangles, x)
+            @show push!(disks, k)
+        elseif k == 0
+            if max(diam(x)[1], diam(x)[2]) > tol
+                pieces = bisect(x)
+                for i = 1:4
+                    collision_purity_internal(pieces[i], v, c)
+                end
+            else
+                println("Tolerance reached")
+            end
+        end
+        return rectangles, disks
+        end
+    
+    return collision_purity_internal(x, v, c)
+end
+
+function collision_purity_flat(x, v, c, tol, prec=64)
+    set_bigfloat_precision(prec)
+    n = length(c)
+    t0 = Interval(0)
+    rectangles = MultiDimInterval[]
+    disks = Int[]
+    N1 = floor(1/tol)
+    dx = diam(x[1]/N1)
+    dy = diam(x[2]/N1)
+    for i0 = 1:N1
+        for j0 = 1:N1
+            rect = [x[1].lo + i0*dx - Interval(0, dx), x[2].lo + j0*dy - Interval(0, dy)]
+            #B = Union{Interval, PurityInterval}[]
+            #C = Union{Interval, PurityInterval}[]
+            X = MultiDimInterval[]
+            t = PurityInterval[]
+
+            for i = 1:n
+                #push!(B, dot(rect - c[i], v))
+                #push!(B, (rect[1] - c[i][1])*v[1] + (rect[2] - c[i][2])*v[2])
+                #push!(C, normsq(rect - c[i]) - 1)
+                push!(X, rect - c[i])
+                push!(t, (-(X[i][1]*v[1] + X[i][2]*v[2]) - sqrt(PurityInterval(normsq(v) - (X[i][1]*v[2] - X[i][2]*v[1])^2, 1))/normsq(v)))
+            end
+            
+            #println(rect, t)
+            
+            # Finding valid time intervals
+            k = 0
+            for i = 1:n
+                if mid(t[i].interval) >= 0 # && t[i].flag == 1 
+                    k = i
+                    break
+                end    
+            end
+            
+            if k > 0
+                push!(rectangles, rect)
+                push!(disks, k)
+            end    
+            
+        end    
+    end
+    return rectangles, disks
 end
 
 
@@ -124,13 +222,39 @@ r = 6
 c = MultiDimInterval[]
 push!(c, [Interval(0), Interval(0)], [Interval(r), Interval(0)], [Interval(r/2), Interval(r*sqrt(3)/2)])
 
-# Initial conditions - not necessarily on disk curcumference
+#= Initial conditions - not necessarily on disk circumference
 x = [Interval(r/2), Interval(0.5)]
 v = [Interval(1), Interval(0)]
 
-#traj = trajectory(x, v, c, 2)
+traj(steps) = trajectory(x, v, c, steps)
 
-f(x) = trajectory(x, v, c, 1)
+f(x) = trajectory(x, v, c, 1)[1][1]
 
 purity(f, x)
+=#
 
+x = [Interval(-2, 7), Interval(-2, 7)]
+v = [Interval(1), Interval(0)]
+#collision_purity_flat(x, v, c, 1e-1)
+
+# Function to draw rectangles
+using PyPlot
+using PyCall
+@pyimport matplotlib.patches as patches
+rectangle = patches.Rectangle
+function draw_rectangle(x, y, xwidth, ywidth, color="grey")
+    ax = gca()
+    ax[:add_patch](rectangle((x, y), xwidth, ywidth, facecolor=color, alpha=0.5))
+end
+
+rects, disks = collision_purity_flat(x, v, c, 0.01)
+for i = 1:length(rects)
+    if disks[i] == 1
+        draw_rectangle(rects[i][1].lo, rects[i][2].lo, diam(rects[i][1]), diam(rects[i][2]), "red")
+    elseif disks[i] == 2
+        draw_rectangle(rects[i][1].lo, rects[i][2].lo, diam(rects[i][1]), diam(rects[i][2]), "green")
+    elseif disks[i] == 3
+        draw_rectangle(rects[i][1].lo, rects[i][2].lo, diam(rects[i][1]), diam(rects[i][2]), "blue")
+    end
+end
+axis([-2, 7, -2, 7])
