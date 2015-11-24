@@ -175,7 +175,9 @@ function collision_purity_flat(x, v, c, tol, prec=64)
     n = length(c)
     t0 = Interval(0)
     rectangles = MultiDimInterval[]
+    times = Interval[]
     disks = Int[]
+    purities = Int[]
     N1 = floor(1/tol)
     dx = diam(x[1]/N1)
     dy = diam(x[2]/N1)
@@ -198,10 +200,10 @@ function collision_purity_flat(x, v, c, tol, prec=64)
             #println(rect, t)
             
             # Finding valid time intervals
-            k = 0
+            k = 0; p = -2; t1 = 0
             for i = 1:n
                 if mid(t[i].interval) >= 0 # && t[i].flag == 1 
-                    k = i
+                    k = i; p = t[i].flag; t1 = t[i].interval
                     break
                 end    
             end
@@ -209,11 +211,13 @@ function collision_purity_flat(x, v, c, tol, prec=64)
             if k > 0
                 push!(rectangles, rect)
                 push!(disks, k)
+                push!(times, t1)
+                push!(purities, p)
             end    
             
         end    
     end
-    return rectangles, disks
+    return rectangles, disks, times, purities
 end
 
 
@@ -247,14 +251,66 @@ function draw_rectangle(x, y, xwidth, ywidth, color="grey")
     ax[:add_patch](rectangle((x, y), xwidth, ywidth, facecolor=color, alpha=0.5))
 end
 
-rects, disks = collision_purity_flat(x, v, c, 0.01)
+
+#= Plotting rectangles from which second ball will be hit (clean - green, unclean - yellow) and third ball (clean - blue, unclean - brown)
+rects, disks, times, purities = collision_purity_flat(x, v, c, 0.01)
 for i = 1:length(rects)
-    if disks[i] == 1
-        draw_rectangle(rects[i][1].lo, rects[i][2].lo, diam(rects[i][1]), diam(rects[i][2]), "red")
-    elseif disks[i] == 2
+    #if disks[i] == 1
+        #draw_rectangle(rects[i][1].lo, rects[i][2].lo, diam(rects[i][1]), diam(rects[i][2]), "red")
+    if disks[i] == 2 && purities[i] == 1
         draw_rectangle(rects[i][1].lo, rects[i][2].lo, diam(rects[i][1]), diam(rects[i][2]), "green")
-    elseif disks[i] == 3
+    elseif disks[i] == 2 && purities[i] == 0
+        draw_rectangle(rects[i][1].lo, rects[i][2].lo, diam(rects[i][1]), diam(rects[i][2]), "yellow")
+    elseif disks[i] == 3 && purities[i] == 1
         draw_rectangle(rects[i][1].lo, rects[i][2].lo, diam(rects[i][1]), diam(rects[i][2]), "blue")
+    elseif disks[i] == 3 && purities[i] == 0
+        draw_rectangle(rects[i][1].lo, rects[i][2].lo, diam(rects[i][1]), diam(rects[i][2]), "brown")
+    
     end
 end
 axis([-2, 7, -2, 7])
+=#
+
+# 2 steps: take rectangle and, if there is a collision, try to find next
+
+rects, disks, times, purities = collision_purity_flat(x, v, c, 0.01)
+
+collision_rectangles = MultiDimInterval[]
+new_velocities = MultiDimInterval[]
+normals = MultiDimInterval[]
+normalized_normals = MultiDimInterval[]
+new_times = Interval[]
+new_disks = Int[]
+new_purities = Int[]
+
+for i = 1:length(rects)
+	@show push!(collision_rectangles, rects[i] + [v[1]*times[i], v[2]*times[i]])
+	push!(normals, collision_rectangles[i] - c[disks[i]])
+	push!(normalized_normals, [normals[i][1]/sqrt(normals[i][1]^2 + normals[i][2]^2), normals[i][2]/sqrt(normals[i][1]^2 + normals[i][2]^2)])
+	#v1 = v - 2dot(v, N)*N
+	@show push!(new_velocities, v - [2*(v[1]*normalized_normals[i][1] + v[2]*normalized_normals[i][2])*normalized_normals[i][1], 2*(v[1]*normalized_normals[i][1] + v[2]*normalized_normals[i][2])*normalized_normals[i][2]])
+	
+	if purities[i] == 1
+		for j = 1:length(new_velocities)
+			rects1, disks1, times1, purities1 = collision_purity_flat(collision_rectangles[j], new_velocities[j], c, 1)		
+		end
+	end
+end
+
+
+for i = 1:length(rects1)
+    if disks1[i] == 1
+        draw_rectangle(rects1[i][1].lo, rects1[i][2].lo, diam(rects1[i][1]), diam(rects1[i][2]), "red")
+    elseif disks1[i] == 2 #&& purities[i] == 1
+        draw_rectangle(rects1[i][1].lo, rects1[i][2].lo, diam(rects1[i][1]), diam(rects1[i][2]), "green")
+
+    elseif disks1[i] == 3 #&& purities[i] == 1
+        draw_rectangle(rects1[i][1].lo, rects1[i][2].lo, diam(rects1[i][1]), diam(rects1[i][2]), "blue")
+
+    end
+end
+axis([-2, 7, -2, 7])
+
+
+
+
