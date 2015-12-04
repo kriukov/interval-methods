@@ -181,7 +181,7 @@ using PyCall
 rectangle = patches.Rectangle
 function draw_rectangle(x, y, xwidth, ywidth, color="grey")
     ax = gca()
-    ax[:add_patch](rectangle((x, y), xwidth, ywidth, facecolor=color, alpha=0.5))
+    ax[:add_patch](rectangle((x, y), xwidth, ywidth, facecolor=color, alpha=0.5, linewidth=0))
 end
 
 
@@ -246,6 +246,7 @@ axis([0, pi/3, -1, 1])
 
 # Draw the image/range
 #points, purities = plot_band_bisection(x -> path(x, [1, 2, 3, 1]), rect, 5e-5)
+#=
 points0 = readdlm("points.dat")
 points = MultiDimInterval[]
 for i = 1:length(points0)
@@ -277,7 +278,95 @@ for i = 1:length(points)
     end
 end
 axis([0, 2pi, -1, 1])
-
+=#
 
 #savefig("T1231-range.pdf")
+#=
+f(x) = path(x, [1, 2, 3]) - x
+points, purities = plot_band_bisection(f, rect, 2e-3)
+points1, purities1 = plot_band_bisection(x->path(x,[1,2])-x, rect, 1e-3)
+for i = 1:length(points)
+    if purities[i] == 0
+        draw_rectangle(points[i][2].lo, points[i][1].lo, diam(points[i][2]), diam(points[i][1]), "green")
+    elseif purities[i] == 1
+        draw_rectangle(points[i][2].lo, points[i][1].lo, diam(points[i][2]), diam(points[i][1]), "blue")
+    end
+end
+for i = 1:length(points1)
+    if purities1[i] == 0
+        draw_rectangle(points1[i][2].lo, points1[i][1].lo, diam(points1[i][2]), diam(points1[i][1]), "black")
+    elseif purities1[i] == 1
+        draw_rectangle(points1[i][2].lo, points1[i][1].lo, diam(points1[i][2]), diam(points1[i][1]), "red")
+    end
+end
+axis([0, pi/3, -1, 1])
+=#
 
+
+c = MultiDimInterval[]
+r0 = 6
+push!(c, [Interval(0), Interval(0)], [Interval(r0), Interval(0)], [Interval(r0/2), Interval(r0*sqrt(3)/2)])
+
+
+
+
+function T0(x, c, n, m)
+	ω, θ = x
+	
+	r = Any[]
+    a = Any[]
+    for i = 1:length(c)
+        for j = 1:length(c)
+            push!(r, [sqrt((c[i][1] - c[j][1])^2 + (c[i][2] - c[j][2])^2), i, j])
+            push!(a, [atan((c[j] - c[i])[2]/(c[j] - c[i])[1]), i, j])
+        end
+    end
+	
+	r_nm = 0; a_nm = 0
+	
+	for i = 1:length(r)
+	    if r[i][2] == n && r[i][3] == m
+	        r_nm = r[i][1]
+	    end
+	end
+	
+	for i = 1:length(a)
+        if a[i][2] == n && a[i][3] == m
+            a_nm = a[i][1]
+        end
+	end
+	
+	
+	ω_next = ω - r_nm*(ω*cos(θ - a_nm) + √(1 - ω^2)*sin(θ - a_nm))
+	θ_next = mod(θ + big(pi) + asin(ω) + asin(ω_next), 2π)
+	
+    [ω_next, θ_next]
+end
+
+function path_general(x, c, n)
+    for i = 1:length(n)-1
+        if n[i] != n[i+1]
+            x = T0(x, c, n[i], n[i+1])
+        else
+            error("Cannot hit the same disk twice in succession")
+        end
+    end
+    x
+end
+
+function draw_phase_space(c, n, rect, tol)
+    points, purities = plot_band_bisection(x -> path_general(x, c, n), rect, tol)
+    for i = 1:length(points)
+        if purities[i] == 0
+            draw_rectangle(points[i][2].lo, points[i][1].lo, diam(points[i][2]), diam(points[i][1]), "green")
+        elseif purities[i] == 1
+            draw_rectangle(points[i][2].lo, points[i][1].lo, diam(points[i][2]), diam(points[i][1]), "blue")
+        end
+    end
+    axis([0, pi/3, -1, 1])
+end
+
+function find_periodic_orbits(c, n, rect, prec, tol)
+   f(x) = path_general(x, c, n) - x 
+   krawczyk2d_purity(f, rect, prec, tol)
+end

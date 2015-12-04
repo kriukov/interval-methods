@@ -487,6 +487,9 @@ asin(x::Interval) = Interval(asin(x.lo), asin(x.hi))
 import Base.acos
 acos(x::Interval) = Interval(acos(x.hi), acos(x.lo))
 
+import Base.atan
+atan(x::Interval) = Interval(atan(x.lo), atan(x.hi))
+
 # Old function for the first version of purity and loose evaluation
 
 #= Check if x is within the range of function f - unnecessary, domaincheck does a better job
