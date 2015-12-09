@@ -8,3 +8,11 @@ Time of execution: ~30h
  [[IntervalArithmetic.Interval(-0.5000000000244574,-0.49999999997557926),IntervalArithmetic.Interval(0.5235987755982986,0.5235987756221809)]]
  
  
+Another run, with @time:
+
+61461.967410 seconds (352.69 G allocations: 12.545 TB, 9.04% gc time)
+3-element Array{Array{Array{IntervalArithmetic.Interval,1},1},1}:
+[[IntervalArithmetic.Interval(-0.5091739486503828,-0.5091739486134875),IntervalArithmetic.Interval(0.29304911868761885,0.2930491187239249)]]
+[[IntervalArithmetic.Interval(-0.5000000000324325,-0.4999999999708837),IntervalArithmetic.Interval(0.5235987755698678,0.523598775598299)]]  
+[[IntervalArithmetic.Interval(-0.5000000000244574,-0.49999999997557926),IntervalArithmetic.Interval(0.5235987755982986,0.5235987756221809)]]
+   
