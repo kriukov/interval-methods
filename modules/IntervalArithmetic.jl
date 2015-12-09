@@ -3,7 +3,7 @@
 module IntervalArithmetic
 export Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, all_inside, bisect, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip, arcsin_d, sqrt_d, normsq
 
-typealias prec BigFloat
+typealias prec Float64
 
 type Interval
 
@@ -13,17 +13,19 @@ type Interval
 	function Interval(a, b)
 	    set_rounding(prec, RoundDown)
 	    #lo = BigFloat("$a")
-	    lo = parse(BigFloat, "$a")
+	    lo = parse(prec, "$a")
 
 	    set_rounding(prec, RoundUp)
 	    #hi = BigFloat("$b")
-	    hi = parse(BigFloat, "$b")
+	    hi = parse(prec, "$b")
 
 	    new(lo, hi)
 	end
 
 end
 
+# Show intervals in a nice form
+#Base.show(io::IO, x::Interval) = print(io, "[$(x.lo), $(x.hi)]")
 
 typealias MultiDimInterval Array{Interval, 1}
 
@@ -290,7 +292,7 @@ end
 # Real power function - taken from https://github.com/dpsanders/ValidatedNumerics.jl
 macro round_down(expr)
 	quote
-		with_rounding(BigFloat, RoundDown) do
+		with_rounding(prec, RoundDown) do
 				$expr
 			end
 	end
@@ -298,7 +300,7 @@ end
 
 macro round_up(expr)
 	quote
-	with_rounding(BigFloat, RoundUp) do
+	with_rounding(prec, RoundUp) do
 			$expr
 		end
 	end
@@ -311,8 +313,8 @@ macro round(expr1, expr2)
 end
 
 function reciprocal(a::Interval)
-	uno = one(BigFloat)
-	z = zero(BigFloat)
+	uno = one(prec)
+	z = zero(prec)
 	if belong(z, a)
 	#if z in a
 		warn("\nInterval in denominator contains 0.")
@@ -325,7 +327,7 @@ function ^(a::Interval, x::Real)
 	x == int(x) && return a^(int(x))
 	x < zero(x) && return reciprocal(a^(-x))
 	x == 0.5*one(x) && return sqrt(a)
-	z = zero(BigFloat)
+	z = zero(prec)
 	z > a.hi && error("Undefined operation; Interval is strictly negative and power is not an integer")
 	xInterv = Interval(x)
 	diam(xInterv) >= eps(x) && return a^xInterv
@@ -388,10 +390,10 @@ function sin(a::Interval)
 	    return Interval(NaN, NaN)
 	end
 	#piHalf = pi*BigFloat("0.5")
-	piHalf = pi*parse(BigFloat, "0.5")
+	piHalf = pi*parse(prec, "0.5")
 	#twoPi = pi*BigFloat("2.0")
-	twoPi = pi*parse(BigFloat, "2.0")
-	domainSin = Interval( BigFloat(-1.0), BigFloat(1.0) )
+	twoPi = pi*parse(prec, "2.0")
+	domainSin = Interval( prec(-1.0), prec(1.0) )
 
 	# Checking the specific case
 	diam(a) >= twoPi && return domainSin
@@ -406,40 +408,40 @@ function sin(a::Interval)
 	# 20 different cases
 	if loQuartile == hiQuartile # Interval limits in the same quartile
 	    loMod2pi > hiMod2pi && return domainSin
-	    set_rounding(BigFloat, RoundDown)
+	    set_rounding(prec, RoundDown)
 	    lo = sin( a.lo )
-	    set_rounding(BigFloat, RoundUp)
+	    set_rounding(prec, RoundUp)
 	    hi = sin( a.hi )
-	    set_rounding(BigFloat, RoundNearest)
+	    set_rounding(prec, RoundNearest)
 	    return Interval( lo, hi )
 	elseif loQuartile == 3 && hiQuartile==0
-	    set_rounding(BigFloat, RoundDown)
+	    set_rounding(prec, RoundDown)
 	    lo = sin( a.lo )
-	    set_rounding(BigFloat, RoundUp)
+	    set_rounding(prec, RoundUp)
 	    hi = sin( a.hi )
-	    set_rounding(BigFloat, RoundNearest)
+	    set_rounding(prec, RoundNearest)
 	    return Interval( lo, hi )
 	elseif loQuartile == 1 && hiQuartile==2
-	    set_rounding(BigFloat, RoundDown)
+	    set_rounding(prec, RoundDown)
 	    lo = sin( a.hi )
-	    set_rounding(BigFloat, RoundUp)
+	    set_rounding(prec, RoundUp)
 	    hi = sin( a.lo )
-	    set_rounding(BigFloat, RoundNearest)
+	    set_rounding(prec, RoundNearest)
 	    return Interval( lo, hi )
 	elseif ( loQuartile == 0 || loQuartile==3 ) && ( hiQuartile==1 || hiQuartile==2 )
-	    set_rounding(BigFloat, RoundDown)
+	    set_rounding(prec, RoundDown)
 	    slo = sin( a.lo )
 	    shi = sin( a.hi )
-	    set_rounding(BigFloat, RoundNearest)
+	    set_rounding(prec, RoundNearest)
 	    lo = min( slo, shi )
-	    return Interval( lo, BigFloat(1.0) )
+	    return Interval( lo, prec(1.0) )
 	elseif ( loQuartile == 1 || loQuartile==2 ) && ( hiQuartile==3 || hiQuartile==0 )
-	    set_rounding(BigFloat, RoundUp)
+	    set_rounding(prec, RoundUp)
 	    slo = sin( a.lo )
 	    shi = sin( a.hi )
-	    set_rounding(BigFloat, RoundNearest)
+	    set_rounding(prec, RoundNearest)
 	    hi = max( slo, shi )
-	    return Interval( BigFloat(-1.0), hi )
+	    return Interval( prec(-1.0), hi )
 	elseif ( loQuartile == 0 && hiQuartile==3 ) || ( loQuartile == 2 && hiQuartile==1 )
 	    return domainSin
 	else
@@ -648,6 +650,8 @@ normsq(x) = x[1]^2 + x[2]^2
 
 import Base.dot
 dot(x::MultiDimInterval, y::MultiDimInterval) = x[1]*y[1] + x[2]*y[2]
+
+-(x::MultiDimInterval, y::Array{Float64, 1}) = x - map(Interval, y)
 
 *(x::MultiDimInterval, y::Interval) = [x[1]*y, x[2]*y]
 *(x::Interval, y::MultiDimInterval) = y*x

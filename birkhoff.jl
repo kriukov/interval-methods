@@ -370,3 +370,75 @@ function find_periodic_orbits(c, n, rect, prec, tol)
    f(x) = path_general(x, c, n) - x 
    krawczyk2d_purity(f, rect, prec, tol)
 end
+
+# Time/distance function
+function distance(x, c, n, m)
+	ω, θ = x
+	
+	r = Any[]
+    a = Any[]
+    for i = 1:length(c)
+        for j = 1:length(c)
+            push!(r, [sqrt((c[i][1] - c[j][1])^2 + (c[i][2] - c[j][2])^2), i, j])
+            push!(a, [atan((c[j] - c[i])[2]/(c[j] - c[i])[1]), i, j])
+        end
+    end
+	
+	r_nm = 0; a_nm = 0
+	
+	for i = 1:length(r)
+	    if r[i][2] == n && r[i][3] == m
+	        r_nm = r[i][1]
+	    end
+	end
+	
+	for i = 1:length(a)
+        if a[i][2] == n && a[i][3] == m
+            a_nm = a[i][1]
+        end
+	end
+	
+	
+	ω_next = ω - r_nm*(ω*cos(θ - a_nm) + √(1 - ω^2)*sin(θ - a_nm))
+	θ_next = mod(θ + big(pi) + asin(ω) + asin(ω_next), 2π)
+	
+	t_next = sqrt(r_nm^2 + 2r_nm*(cos(θ_next - a_nm) - cos(θ - a_nm)) + 2 - 2*cos(θ_next - θ))
+    t_next
+end
+
+# Draw phase space from n-th disk to all other - here "n" is a number
+
+function draw_phase_space_general(c, n, rect, tol)
+    points = Array{MultiDimInterval, 1}[]
+    purities = Array{Int, 1}[]
+    for i = 1:length(c)
+        if i != n
+            points_i, purities_i = plot_band_bisection(x -> path_general(x, c, [n, i]) - x, rect, tol)
+            push!(points, points_i)
+            push!(purities, purities_i)
+        end
+    end
+    
+    for i = 1:length(points)
+        for j = 1:length(points[i])
+            if purities[i][j] == 0
+                draw_rectangle(points[i][j][2].lo, points[i][j][1].lo, diam(points[i][j][2]), diam(points[i][j][1]), "green")
+            elseif purities[i][j] == 1
+                draw_rectangle(points[i][j][2].lo, points[i][j][1].lo, diam(points[i][j][2]), diam(points[i][j][1]), "blue")
+            end
+        end
+    end
+    
+    axis([0, pi/3, -1, 1])
+    
+end
+
+#draw_phase_space_general(c, 1, rect, 1e-2)
+
+# Another system of disks: #2 is in the way of #3 from #1
+c1 = MultiDimInterval[]
+push!(c1, [Interval(0), Interval(0)], [Interval(r0), Interval(0)], [Interval(r0/2), Interval(1.3)])
+
+draw_phase_space_general(c1, 1, rect, 1e-2)
+
+

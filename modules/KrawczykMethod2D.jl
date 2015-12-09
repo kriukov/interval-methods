@@ -33,6 +33,8 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
     function K(f, x)
         midx = mid(x)
         intmidx = make_intervals(midx)
+        #@show midx
+        #@show f(midx)
         intmidx - Y(f, x)*make_intervals(f(midx)) + M(f, x)*(x - intmidx)
     end
     #K(f, x) = make_intervals(mid(x)) - Y(f, x)*make_intervals(f(mid(x))) + M(f, x)*(x - make_intervals(mid(x)))

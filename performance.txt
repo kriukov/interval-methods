@@ -1,0 +1,8 @@
+With BigFloat:
+tests/tests-krawczyk2d.jl
+38.281550 seconds (109.52 M allocations: 11.749 GB, 11.94% gc time)
+
+With prec=Float64
+12.846026 seconds (51.03 M allocations: 1.238 GB, 6.16% gc time)
+
+tests/tests-krawczyk.jl passes with BigFloat but not with Float64
