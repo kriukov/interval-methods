@@ -6,7 +6,9 @@ using NewtonMethod
 # Choose interval [-20, 20]
 a = Interval(-20, 20)
 
-enclosure(x) = Interval(x - 10*eps(), x + 10*eps())
+#enclosure(x) = Interval(x - 10*eps(), x + 10*eps())
+delta = 1e-7
+enclosure(x) = Interval(x - delta, x + delta)
 
 function checkroots(f, trueroots)
 	roots = newton(f, a, 128)

@@ -3,9 +3,11 @@ using KrawczykMethod
 
 # Transcendental true roots were found using Wolfram Mathematica
 
-a = Interval(-20, 20)
+a = Interval(-21, 24)
 
-enclosure(x) = Interval(x - 5000*eps(BigFloat), x + 5000*eps(BigFloat))
+#enclosure(x) = Interval(x - 5000*eps(BigFloat), x + 5000*eps(BigFloat))
+delta = 1e-7
+enclosure(x) = Interval(x - delta, x + delta)
 
 function checkroots(f, trueroots)
 	roots = krawczyk(f, a, 64)
