@@ -1,5 +1,5 @@
 module KrawczykMethod2D
-export krawczyk2d, differentiate, Interval, rad, diam, mid, mig, mag, lo, hi, belong, hd, hull, isect, isectext, K, all_inside, left, right, bisect, jacobian, MultiDimInterval, make_intervals, Y, krawczyk2d_internal, mod21, Ad, mod1, mod2, mod21, mod22, mod23, mod24, arcsin, sqrt1, krawczyk2d_purity, domaincheck, domaincheck2d, arcsin_d, sqrt_d, krawczyk2d_loose, purity
+export krawczyk2d, differentiate, Interval, rad, diam, mid, mig, mag, lo, hi, belong, hd, hull, isect, isectext, K, all_inside, left, right, bisect, jacobian, MultiDimInterval, make_intervals, Y, krawczyk2d_internal, mod21, Ad, mod1, mod2, mod21, mod22, mod23, mod24, arcsin, sqrt1, krawczyk2d_purity, domaincheck, domaincheck2d, arcsin_d, sqrt_d, krawczyk2d_purity_periodic, purity
 
 using IntervalArithmetic
 using AutoDiff
@@ -75,36 +75,26 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
     return krawczyk2d_internal(f, a, bigprec)
 end
 
+#=
+function krawczyk2d(f, a, bigprec::Integer=64)
+    if typeof(a[1]) == IntUnion || typeof(a[2]) == Interval
+        for i = 1:length(a[1].union)
+            krawczyk2d(f, [a[1].union[i], a[2]], bigprec)
+        end
+    elseif typeof(a[1]) == Interval || typeof(a[2]) == IntUnion
+        for i = 1:length(a[2].union)
+            krawczyk2d(f, [a[1], a[2].union[i]], bigprec)
+        end  
+    end
+end
+=#
+
 # Version of krawczyk2d with purity
 function krawczyk2d_purity(f, a::MultiDimInterval, prec::Integer=64, tol=1e-4)
-    #sol = Array{Array{Interval, 1}, 1}[]
     roots_array = Array{MultiDimInterval, 1}[]
     set_bigfloat_precision(prec)
-
-    I = [Interval(1) Interval(0); Interval(0) Interval(1)]
-
-    intdet(A) = A[1]*A[4] - A[2]*A[3]
-
-    # If the jacobian is non-invertible, the SingularException error is returned for Y. We need to choose a slightly different Y then.
-    function Y(f, x)
-        midx = mid(x)
-        D = intdet(jacobian(f, midx))
-	    if D == Interval(0) || D == Interval(Inf) || D == Interval(-Inf)
-		    return make_intervals(inv(jacobian(f, mid(x + [Interval(0.0001), Interval(0.0002)]))))
-	    else
-		    return make_intervals(inv(jacobian(f, midx)))
-	    end
-    end
-
-    M(f, x) = I - Y(f, x)*jacobian(f, x)
-
-    # Krawczyk operator
-    function K(f, x)
-        midx = mid(x)
-        intmidx = make_intervals(midx)
-        intmidx - Y(f, x)*make_intervals(f(midx)) + M(f, x)*(x - intmidx)
-    end
-
+    
+    rect_count = 0
     function krawczyk2d_purity_internal(f, a::MultiDimInterval, prec::Integer)
         
         @show a
@@ -112,6 +102,7 @@ function krawczyk2d_purity(f, a::MultiDimInterval, prec::Integer=64, tol=1e-4)
 
         if p != -1
             if p == 1
+                rect_count += 1
                 println("Clean")
                 roots = krawczyk2d(f, a, prec)
                 if length(roots) > 0
@@ -122,11 +113,6 @@ function krawczyk2d_purity(f, a::MultiDimInterval, prec::Integer=64, tol=1e-4)
 
                 println("Unclean")
                 if max(diam(a)[1], diam(a)[2]) < tol
-                    #@show a
-                    #if all_inside(f(a), [Interval(-tol, tol), Interval(-tol, tol)])
-                    #    println("Unique zero in $a")
-			        #    push!(roots_array, a)
-			        #end
 			        print_with_color(:blue, "Krawczyk could not properly identify zeros here: tolerance reached at unclean\n")
 			    else
                     pieces = bisect(a)
@@ -137,10 +123,56 @@ function krawczyk2d_purity(f, a::MultiDimInterval, prec::Integer=64, tol=1e-4)
             end
         end
 
-        return roots_array
+        return roots_array, rect_count
     end
     return krawczyk2d_purity_internal(f, a, prec)
 end
+
+
+
+# Version of krawczyk2d with purity for periodic orbits (solving f(a) = a)
+function krawczyk2d_purity_periodic(f, a::MultiDimInterval, prec::Integer=64, tol=1e-4)
+    roots_array = Array{MultiDimInterval, 1}[]
+    set_bigfloat_precision(prec)
+    
+    rect_count = 0
+    function krawczyk2d_purity_internal_periodic(f, a::MultiDimInterval, prec::Integer)
+        
+        #@show a
+        p = purity(f, a)
+        #@show p
+        if p != -1
+            if p == 1
+                rect_count += 1
+                println("$a clean")
+                #@show a, f(a)
+                if isect(a, f(a)) != false
+                    roots = krawczyk2d(x -> f(x) - x, a, prec)
+                    if length(roots) > 0
+                        push!(roots_array, roots)
+                    end
+                end
+                
+            elseif p == 0
+
+                println("$a unclean")
+                if max(diam(a)[1], diam(a)[2]) < tol
+			        print_with_color(:blue, "Krawczyk could not properly identify zeros here: tolerance reached at unclean\n")
+			    else
+                    pieces = bisect(a)
+                    for i = 1:4
+                        krawczyk2d_purity_internal_periodic(f, pieces[i], prec)
+                    end
+                end
+            end
+        end
+
+        return roots_array, rect_count
+    end
+    return krawczyk2d_purity_internal_periodic(f, a, prec)
+end
+
+
 
 
 

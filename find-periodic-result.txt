@@ -15,4 +15,43 @@ Another run, with @time:
 [[IntervalArithmetic.Interval(-0.5091739486503828,-0.5091739486134875),IntervalArithmetic.Interval(0.29304911868761885,0.2930491187239249)]]
 [[IntervalArithmetic.Interval(-0.5000000000324325,-0.4999999999708837),IntervalArithmetic.Interval(0.5235987755698678,0.523598775598299)]]  
 [[IntervalArithmetic.Interval(-0.5000000000244574,-0.49999999997557926),IntervalArithmetic.Interval(0.5235987755982986,0.5235987756221809)]]
-   
+
+
+# Anonymous
+julia> @time find_periodic_orbits(c, [1, 2], rect, 64, 1e-4)
+6118.967365 seconds (16.68 G allocations: 472.618 GB, 9.19% gc time)
+0-element Array{Array{Array{IntervalArithmetic.Interval,1},1},1}
+
+# FastAnonymous
+julia> @time find_periodic_orbits(c, [1, 2], rect, 64, 1e-4)
+5987.698615 seconds (16.68 G allocations: 472.616 GB, 9.68% gc time)
+0-element Array{Array{Array{IntervalArithmetic.Interval,1},1},1}
+
+# I messed up. The path is [1, 2, 1].
+
+# Problem: 
+julia> f(x) = path_general(x, c, [1,2,1]) - x
+f (generic function with 1 method)
+
+julia> f([0, 0])
+2-element Array{IntervalArithmetic.Interval,1}:
+ IntervalArithmetic.Interval(-1.3545389598379823e-10,-1.3545389598379823e-10)
+ IntervalArithmetic.Interval(6.283185307044132,6.283185307044133) 
+ 
+Output is [0, ~<2pi] instead of [0, 0]!
+
+# periodic with regular krawczyk: 1-3-1
+@time find_periodic_orbits(c, [1, 3, 1], [Interval(-0.012, 0.001), Interval(pi/3-0.01, pi/3+0.0011)], 64, 1e-4)
+ 37.927249 seconds (142.76 M allocations: 4.096 GB, 7.18% gc time)
+([[[IntervalArithmetic.Interval(-7.903703736252994e-11,-3.704669695472028e-15),IntervalArithmetic.Interval(1.047197551140141,1.047197551196597)],[IntervalArithmetic.Interval(-6.773574078598436e-11,-3.704669695472028e-15),IntervalArithmetic.Interval(1.047197551196597,1.0471975512530445)],[IntervalArithmetic.Interval(-3.704669695472028e-15,6.773568880990972e-11),IntervalArithmetic.Interval(1.0471975511401515,1.047197551196597)],[IntervalArithmetic.Interval(-3.704669695472028e-15,7.90361028503662e-11),IntervalArithmetic.Interval(1.047197551196597,1.0471975512530554)]]],403)
+
+# periodic with periodic krawczyk (reject "X isect Y = empty")
+@time find_periodic_orbits(c, [1, 3, 1], [Interval(-0.012, 0.001), Interval(pi/3-0.01, pi/3+0.0011)], 64, 1e-4)
+ 12.790110 seconds (35.68 M allocations: 1.004 GB, 5.62% gc time)
+([[[IntervalArithmetic.Interval(-7.903703736252994e-11,-3.704669695472028e-15),IntervalArithmetic.Interval(1.047197551140141,1.047197551196597)],[IntervalArithmetic.Interval(-6.773574078598436e-11,-3.704669695472028e-15),IntervalArithmetic.Interval(1.047197551196597,1.0471975512530445)],[IntervalArithmetic.Interval(-3.704669695472028e-15,6.773568880990972e-11),IntervalArithmetic.Interval(1.0471975511401515,1.047197551196597)],[IntervalArithmetic.Interval(-3.704669695472028e-15,7.90361028503662e-11),IntervalArithmetic.Interval(1.047197551196597,1.0471975512530554)]]],403)
+
+
+# New run of search for 1-2-3-1 with krawczyk2d_purity_periodic: more than twice as fast
+25245.406842 seconds (151.34 G allocations: 5.309 TB, 7.98% gc time)
+([[[IntervalArithmetic.Interval(-0.5091739486502705,-0.5091739486135997),IntervalArithmetic.Interval(0.2930491186877287,0.29304911872381495)]],[[IntervalArithmetic.Interval(-0.5000000000321938,-0.4999999999711231),IntervalArithmetic.Interval(0.5235987755701015,0.523598775598299)]],[[IntervalArithmetic.Interval(-0.5000000000242077,-0.49999999997582806),IntervalArithmetic.Interval(0.5235987755982986,0.5235987756219369)]]],432010)
+

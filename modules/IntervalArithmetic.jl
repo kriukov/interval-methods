@@ -1,15 +1,15 @@
 ## Interval arithmetic
 
 module IntervalArithmetic
-export Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, all_inside, bisect, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip, arcsin_d, sqrt_d, normsq
+export Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, all_inside, bisect, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip, arcsin_d, sqrt_d, normsq, IntUnion2D
 
 typealias prec Float64
 #typealias prec BigFloat
 
 type Interval
 
-	lo
-	hi
+	lo::prec
+	hi::prec
 
 	function Interval(a, b)
 	    set_rounding(prec, RoundDown)
@@ -353,34 +353,6 @@ end
 # Trigonometry
 
 
-# Taken from http://jenchienjackchang.com/sample-page/implicit-solid-modeling-using-interval-methods/interval-arithmetic/
-
-#= Deprecated in favour of the next
-import Base.sin
-function sin(x::Interval)
-	if x.lo%2pi >= 0
-		low = x.lo%2pi
-	else low = x.lo%2pi + 2pi
-	end
-	x1 = Interval(low, low + diam(x))
-	# If the interval has a diameter equal or greater than 2pi or it is an extended interval, return [-1, 1]
-	if diam(x) >= 2pi || x.lo > x.hi
-		return Interval(-1, 1)
-	elseif 0 <= x1.lo <= x1.hi <= pi/2 || 3pi/2 <= x1.lo <= x1.hi <= 5pi/2 || 7pi/2 <= x1.lo <= x1.hi <= 4pi
-			return Interval(sin(x1.lo), sin(x1.hi))
-		elseif pi/2 <= x1.lo <= x1.hi <= 3pi/2 || 5pi/2 <= x1.lo <= x1.hi <= 7pi/2
-			return Interval(sin(x1.hi), sin(x1.lo))
-		elseif (0 <= x1.lo <= pi/2 && pi/2 <= x1.hi <= 3pi/2) || (3pi/2 <= x1.lo <= 5pi/2 && 5pi/2 <= x1.hi <= 7pi/2)
-			return Interval(min(sin(x1.lo), sin(x1.hi)), 1)
-		elseif (pi/2 <= x1.lo <= 3pi/2 && 3pi/2 <= x1.hi <= 5pi/2) || (5pi/2 <= x1.lo <= 7pi/2 && 7pi/2 <= x1.hi <= 4pi)
-			return Interval(-1, max(sin(x1.lo), sin(x1.hi)))
-		elseif (0 <= x1.lo <= pi/2 && 3pi/2 <= x1.hi <= 5pi/2) || (pi/2 <= x1.lo <= 3pi/2 && 5pi/2 <= x1.hi <= 7pi/2) || (3pi/2 <= x1.lo <= 5pi/2 && 7pi/2 <= x1.hi <= 4pi)
-			return Interval(-1, 1)
-		end
-
-end
-=#
-
 # Using Sanders/Benet sin() from https://github.com/dpsanders/ValidatedNumerics.jl
 import Base.sin
 function sin(a::Interval)
@@ -389,6 +361,10 @@ function sin(a::Interval)
 	end
 	if isnan(a.lo) || isnan(a.hi)
 	    return Interval(NaN, NaN)
+	end
+	# If diam(a) <= eps(), an error occurs, e.g., sin(Interval(-eps(Float64), 0.0)); fix
+	if diam(a) <= eps(prec)
+	    return Interval(sin(mid(a)))
 	end
 	#piHalf = pi*BigFloat("0.5")
 	piHalf = pi*parse(prec, "0.5")
@@ -493,17 +469,6 @@ acos(x::Interval) = Interval(acos(x.hi), acos(x.lo))
 import Base.atan
 atan(x::Interval) = Interval(atan(x.lo), atan(x.hi))
 
-# Old function for the first version of purity and loose evaluation
-
-#= Check if x is within the range of function f - unnecessary, domaincheck does a better job
-function is_allowed(f, x)
-    try f(x)
-    catch DomainError
-        return false
-    end
-    return true
-end
-=#
 
 function arcsin(x)
     domain = Interval(-1, 1)
@@ -652,7 +617,9 @@ normsq(x) = x[1]^2 + x[2]^2
 import Base.dot
 dot(x::MultiDimInterval, y::MultiDimInterval) = x[1]*y[1] + x[2]*y[2]
 
+# Workarounds for krawczyk2d "Any" error when "MultiDimInterval - Array[Float64|Int32]"
 -(x::MultiDimInterval, y::Array{Float64, 1}) = x - map(Interval, y)
+-(x::MultiDimInterval, y::Array{Int, 1}) = x - float(y)
 
 *(x::MultiDimInterval, y::Interval) = [x[1]*y, x[2]*y]
 *(x::Interval, y::MultiDimInterval) = y*x
@@ -676,6 +643,22 @@ end
 
 make_intervals(x::Array{Interval, 1}) = x
 make_intervals(x::Array{Interval, 2}) = x
+
+function make_intervals(x::Array{Any, 1})
+    x1 = Any[]
+    if typeof(x[1]) == IntUnion && typeof(x[2]) == Interval
+        for i = 1:length(x[1].union)
+            push!(x1, [x[1].union[i], x[2]])
+        end
+    elseif typeof(x[1]) == Interval && typeof(x[2]) == IntUnion
+        for i = 1:length(x[2].union)
+            push!(x1, [x[1], x[2].union[i]])
+        end
+    #elseif typeof(x[1]) == Interval && typeof(x[2]) == Interval
+        
+    end
+    x1
+end
 
 # Intersection of 2-D rectangles
 function isect(x::MultiDimInterval, y::MultiDimInterval)
@@ -790,49 +773,6 @@ function all_inside(x::MultiDimInterval, y::MultiDimInterval)
 	end
 end
 
-# Experimental: arithmetic operations between intervals and sets of intervals
-
-#=
-
-function +(x::Array{Interval, 1}, y::Interval)
-	z = Interval[]
-	for i = 1:length(x)
-		push!(z, x[i] + y)
-	end
-	z
-end
-
-function +(x::Array{Any, 1}, y::Interval)
-	z = Any[]
-	for i = 1:length(x)
-		push!(z, x[i] + y)
-	end
-	z
-end
-
-
-+(x::Interval, y::Array{Interval, 1}) = y + x
-+(x::Interval, y::Array{Any, 1}) = y + x
-
-function -(x::Array{Interval, 1}, y::Interval)
-	z = Interval[]
-	for i = 1:length(x)
-		push!(z, x[i] - y)
-	end
-	z
-end
-
-function -(x::Array{Any, 1}, y::Interval)
-	z = Any[]
-	for i = 1:length(x)
-		push!(z, x[i] - y)
-	end
-	z
-end
-
--(x::Interval, y::Array{Interval, 1}) = -(y - x)
-
-=#
 
 function *(x::Array{Interval, 1}, y::Interval)
 	z = Interval[]
@@ -846,22 +786,6 @@ end
 
 *(x::Real, y::Array{Interval, 1}) = Interval(x)*y
 
-#=
-function *(x::Array{Any, 1}, y::Array{Any, 1})
-	z = Any[]
-	for i = 1:length(x)
-		for j = 1:length(y)
-			push!(z, i*j)
-		end
-	end
-	z
-end
-
-.*(x::Real, y::Interval) = Interval(x*y.lo, x*y.hi)
-.*(x::Interval, y::Real) = Interval(x.lo*y, x.hi*y)
-
-=#
-
 import Base.floor
 floor(x::Interval) = floor(x.lo)
 
@@ -872,60 +796,6 @@ norm(x::Array{Interval, 1}) = norm(mid(x))
 
 ## --------- Interval unions -----------
 
-#= Union of 2 intervals - old version
-
-
-type IntUnion
-	elem1::Interval
-	elem2::Interval
-	function IntUnion(elem1, elem2)
-	    if isect(elem1, elem2) != false
-		    return hull(elem1, elem2) #error("Badly formed union: elements intersect")
-	    end
-		new(elem1, elem2)
-	end
-end
-=#
-
-
-#=
-import Base.+, Base.-, Base.*, Base./
-+(x::IntUnion, y::Interval) = IntUnion(x.elem1 + y, x.elem2 + y)
-+(x::Interval, y::IntUnion) = y + x
--(x::IntUnion, y::Interval) = IntUnion(x.elem1 - y, x.elem2 - y)
--(x::Interval, y::IntUnion) = - (y - x)
-*(x::IntUnion, y::Interval) = IntUnion(x.elem1*y, x.elem2*y)
-*(x::Interval, y::IntUnion) = y * x
-/(x::IntUnion, y::Interval) = IntUnion(x.elem1/y, x.elem2/y)
-/(x::Interval, y::IntUnion) = IntUnion(x/y.elem1, x/y.elem2)
-
-for func in (:exp, :log, :sin, :cos, :tan, :asin, :acos, :atan, :abs, :sqrt)
-    @eval begin
-        function $func(x::IntUnion)
-            IntUnion($func(x.elem1), $func(x.elem2))
-        end
-    end
-end
-
-mod(x::IntUnion, y) = IntUnion(mod(x.elem1, y), mod(x.elem2, y))
-
-function isect(x::Interval, y::IntUnion)
-    s1 = isect(x, y.elem1)
-    s2 = isect(x, y.elem2)
-    if s1 != false && s2 != false
-        return IntUnion(s1, s2)
-    elseif s1 != false && s2 == false
-        return s1
-    elseif s1 == false && s2 != false
-        return s2
-    else
-        return false
-    end
-end
-=#
-
-#isect(x::IntUnion, y::Interval) = isect(y, x)
-#isect(x::IntUnion, y::IntUnion) = IntUnion()
 
 # Base.unique() doesn't work for interval arrays. This extension is not the most efficient (we don't have to check equality with all elements above, just stop at the first equal).
 import Base.unique
@@ -1008,6 +878,9 @@ end
 isect(x::IntUnion, y::Interval) = isect(x, IntUnion([y]))
 isect(x::Interval, y::IntUnion) = isect(y, x)
 
+isect(x::MultiDimInterval, y::Array{Any, 1}) = [isect(x[1], y[1]), isect(x[2], y[2])]
+isect(x::Array{Any, 1}, y::MultiDimInterval) = isect(y, x)
+
 function inside(x::IntUnion, y::Interval)
     k = 0
     for i = 1:length(x.union)
@@ -1033,6 +906,21 @@ function mod(x::IntUnion, y)
     end
     IntUnion(res)
 end
+
+## IntUnion2D - to avoid Any[Interval, IntUnion]
+
+#= Commented out because of problems - using Any for now
+type IntUnion2D
+    x::Union{Interval, IntUnion}
+    y::Union{Interval, IntUnion}
+    function IntUnion2D(x, y)
+        if x::Interval && y::Interval
+            new([x, y])
+        end
+    end
+end
+=#
+
 
 import Base.isnan
 function isnan(x::Interval)

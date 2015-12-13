@@ -3,6 +3,8 @@ using AutoDiff
 using PurityIntervals
 using KrawczykMethod2D
 
+using FastAnonymous
+
 # The vector x = [ω, θ] in Birkhoff mapping
 
 function alpha(n, m)
@@ -340,6 +342,7 @@ function T0(x, c, n, m)
 	ω_next = ω - r_nm*(ω*cos(θ - a_nm) + √(1 - ω^2)*sin(θ - a_nm))
 	θ_next = mod(θ + big(pi) + asin(ω) + asin(ω_next), 2π)
 	
+	#IntUnion2D(ω_next, θ_next)
     [ω_next, θ_next]
 end
 
@@ -367,8 +370,9 @@ function draw_phase_space(c, n, rect, tol)
 end
 
 function find_periodic_orbits(c, n, rect, prec, tol)
-   f(x) = path_general(x, c, n) - x 
-   krawczyk2d_purity(f, rect, prec, tol)
+   f(x) = path_general(x, c, n)
+   #f = @anon x -> path_general(x, c, n) - x
+   krawczyk2d_purity_periodic(f, rect, prec, tol)
 end
 
 # Time/distance function
@@ -436,9 +440,14 @@ end
 #draw_phase_space_general(c, 1, rect, 1e-2)
 
 # Another system of disks: #2 is in the way of #3 from #1
+#=
 c1 = MultiDimInterval[]
 push!(c1, [Interval(0), Interval(0)], [Interval(r0), Interval(0)], [Interval(r0/2), Interval(1.3)])
 
 draw_phase_space_general(c1, 1, rect, 1e-2)
+=#
 
+#@time find_periodic_orbits(c, [1, 2], rect, 64, 1e-4)
+
+@time find_periodic_orbits(c, [1, 3, 1], [Interval(-0.012, 0.001), Interval(pi/3-0.01, pi/3+0.0011)], 64, 1e-4)
 
