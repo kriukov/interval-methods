@@ -880,6 +880,7 @@ isect(x::Interval, y::IntUnion) = isect(y, x)
 
 isect(x::MultiDimInterval, y::Array{Any, 1}) = [isect(x[1], y[1]), isect(x[2], y[2])]
 isect(x::Array{Any, 1}, y::MultiDimInterval) = isect(y, x)
+isect(x::MultiDimInterval, y::Array{IntUnion, 1}) = [isect(x[1], y[1]), isect(x[2], y[2])]
 
 function inside(x::IntUnion, y::Interval)
     k = 0

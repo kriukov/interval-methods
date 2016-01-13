@@ -432,22 +432,30 @@ function draw_phase_space_general(c, n, rect, tol)
             end
         end
     end
-    
+
     axis([0, pi/3, -1, 1])
     
 end
 
+# Birkhoff 1-2 and 1-3 belts in a symmetric 3-disk scatterer
 #draw_phase_space_general(c, 1, rect, 1e-2)
 
 # Another system of disks: #2 is in the way of #3 from #1
-#=
+
 c1 = MultiDimInterval[]
 push!(c1, [Interval(0), Interval(0)], [Interval(r0), Interval(0)], [Interval(r0/2), Interval(1.3)])
 
-draw_phase_space_general(c1, 1, rect, 1e-2)
-=#
+#draw_phase_space_general(c1, 1, rect, 1e-2)
+
 
 #@time find_periodic_orbits(c, [1, 2], rect, 64, 1e-4)
 
-@time find_periodic_orbits(c, [1, 3, 1], [Interval(-0.012, 0.001), Interval(pi/3-0.01, pi/3+0.0011)], 64, 1e-4)
+#@time find_periodic_orbits(c, [1, 3, 1], [Interval(-0.012, 0.001), Interval(pi/3-0.01, pi/3+0.0011)], 64, 1e-4)
+
+# Find periodic orbit 1-2-3-1 in isosceles system c1
+find_periodic_orbits(c1, [1, 2, 3, 1], rect, 64, 1e-4)
+
+
+
+
 
