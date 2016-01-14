@@ -145,8 +145,10 @@ function krawczyk2d_purity_periodic(f, a::MultiDimInterval, prec::Integer=64, to
             if p == 1
                 rect_count += 1
                 println("$a clean")
-                #@show a, f(a)
-                if isect(a, f(a)) != false
+                @show a
+                @show f(a)
+                isect_step = isect(a, f(a))
+                if isect_step != false && (isect_step[1] != false && isect_step[2] != false)
                     roots = krawczyk2d(x -> f(x) - x, a, prec)
                     if length(roots) > 0
                         push!(roots_array, roots)

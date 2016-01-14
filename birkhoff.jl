@@ -328,18 +328,18 @@ function T0(x, c, n, m)
 	
 	for i = 1:length(r)
 	    if r[i][2] == n && r[i][3] == m
-	        r_nm = r[i][1]
+	        @show r_nm = r[i][1]
 	    end
 	end
 	
 	for i = 1:length(a)
         if a[i][2] == n && a[i][3] == m
-            a_nm = a[i][1]
+            @show a_nm = a[i][1]
         end
 	end
 	
 	
-	ω_next = ω - r_nm*(ω*cos(θ - a_nm) + √(1 - ω^2)*sin(θ - a_nm))
+	@show ω_next = ω - r_nm*(ω*cos(θ - a_nm) + √(1 - ω^2)*sin(θ - a_nm))
 	θ_next = mod(θ + big(pi) + asin(ω) + asin(ω_next), 2π)
 	
 	#IntUnion2D(ω_next, θ_next)
@@ -373,6 +373,7 @@ function find_periodic_orbits(c, n, rect, prec, tol)
    f(x) = path_general(x, c, n)
    #f = @anon x -> path_general(x, c, n) - x
    krawczyk2d_purity_periodic(f, rect, prec, tol)
+   #krawczyk2d_purity(f, rect, prec, tol)
 end
 
 # Time/distance function

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2011.4.19)  12 JAN 2016 22:19
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2011.4.19)  13 JAN 2016 18:39
 entering extended mode
  %&-line parsing enabled.
 **interval-tools.tex
@@ -765,9 +765,6 @@ LaTeX Font Info:    Try loading font information for U+bbold on input line 69.
 File: birkhoff-12-and-13_tol=1e-2.pdf Graphic file (type pdf)
 
 <use birkhoff-12-and-13_tol=1e-2.pdf>
-
-LaTeX Warning: Reference `fig01' on page 3 undefined on input line 102.
-
 No file interval-tools.bbl.
 
 Class revtex4-1 Warning: Command \address is obsolete;
@@ -775,19 +772,16 @@ Use \affiliation instead.
 
 [3 <./birkhoff-12-and-13_tol=1e-2.pdf>] (./interval-tools.aux)
 
-LaTeX Warning: There were undefined references.
-
-
 LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right .
 
 
  ) 
 Here is how much of TeX's memory you used:
- 7540 strings out of 495061
- 102194 string characters out of 1182621
+ 7538 strings out of 495061
+ 102177 string characters out of 1182621
  194209 words of memory out of 3000000
- 10519 multiletter control sequences out of 15000+50000
- 57189 words of font info for 135 fonts, out of 3000000 for 9000
+ 10518 multiletter control sequences out of 15000+50000
+ 56082 words of font info for 134 fonts, out of 3000000 for 9000
  28 hyphenation exceptions out of 8191
  38i,15n,28p,1079b,373s stack positions out of 5000i,500n,10000p,200000b,50000s
  </home/kriukov/.texmf-var/fonts/pk/ljfour/public/bbold/bbold10.600pk>{/usr/s
@@ -799,9 +793,9 @@ b></usr/share/texmf-texlive/fonts/type1/urw/symbol/usyr.pfb></usr/share/texmf-t
 exlive/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf-texlive/fonts/type1/u
 rw/times/utmbi8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/times/utmr8a.pfb
 ></usr/share/texmf-texlive/fonts/type1/urw/times/utmri8a.pfb>
-Output written on interval-tools.pdf (3 pages, 220868 bytes).
+Output written on interval-tools.pdf (3 pages, 220254 bytes).
 PDF statistics:
- 113 PDF objects out of 1000 (max. 8388607)
+ 114 PDF objects out of 1000 (max. 8388607)
  14 named destinations out of 1000 (max. 500000)
  60 words of extra memory for PDF output out of 10000 (max. 10000000)
 

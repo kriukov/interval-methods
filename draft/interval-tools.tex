@@ -88,14 +88,14 @@ Using the methods above, we consider the scattering of a point particle in elast
 \end{split}
 \end{equation}
 
-where $\omega_n = \sin \varphi_n$ is the sine of the angle between the incident ray and the normal at the collision, $\theta_n$ is the angle of the impact point taken anticlockwise with respect to the $x$-axis on the $n$-th disk, $r_{n, n+1}$ is the distance between the centers of the $n$-th and $n+1$-st disk and $\alpha_{n, n+1}$ is the angle between the vector joining the centers of disk $n$ to the disk $n+1$.
+where $\omega_n = \sin \varphi_n$ is the sine of the angle between the incident ray and the normal at the collision, $\theta_n$ is the angle of the impact point taken anticlockwise with respect to the $x$-axis on the $n$-th disk, $r_{n, n+1}$ is the distance between the centers of the $n$-th and $n+1$-st disk and $\alpha_{n, n+1}$ is the angle between the vector joining the centers of disk $n$ to the disk $n+1$ and the $x$-axis.
 
 The Birkhoff mapping contains functions whose domain is not the whole real line. If the input interval causes any of such functions to assume as an argument an interval which does not fully belong to its domain, an exception will be thrown during evaluation. One of the solutions to this problem is so-called decorated intervals [ref.]. A decoration is data attached to the interval to report information, not about the interval as such, but about the process of computing it. In our case, the decoration (which we denote as \textit{purity}) assumes the values of $1$, $0$ and $-1$. Given the starting interval with purity 1, if the interval fully belongs to the domain, the evaluation returns the result with purity 1. If the starting interval intersects with the domain, but does not fully belong to it, the function is evaluated on the intersection and returns the result with purity 0. In case of the starting interval being fully outside of the domain, an empty set is returned with purity $-1$.
 
 \begin{figure}
 \centering
 \includegraphics*[width=300pt]{birkhoff-12-and-13_tol=1e-2.pdf}
-\caption{The cells corrrsponding to the transition from disk 1 to the other disks in a symmetric 3-disk scatterer, for the tolerance 0.01. The Birkhoff coordinate $\theta$ is on the abscissa and $\omega$ is on the ordinate. The rectangles in blue have purity 1 and those in green have purity 0.}
+\caption{The cells corresponding to the transition from disk 1 to the other disks in a symmetric 3-disk scatterer, for the tolerance 0.01. The Birkhoff coordinate $\theta$ is on the abscissa and $\omega$ is on the ordinate. The rectangles in blue have purity 1 and those in green have purity 0.}
 \label{fig01}
 \end{figure}
 
