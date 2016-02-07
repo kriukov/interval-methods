@@ -328,18 +328,18 @@ function T0(x, c, n, m)
 	
 	for i = 1:length(r)
 	    if r[i][2] == n && r[i][3] == m
-	        @show r_nm = r[i][1]
+	        r_nm = r[i][1]
 	    end
 	end
 	
 	for i = 1:length(a)
         if a[i][2] == n && a[i][3] == m
-            @show a_nm = a[i][1]
+            a_nm = a[i][1]
         end
 	end
 	
 	
-	@show ω_next = ω - r_nm*(ω*cos(θ - a_nm) + √(1 - ω^2)*sin(θ - a_nm))
+	ω_next = ω - r_nm*(ω*cos(θ - a_nm) + √(1 - ω^2)*sin(θ - a_nm))
 	θ_next = mod(θ + big(pi) + asin(ω) + asin(ω_next), 2π)
 	
 	#IntUnion2D(ω_next, θ_next)
@@ -454,9 +454,11 @@ push!(c1, [Interval(0), Interval(0)], [Interval(r0), Interval(0)], [Interval(r0/
 #@time find_periodic_orbits(c, [1, 3, 1], [Interval(-0.012, 0.001), Interval(pi/3-0.01, pi/3+0.0011)], 64, 1e-4)
 
 # Find periodic orbit 1-2-3-1 in isosceles system c1
-find_periodic_orbits(c1, [1, 2, 3, 1], rect, 64, 1e-4)
+#find_periodic_orbits(c1, [1, 2, 3, 1], rect, 64, 1e-4)
 
-
-
+#find_periodic_orbits(c, [1, 2, 3, 1, 3, 1], rect, 64, 1e-4)
+#f(x) = path_general(x, c, [1,2,3,1,3,1])
+#a = [IntervalArithmetic.Interval(-0.74925,-0.4995),IntervalArithmetic.Interval(0.13164969389957473,0.26229938779914946)]
+#purity(f,a)
 
 

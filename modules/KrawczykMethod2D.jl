@@ -138,9 +138,9 @@ function krawczyk2d_purity_periodic(f, a::MultiDimInterval, prec::Integer=64, to
     rect_count = 0
     function krawczyk2d_purity_internal_periodic(f, a::MultiDimInterval, prec::Integer)
         
-        #@show a
+        @show a
         p = purity(f, a)
-        #@show p
+        @show p
         if p != -1
             if p == 1
                 rect_count += 1

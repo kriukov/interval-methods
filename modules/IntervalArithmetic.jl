@@ -1,7 +1,7 @@
 ## Interval arithmetic
 
 module IntervalArithmetic
-export Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, all_inside, bisect, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip, arcsin_d, sqrt_d, normsq, IntUnion2D
+export Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, all_inside, bisect, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip, arcsin_d, sqrt_d, normsq, IntUnion2D, collapse_isect
 
 typealias prec Float64
 #typealias prec BigFloat
@@ -817,12 +817,78 @@ end
 
 ## Arbitrary IntUnion
 
+#=
 type IntUnion
 	union::Array{Interval, 1}
 	function IntUnion(x)
-	    new(unique(x))
+	    @show x1 = unique(x)
+	    x2 = Interval[]
+	    l = length(x1)
+	    i1 = 0; j1 = 0
+	    for i = 1:l
+	        for j = i+1:l
+	            @show i,j
+	            if @show i != i1 && j != j1 && i != j1 && j != i1
+                    if isect(x1[i], x1[j]) != false
+                        @show push!(x2, hull(x1[i], x1[j]))
+                        @show i1 = i; @show j1 = j
+                    else
+                        @show push!(x2, x1[i], x1[j])
+                    end
+                end
+	        end
+	    end
+	
+	    new(x2)
 	end
 end
+=#
+
+## Functions for IntUnion type
+
+# Replace intersecting intervals in an array with their hull
+function collapse_isect_step(x::Array{Interval, 1})
+    x1 = unique(x)
+    l = length(x1)
+    for i = 1:l
+        for j = i+1:l
+            if isect(x1[i], x1[j]) != false
+                hull_ij = hull(x1[i], x1[j])
+                deleteat!(x1, (i, j))
+                push!(x1, hull_ij, Interval(Inf, Inf))
+            end
+        end
+    end
+    
+    x2 = unique(x1)
+    sort!(x2)
+    # After uniqueness and sorting, there will be only one Interval(Inf, Inf) at the very end. Remove it
+    if x2[length(x2)] == Interval(Inf, Inf)
+        pop!(x2)
+    end
+    x2
+end
+
+# Repeat the collapse steps until the array does not change
+function collapse_isect(x::Array{Interval, 1})
+    x1 = x
+    x2 = Interval[]
+    while true
+        x2 = collapse_isect_step(x1)
+        x1 == x2 && break
+        x1 = x2
+    end
+    x2
+end
+
+type IntUnion
+	union::Array{Interval, 1}
+	function IntUnion(x)
+        x1 = collapse_isect(x)
+	    new(x1)
+	end
+end
+
 
 # Four arithmetic operations on IntUnions
 import Base.+, Base.-, Base.*, Base./
