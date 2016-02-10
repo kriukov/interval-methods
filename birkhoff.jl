@@ -320,7 +320,8 @@ function T0(x, c, n, m)
     for i = 1:length(c)
         for j = 1:length(c)
             push!(r, [sqrt((c[i][1] - c[j][1])^2 + (c[i][2] - c[j][2])^2), i, j])
-            push!(a, [atan((c[j] - c[i])[2]/(c[j] - c[i])[1]), i, j])
+            #push!(a, [atan((c[j] - c[i])[2]/(c[j] - c[i])[1]), i, j])
+            push!(a, [atan2((c[j] - c[i])[2], (c[j] - c[i])[1]), i, j])
         end
     end
 	

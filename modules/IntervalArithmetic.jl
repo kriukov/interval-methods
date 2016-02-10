@@ -1,7 +1,7 @@
 ## Interval arithmetic
 
 module IntervalArithmetic
-export Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, all_inside, bisect, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip, arcsin_d, sqrt_d, normsq, IntUnion2D, collapse_isect
+export Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, all_inside, bisect, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip, arcsin_d, sqrt_d, normsq, IntUnion2D, collapse_isect_step, collapse_isect
 
 typealias prec Float64
 #typealias prec BigFloat
@@ -469,6 +469,8 @@ acos(x::Interval) = Interval(acos(x.hi), acos(x.lo))
 import Base.atan
 atan(x::Interval) = Interval(atan(x.lo), atan(x.hi))
 
+import Base.atan2
+atan2(x::Interval, y::Interval) = Interval(min(atan2(x.lo, y.lo), atan2(x.lo, y.hi), atan2(x.hi, y.lo), atan2(x.hi, y.hi)), max(atan2(x.lo, y.lo), atan2(x.lo, y.hi), atan2(x.hi, y.lo), atan2(x.hi, y.hi)))
 
 function arcsin(x)
     domain = Interval(-1, 1)
@@ -847,6 +849,7 @@ end
 ## Functions for IntUnion type
 
 # Replace intersecting intervals in an array with their hull
+# Dummy intervals (Inf, -Inf) - because (Inf, Inf) is already used as empty set
 function collapse_isect_step(x::Array{Interval, 1})
     x1 = unique(x)
     l = length(x1)
@@ -855,7 +858,7 @@ function collapse_isect_step(x::Array{Interval, 1})
             if isect(x1[i], x1[j]) != false
                 hull_ij = hull(x1[i], x1[j])
                 deleteat!(x1, (i, j))
-                push!(x1, hull_ij, Interval(Inf, Inf))
+                push!(x1, hull_ij, Interval(Inf, -Inf))
             end
         end
     end
@@ -863,14 +866,19 @@ function collapse_isect_step(x::Array{Interval, 1})
     x2 = unique(x1)
     sort!(x2)
     # After uniqueness and sorting, there will be only one Interval(Inf, Inf) at the very end. Remove it
-    if x2[length(x2)] == Interval(Inf, Inf)
+    if x2[length(x2)] == Interval(Inf, -Inf)
         pop!(x2)
     end
+    #@show x2
     x2
 end
 
 # Repeat the collapse steps until the array does not change
 function collapse_isect(x::Array{Interval, 1})
+    # If the array consists of a single interval (NaN, NaN), it may cause an infinite loop. Make an exception
+    if isnan(x) && length(x) == 1
+        return [Interval(Inf, Inf)]
+    end
     x1 = x
     x2 = Interval[]
     while true
@@ -999,7 +1007,16 @@ function isnan(x::Interval)
 end
 
 function isnan(x::MultiDimInterval)
+    #@show x
     if isnan(x[1].lo) || isnan(x[1].hi) || isnan(x[2].lo) || isnan(x[2].hi)
+        return true
+    else
+        return false
+    end
+end
+
+function isnan(x::MultiDimInterval)
+    if isnan(x[1].lo) || isnan(x[1].hi)
         return true
     else
         return false
