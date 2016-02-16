@@ -305,52 +305,40 @@ axis([0, pi/3, -1, 1])
 =#
 
 
-c = MultiDimInterval[]
+c = Array{prec, 1}[]
 r0 = 6
-push!(c, [Interval(0), Interval(0)], [Interval(r0), Interval(0)], [Interval(r0/2), Interval(r0*sqrt(3)/2)])
+#push!(c, [Interval(0), Interval(0)], [Interval(r0), Interval(0)], [Interval(r0/2), Interval(r0*sqrt(3)/2)])
+push!(c, [0, 0], [r0, 0], [r0/2, r0*sqrt(3)/2])
 
-
+function table(c)
+    N = length(c)
+    r = zeros(prec, N, N)
+    a = zeros(prec, N, N)
+    for i = 1:N
+        for j = 1:N
+            r[i, j] = sqrt((c[i][1] - c[j][1])^2 + (c[i][2] - c[j][2])^2)
+            a[i, j] = atan2((c[j] - c[i])[2], (c[j] - c[i])[1])
+        end
+    end
+    r, a
+end
 
 
 function T0(x, c, n, m)
 	ω, θ = x
+	println("Argument into T0 with $n, $m: $x")
+	r_nm, a_nm = table(c)
 	
-	r = Any[]
-    a = Any[]
-    for i = 1:length(c)
-        for j = 1:length(c)
-            push!(r, [sqrt((c[i][1] - c[j][1])^2 + (c[i][2] - c[j][2])^2), i, j])
-            #push!(a, [atan((c[j] - c[i])[2]/(c[j] - c[i])[1]), i, j])
-            push!(a, [atan2((c[j] - c[i])[2], (c[j] - c[i])[1]), i, j])
-        end
-    end
-	
-	r_nm = 0; a_nm = 0
-	
-	for i = 1:length(r)
-	    if r[i][2] == n && r[i][3] == m
-	        r_nm = r[i][1]
-	    end
-	end
-	
-	for i = 1:length(a)
-        if a[i][2] == n && a[i][3] == m
-            a_nm = a[i][1]
-        end
-	end
-	
-	
-	ω_next = ω - r_nm*(ω*cos(θ - a_nm) + √(1 - ω^2)*sin(θ - a_nm))
-	θ_next = mod(θ + big(pi) + asin(ω) + asin(ω_next), 2π)
-	
-	#IntUnion2D(ω_next, θ_next)
-    [ω_next, θ_next]
+	ω_next = ω - r_nm[n, m]*(ω*cos(θ - a_nm[n, m]) + √(1 - ω^2)*sin(θ - a_nm[n, m]))
+	θ_next = mod(θ + prec(pi) + asin(ω) + asin(ω_next), 2π)
+
+    @show [ω_next, θ_next]
 end
 
 function path_general(x, c, n)
     for i = 1:length(n)-1
         if n[i] != n[i+1]
-            x = T0(x, c, n[i], n[i+1])
+            @show x = T0(x, c, n[i], n[i+1])
         else
             error("Cannot hit the same disk twice in succession")
         end
@@ -381,34 +369,12 @@ end
 function distance(x, c, n, m)
 	ω, θ = x
 	
-	r = Any[]
-    a = Any[]
-    for i = 1:length(c)
-        for j = 1:length(c)
-            push!(r, [sqrt((c[i][1] - c[j][1])^2 + (c[i][2] - c[j][2])^2), i, j])
-            push!(a, [atan((c[j] - c[i])[2]/(c[j] - c[i])[1]), i, j])
-        end
-    end
+	r_nm, a_nm = table(c)
 	
-	r_nm = 0; a_nm = 0
+	ω_next = ω - r_nm[n, m]*(ω*cos(θ - a_nm[n, m]) + √(1 - ω^2)*sin(θ - a_nm[n, m]))
+	θ_next = mod(θ + prec(pi) + asin(ω) + asin(ω_next), 2π)
 	
-	for i = 1:length(r)
-	    if r[i][2] == n && r[i][3] == m
-	        r_nm = r[i][1]
-	    end
-	end
-	
-	for i = 1:length(a)
-        if a[i][2] == n && a[i][3] == m
-            a_nm = a[i][1]
-        end
-	end
-	
-	
-	ω_next = ω - r_nm*(ω*cos(θ - a_nm) + √(1 - ω^2)*sin(θ - a_nm))
-	θ_next = mod(θ + big(pi) + asin(ω) + asin(ω_next), 2π)
-	
-	t_next = sqrt(r_nm^2 + 2r_nm*(cos(θ_next - a_nm) - cos(θ - a_nm)) + 2 - 2*cos(θ_next - θ))
+	t_next = sqrt(r_nm[n, m]^2 + 2r_nm[n, m]*(cos(θ_next - a_nm[n, m]) - cos(θ - a_nm[n, m])) + 2 - 2*cos(θ_next - θ))
     t_next
 end
 
@@ -444,8 +410,8 @@ end
 
 # Another system of disks: #2 is in the way of #3 from #1
 
-c1 = MultiDimInterval[]
-push!(c1, [Interval(0), Interval(0)], [Interval(r0), Interval(0)], [Interval(r0/2), Interval(1.3)])
+c1 = Array{prec, 1}[]
+push!(c1, [0, 0], [r0, 0], [r0/2, 1.3])
 
 #draw_phase_space_general(c1, 1, rect, 1e-2)
 

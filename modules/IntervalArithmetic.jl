@@ -1,7 +1,7 @@
 ## Interval arithmetic
 
 module IntervalArithmetic
-export Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, all_inside, bisect, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip, arcsin_d, sqrt_d, normsq, IntUnion2D, collapse_isect_step, collapse_isect
+export prec, Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, all_inside, bisect, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip, arcsin_d, sqrt_d, normsq, IntUnion2D, collapse_isect_step, collapse_isect
 
 typealias prec Float64
 #typealias prec BigFloat
@@ -390,21 +390,33 @@ function sin(a::Interval)
 	    set_rounding(prec, RoundUp)
 	    hi = sin( a.hi )
 	    set_rounding(prec, RoundNearest)
-	    return Interval( lo, hi )
+	    if lo <= hi
+	        return Interval(lo, hi)
+	    else
+	        return Interval(hi, lo)
+	    end
 	elseif loQuartile == 3 && hiQuartile==0
 	    set_rounding(prec, RoundDown)
 	    lo = sin( a.lo )
 	    set_rounding(prec, RoundUp)
 	    hi = sin( a.hi )
 	    set_rounding(prec, RoundNearest)
-	    return Interval( lo, hi )
+	    if lo <= hi
+	        return Interval(lo, hi)
+	    else
+	        return Interval(hi, lo)
+	    end
 	elseif loQuartile == 1 && hiQuartile==2
 	    set_rounding(prec, RoundDown)
 	    lo = sin( a.hi )
 	    set_rounding(prec, RoundUp)
 	    hi = sin( a.lo )
 	    set_rounding(prec, RoundNearest)
-	    return Interval( lo, hi )
+	    if lo <= hi
+	        return Interval(lo, hi)
+	    else
+	        return Interval(hi, lo)
+	    end
 	elseif ( loQuartile == 0 || loQuartile==3 ) && ( hiQuartile==1 || hiQuartile==2 )
 	    set_rounding(prec, RoundDown)
 	    slo = sin( a.lo )
@@ -469,8 +481,6 @@ acos(x::Interval) = Interval(acos(x.hi), acos(x.lo))
 import Base.atan
 atan(x::Interval) = Interval(atan(x.lo), atan(x.hi))
 
-import Base.atan2
-atan2(x::Interval, y::Interval) = Interval(min(atan2(x.lo, y.lo), atan2(x.lo, y.hi), atan2(x.hi, y.lo), atan2(x.hi, y.hi)), max(atan2(x.lo, y.lo), atan2(x.lo, y.hi), atan2(x.hi, y.lo), atan2(x.hi, y.hi)))
 
 function arcsin(x)
     domain = Interval(-1, 1)
@@ -851,6 +861,7 @@ end
 # Replace intersecting intervals in an array with their hull
 # Dummy intervals (Inf, -Inf) - because (Inf, Inf) is already used as empty set
 function collapse_isect_step(x::Array{Interval, 1})
+    println("Init. arg. of collapse_isect_step: $x")
     x1 = unique(x)
     l = length(x1)
     for i = 1:l
@@ -858,7 +869,7 @@ function collapse_isect_step(x::Array{Interval, 1})
             if isect(x1[i], x1[j]) != false
                 hull_ij = hull(x1[i], x1[j])
                 deleteat!(x1, (i, j))
-                push!(x1, hull_ij, Interval(Inf, -Inf))
+                push!(x1, hull_ij, Interval(2.3456789, 3.456789))
             end
         end
     end
@@ -866,33 +877,40 @@ function collapse_isect_step(x::Array{Interval, 1})
     x2 = unique(x1)
     sort!(x2)
     # After uniqueness and sorting, there will be only one Interval(Inf, Inf) at the very end. Remove it
-    if x2[length(x2)] == Interval(Inf, -Inf)
+    if x2[length(x2)] == Interval(2.3456789, 3.456789)
         pop!(x2)
     end
-    #@show x2
+    println("Result of collapse_isect_step: $x2")
     x2
 end
 
 # Repeat the collapse steps until the array does not change
 function collapse_isect(x::Array{Interval, 1})
+    println("Init. arg. of collapse_isect: $x")
     # If the array consists of a single interval (NaN, NaN), it may cause an infinite loop. Make an exception
     if isnan(x) && length(x) == 1
         return [Interval(Inf, Inf)]
     end
     x1 = x
     x2 = Interval[]
-    while true
+    i = 0
+    while i < 10
+        @show diam(x1)
         x2 = collapse_isect_step(x1)
         x1 == x2 && break
         x1 = x2
+        @show i += 1
     end
+    println("Result of collapse_isect after $i iterations: $x2")
     x2
 end
 
 type IntUnion
 	union::Array{Interval, 1}
 	function IntUnion(x)
+	    println("Initial argument of IntUnion: $x")
         x1 = collapse_isect(x)
+        println("Collapsed argument of IntUnion: $x1")
 	    new(x1)
 	end
 end

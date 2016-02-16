@@ -84,11 +84,22 @@ function purity(f, x::MultiDimInterval)
 	min(p[1].flag, p[2].flag)
 end
 
+function purity(f, x::IntUnion)
+    p = Int[]
+    l = length(x.union)
+    for i = 1:l
+        push!(p, f(PurityInterval(x.union[i])).flag)
+    end
+	minimum(p)
+end
+
+
+#=
 function purity(f, x::Array{MultiDimInterval, 1})
 	p = f([PurityInterval(x[1]), PurityInterval(x[2])])
 	min(p[1].flag, p[2].flag)
 end
-
+=#
 #=
 function purity(f, x::IntUnion2D)
     if typeof(x[1]) == IntUnion || typeof(x[2]) == Interval

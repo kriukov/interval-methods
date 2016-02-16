@@ -66,3 +66,37 @@ Output is [0, ~<2pi] instead of [0, 0]!
 [IntervalArithmetic.Interval(-0.2852575176734361,-0.28525751767318985),IntervalArithmetic.Interval(0.2892750985645687,0.289275098564782)]]],
 302792)
 
+## Previously, the isosceles results were wrong due to atan2 error and they didn't agree with the analytical result.
+
+#############################################################################
+
+## Now, there is an error, possibly due to collapse_isect_step(), when intervals with negative diameter appear. Reproduce:
+
+include("birkhoff.jl")
+f(x) = path_general(x, c1, [1,2,3,1])
+a = [IntervalArithmetic.Interval(-0.6243750000000001,-0.5931562499999999),IntervalArithmetic.Interval(0.44194271691106485,0.45827392864851174)]
+purity(f, a)
+
+Another test:
+include("birkhoff.jl"); b = [PurityInterval(Interval(-4.349010407847645,-0.9680456260810649),1),PurityInterval(IntUnion([Interval(0.0,0.3232309355530365),Interval(5.369682871590993,6.283185307179586)]),0)]
+T0(b, c, 1, 2)
+
+Next step:
+include("birkhoff.jl")
+th = PurityInterval(IntUnion([Interval(0.0,0.3232309355530365),Interval(5.369682871590993,6.283185307179586)]),0)
+r_nm, a_nm = table(c)
+cos(th - a_nm[1,2])
+
+Problem is with cos, as it seems:
+include("birkhoff.jl")
+b = IntUnion([Interval(-0.0,0.3232309355530365),Interval(5.369682871590993,6.283185307179586)])
+cos(b)
+
+Finally narrowed down to the obvious:
+
+b1 = Interval(0.0,0.3232309355530365)
+cos(b1)
+
+sin also has a problem!
+sin(Interval(1.7, 1.9))
+

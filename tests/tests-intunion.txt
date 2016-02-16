@@ -1,0 +1,74 @@
+x = IntUnion([Interval(4, 6), Interval(5, 8), Interval(9, 12), Interval(9, 12)])
+x = IntUnion([Interval(9, 12), Interval(4, 6), Interval(5, 8), Interval(9, 12)])
+
+Should be IntUnion([Interval(4, 8), Interval(9, 12)])
+
+x = IntUnion([Interval(3, 5), Interval(4, 6), Interval(8, 9), Interval(10, 12)])
+x = IntUnion([Interval(8, 9), Interval(3, 5), Interval(4, 6), Interval(10, 12)])
+Should be IntUnion([Interval(3, 6), Interval(8, 9), Interval(10, 12)])
+
+# 1 isect 2, 3 isect 4, and 5 separate.
+x = IntUnion([Interval(1, 3), Interval(2, 4), Interval(5, 7), Interval(6, 8), Interval(9, 10)])
+
+#==============================================#
+
+
+
+f(x) = path_general(x, c, [1,2,3,1,3,1])
+a = [IntervalArithmetic.Interval(-0.49956097412109385,-0.49950000000000006),IntervalArithmetic.Interval(0.2835427218170003,0.283574618714925)]
+purity(f, a)
+
+
+ERROR: BoundsError: attempt to access 0-element Array{IntervalArithmetic.Interval,1}
+  at index [0]
+ in collapse_isect_step at /home/kriukov/temp/interval-methods/modules/IntervalArithmetic.jl:866
+ in collapse_isect at /home/kriukov/temp/interval-methods/modules/IntervalArithmetic.jl:877
+ in + at /home/kriukov/temp/interval-methods/modules/IntervalArithmetic.jl:917
+ in + at operators.jl:103
+ in T0 at /home/kriukov/temp/interval-methods/birkhoff.jl:343
+ in path_general at /home/kriukov/temp/interval-methods/birkhoff.jl:352
+ in f at none:1
+ in purity at /home/kriukov/temp/interval-methods/modules/PurityIntervals.jl:83
+
+# Problem again: 
+f(x) = path_general(x, c, [1,2,3,1,3,1])
+a = [IntervalArithmetic.Interval(-0.515353271484375,-0.5151093750000001),IntervalArithmetic.Interval(0.522705662456407,0.5228332500481061)]
+
+#==========================#
+
+a = [IntervalArithmetic.Interval(-0.7492500000000002,-0.49950000000000006),IntervalArithmetic.Interval(0.13164969389957473,0.2622993877991495)]
+x2 = [IntervalArithmetic.Interval(0.0,4.451666846693809),IntervalArithmetic.Interval(5.843124966766679,6.283185307179586)]
+ERROR: BoundsError: attempt to access 1-element Array{IntervalArithmetic.Interval,1}:
+ IntervalArithmetic.Interval(1.0471975511965979,1.047197551196598)
+  at index [2]
+ in isnan at /home/kriukov/temp/interval-methods/modules/IntervalArithmetic.jl:1008
+ in collapse_isect at /home/kriukov/temp/interval-methods/modules/IntervalArithmetic.jl:877
+ in - at /home/kriukov/temp/interval-methods/modules/IntervalArithmetic.jl:926
+ in - at /home/kriukov/temp/interval-methods/modules/PurityIntervals.jl:30
+ in T0 at /home/kriukov/temp/interval-methods/birkhoff.jl:342
+ in path_general at /home/kriukov/temp/interval-methods/birkhoff.jl:352
+ in f at /home/kriukov/temp/interval-methods/birkhoff.jl:373
+ in krawczyk2d_purity_internal_periodic at /home/kriukov/temp/interval-methods/modules/KrawczykMethod2D.jl:142
+ in krawczyk2d_purity_internal_periodic at /home/kriukov/temp/interval-methods/modules/KrawczykMethod2D.jl:166 (repeats 3 times)
+ in krawczyk2d_purity_periodic at /home/kriukov/temp/interval-methods/modules/KrawczykMethod2D.jl:174
+ in find_periodic_orbits at /home/kriukov/temp/interval-methods/birkhoff.jl:375
+
+#================#
+
+a = [IntervalArithmetic.Interval(-0.515353271484375,-0.5151093750000001),IntervalArithmetic.Interval(0.522705662456407,0.5228332500481061)]
+ERROR: BoundsError: attempt to access 0-element Array{IntervalArithmetic.Interval,1}
+  at index [1]
+ in isnan at /home/kriukov/temp/interval-methods/modules/IntervalArithmetic.jl:1017
+ in collapse_isect at /home/kriukov/temp/interval-methods/modules/IntervalArithmetic.jl:877
+ in * at /home/kriukov/temp/interval-methods/modules/IntervalArithmetic.jl:910
+ in * at /home/kriukov/temp/interval-methods/modules/IntervalArithmetic.jl:929
+ in * at /home/kriukov/temp/interval-methods/modules/PurityIntervals.jl:31
+ in T0 at /home/kriukov/temp/interval-methods/birkhoff.jl:342
+ in path_general at /home/kriukov/temp/interval-methods/birkhoff.jl:352
+ in f at /home/kriukov/temp/interval-methods/birkhoff.jl:373
+ in krawczyk2d_purity_internal_periodic at /home/kriukov/temp/interval-methods/modules/KrawczykMethod2D.jl:142
+ in krawczyk2d_purity_internal_periodic at /home/kriukov/temp/interval-methods/modules/KrawczykMethod2D.jl:166 (repeats 13 times)
+ in krawczyk2d_purity_periodic at /home/kriukov/temp/interval-methods/modules/KrawczykMethod2D.jl:174
+ in find_periodic_orbits at /home/kriukov/temp/interval-methods/birkhoff.jl:375
+
+
