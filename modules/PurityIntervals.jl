@@ -1,5 +1,5 @@
 module PurityIntervals
-export PurityInterval, purity
+export PurityInterval, purity, purify, unpurify
 
 using IntervalArithmetic
 
@@ -113,6 +113,11 @@ function purity(f, x::IntUnion2D)
     end
 end
 =#
+
+# Convert a 2D rectangle into one with purity 1 and extract rectangle from a PurityInterval
+purify(x::MultiDimInterval) = [PurityInterval(x[1], 1), PurityInterval(x[2], 1)]
+unpurify(x::Array{PurityInterval, 1}) = [x[1].interval, x[2].interval]
+
 
 # end of module
 end

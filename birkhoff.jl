@@ -323,22 +323,25 @@ function table(c)
     r, a
 end
 
+#typealias IntUnion2D Array{Union{IntUnion, Interval}, 1}
+#import Base.convert; convert(IntUnion, x::Interval) = IntUnion([x])
+
 
 function T0(x, c, n, m)
 	ω, θ = x
-	println("Argument into T0 with $n, $m: $x")
+	#println("Argument into T0 with $n, $m: $x")
 	r_nm, a_nm = table(c)
 	
 	ω_next = ω - r_nm[n, m]*(ω*cos(θ - a_nm[n, m]) + √(1 - ω^2)*sin(θ - a_nm[n, m]))
 	θ_next = mod(θ + prec(pi) + asin(ω) + asin(ω_next), 2π)
 
-    @show [ω_next, θ_next]
+    [ω_next, θ_next]
 end
 
 function path_general(x, c, n)
     for i = 1:length(n)-1
         if n[i] != n[i+1]
-            @show x = T0(x, c, n[i], n[i+1])
+            x = T0(x, c, n[i], n[i+1])
         else
             error("Cannot hit the same disk twice in succession")
         end
@@ -428,4 +431,126 @@ push!(c1, [0, 0], [r0, 0], [r0/2, 1.3])
 #a = [IntervalArithmetic.Interval(-0.74925,-0.4995),IntervalArithmetic.Interval(0.13164969389957473,0.26229938779914946)]
 #purity(f,a)
 
+##################
 
+
+# Escape-time function
+
+# Symmetric 3-disk scatterer with variable separation r0
+function symmetric3(r0)
+    c = Array{prec, 1}[]
+    push!(c, [0, 0], [r0, 0], [r0/2, r0*sqrt(3)/2]) 
+    c
+end
+
+# Symmetric 3-disk scatterer with variable separation r0 in Gaspard's orientation
+function symmetric3g(r0)
+    c = Array{prec, 1}[]
+    push!(c, [r0/sqrt(3), 0], [-r0/(2*sqrt(3)), r0/2], [-r0/(2*sqrt(3)), -r0/2]) 
+    c
+end
+
+cg = symmetric3g(2.5)
+
+x0 = -10
+#y0 = 0.15
+
+# Not to confuse with Cartesian, denote Birkhoff 2D coordinate as b
+# Time from (x0, y0) to the first collision is just the x-displacement
+
+# Given y0, output the Birkhoff point, disk and time for symmetric3g
+function place0(r0, x0, y0)
+    if y0.hi < r0/2 - 1
+        b0 = [y0, prec(pi) - asin(y0)]
+        n0 = 1
+        t0 = r0/sqrt(3) - x0 - sqrt(1 - y0^2)
+        return b0, n0, t0
+    elseif y0.lo > r0/2 - 1
+        b0 = [r0/2 - y0, -acos(r0/2 - y0) - prec(pi)/2]
+        n0 = 2
+        t0 = -r0/(2*sqrt(3)) - x0 - sqrt(1 - y0^2)
+        return b0, n0, t0
+    end
+    
+end
+
+
+#starting_intervals = split_range(Interval(0, 0.24999), 1e-3)
+starting_intervals = split_range(Interval(0.250001, 0.499999), 1e-6)
+
+esctime_vs_y0 = Any[] #MultiDimInterval[] # May be IntUnions here, so change to something else or Any
+
+#b, n, t0 = place0(2.5, x0, y0)
+disks = range(1, length(cg))
+
+
+
+for i = 1:length(starting_intervals)
+    y = starting_intervals[i]
+    b, n, t0 = place0(2.5, x0, y)
+    
+    counter = 1
+    function collision_iterate_flat(n, rect_p, t0)
+        next_places = Array{PurityInterval, 1}[]
+        next_disks = Int[]
+        next_purities = Int[]
+        
+        for j = 1:length(cg) # From disk n transition to all other
+            if j != n # ...except n, of course
+                next_place = path_general(rect_p, cg, [n, j])
+                push!(next_places, next_place)
+                push!(next_disks, j)
+                push!(next_purities, min(next_place[1].flag, next_place[2].flag))
+            end        
+        end
+        
+        #= In a system of non-screening disks (such as symmetric-3), in which a ray from one of the disks cannot 
+        intersect more than one disk, either all purities are -1 (particle escapes), or only one of all is equal 
+        to 0 or 1 (probably or certainly hits one of the disks). =#
+        
+        #@show next_purities
+        p_max = maximum(next_purities)
+        arr_ind = findfirst(next_purities, p_max)
+        k = next_disks[arr_ind]
+        next = next_places[arr_ind]
+        
+        if p_max == -1
+            #t0 += distance(rect_p, cg, n, j)
+            push!(esctime_vs_y0, [y, t0])
+            #println(counter, " collisions before escape starting from ", y)
+            #@show n, k
+        elseif p_max == 1
+            #@show rect_p
+            #@show n, k
+            if distance(rect_p, cg, n, k).flag == 1
+                t0 += distance(unpurify(rect_p), cg, n, k)
+                counter += 1
+                collision_iterate_flat(n, next, t0)
+            end
+        end
+end
+        
+    collision_iterate_flat(n, purify(b), t0)
+end
+
+
+#= With fine tolerance, the rectangles are too small. it's better to use midpoints of rectangles
+for i = 1:length(esctime_vs_y0)
+    draw_rectangle(esctime_vs_y0[i][1].lo, esctime_vs_y0[i][2].lo, diam(esctime_vs_y0[i][1]), diam(esctime_vs_y0[i][2]), "black")
+end
+axis([0, 0.25, 8, 12])
+=#
+
+z = Array{prec, 1}[]
+for i = 1:length(esctime_vs_y0)
+    if typeof(esctime_vs_y0[i]) == MultiDimInterval
+        push!(z, mid(esctime_vs_y0[i]))
+    end
+end
+
+#z = mid(esctime_vs_y0)
+x = [Float64(xx[1]) for xx in z]
+y = [Float64(log10(xx[2])) for xx in z]
+plot(x, y, ".b-", markersize = 1, alpha = 0.5) # ".b-" means "dots connected with blue lines"
+xlabel(L"{y_0}"); ylabel(L"\mathrm{lg} t_{esc}")
+legend()

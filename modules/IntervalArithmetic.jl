@@ -1,7 +1,7 @@
 ## Interval arithmetic
 
 module IntervalArithmetic
-export prec, Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, all_inside, bisect, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip, arcsin_d, sqrt_d, normsq, IntUnion2D, collapse_isect_step, collapse_isect
+export prec, Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, all_inside, bisect, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip, arcsin_d, sqrt_d, normsq, IntUnion2D, collapse_isect_step, collapse_isect, split_range
 
 typealias prec Float64
 #typealias prec BigFloat
@@ -770,6 +770,33 @@ function bisect(xx::MultiDimInterval)
 	intervals
 end
 
+# Flat bisection
+function split_range(x::Interval, tol)
+    ints = Interval[]
+    N = ceil(1/tol)
+    d = diam(x)
+    dx = d/N
+    for i = 1:N
+        push!(ints, Interval(x.lo + (i-1)*dx, x.lo + i*dx))
+    end
+    ints
+end
+
+function split_range(x::MultiDimInterval, tol)
+    rects = MultiDimInterval[]
+    N = ceil(1/tol)
+    d = diam(x)
+    dx = d[1]/N
+    dy = d[2]/N
+    for i = 1:N
+        for j = 1:N
+            push!(rects, [Interval(x[1].lo + (i-1)*dx, x[1].lo + i*dx), Interval(x[2].lo + (j-1)*dy, x[2].lo + j*dy)])
+        end
+    end
+    rects
+end
+
+
 # Multidimensional inside() (moved from KrawczykMethod2D)
 function all_inside(x::MultiDimInterval, y::MultiDimInterval)
 	k = 0
@@ -861,7 +888,7 @@ end
 # Replace intersecting intervals in an array with their hull
 # Dummy intervals (Inf, -Inf) - because (Inf, Inf) is already used as empty set
 function collapse_isect_step(x::Array{Interval, 1})
-    println("Init. arg. of collapse_isect_step: $x")
+    #println("Init. arg. of collapse_isect_step: $x")
     x1 = unique(x)
     l = length(x1)
     for i = 1:l
@@ -869,7 +896,7 @@ function collapse_isect_step(x::Array{Interval, 1})
             if isect(x1[i], x1[j]) != false
                 hull_ij = hull(x1[i], x1[j])
                 deleteat!(x1, (i, j))
-                push!(x1, hull_ij, Interval(2.3456789, 3.456789))
+                push!(x1, hull_ij, Interval(Inf, -Inf))
             end
         end
     end
@@ -877,16 +904,16 @@ function collapse_isect_step(x::Array{Interval, 1})
     x2 = unique(x1)
     sort!(x2)
     # After uniqueness and sorting, there will be only one Interval(Inf, Inf) at the very end. Remove it
-    if x2[length(x2)] == Interval(2.3456789, 3.456789)
+    if x2[length(x2)] == Interval(Inf, -Inf)
         pop!(x2)
     end
-    println("Result of collapse_isect_step: $x2")
+    #println("Result of collapse_isect_step: $x2")
     x2
 end
 
 # Repeat the collapse steps until the array does not change
 function collapse_isect(x::Array{Interval, 1})
-    println("Init. arg. of collapse_isect: $x")
+    #println("Init. arg. of collapse_isect: $x")
     # If the array consists of a single interval (NaN, NaN), it may cause an infinite loop. Make an exception
     if isnan(x) && length(x) == 1
         return [Interval(Inf, Inf)]
@@ -894,23 +921,23 @@ function collapse_isect(x::Array{Interval, 1})
     x1 = x
     x2 = Interval[]
     i = 0
-    while i < 10
-        @show diam(x1)
+    while true # i < 10
+        #@show diam(x1)
         x2 = collapse_isect_step(x1)
         x1 == x2 && break
         x1 = x2
-        @show i += 1
+        #@show i += 1
     end
-    println("Result of collapse_isect after $i iterations: $x2")
+    #println("Result of collapse_isect after $i iterations: $x2")
     x2
 end
 
 type IntUnion
 	union::Array{Interval, 1}
 	function IntUnion(x)
-	    println("Initial argument of IntUnion: $x")
+	    #println("Initial argument of IntUnion: $x")
         x1 = collapse_isect(x)
-        println("Collapsed argument of IntUnion: $x1")
+        #println("Collapsed argument of IntUnion: $x1")
 	    new(x1)
 	end
 end

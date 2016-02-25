@@ -100,3 +100,8 @@ cos(b1)
 sin also has a problem!
 sin(Interval(1.7, 1.9))
 
+Sanders/Benet sin had an error; fixed.
+
+================================================
+
+
