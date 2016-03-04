@@ -481,6 +481,23 @@ acos(x::Interval) = Interval(acos(x.hi), acos(x.lo))
 import Base.atan
 atan(x::Interval) = Interval(atan(x.lo), atan(x.hi))
 
+# Attempt to define atan2 for intervals
+import Base.atan2
+function atan2(y::Interval, x::Interval)
+    f(y, x) = 2atan((sqrt(x^2 + y^2) - x)/y)
+    if !belong(0, y)
+        return f(y, x)
+    else
+        if x.lo > 0
+            return hull(f(Interval(y.lo, -10eps()), x), f(Interval(10eps(), y.hi), x))
+        elseif x.hi < 0
+            return IntUnion([f(Interval(y.lo, -10eps()), x), f(Interval(10eps(), y.hi), x)])
+        else
+            return Interval(-prec(pi), prec(pi))
+        end
+    end
+end
+
 
 function arcsin(x)
     domain = Interval(-1, 1)
@@ -828,8 +845,8 @@ end
 import Base.floor
 floor(x::Interval) = floor(x.lo)
 
-import Base.norm
-norm(x::Array{Interval, 1}) = norm(mid(x))
+#import Base.norm
+#norm(x::Array{Interval, 1}) = norm(mid(x)) # Conflicts with previous definition of norm
 
 
 

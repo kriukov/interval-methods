@@ -443,14 +443,14 @@ function symmetric3(r0)
     c
 end
 
-# Symmetric 3-disk scatterer with variable separation r0 in Gaspard's orientation
+# Symmetric 3-disk scatterer with variable separation r0 in Gaspard's orientation (with disk 1 rightmost on the x-axis)
 function symmetric3g(r0)
     c = Array{prec, 1}[]
     push!(c, [r0/sqrt(3), 0], [-r0/(2*sqrt(3)), r0/2], [-r0/(2*sqrt(3)), -r0/2]) 
     c
 end
 
-cg = symmetric3g(2.5)
+cg = symmetric3g(3.5)
 
 x0 = -10
 #y0 = 0.15
@@ -458,7 +458,7 @@ x0 = -10
 # Not to confuse with Cartesian, denote Birkhoff 2D coordinate as b
 # Time from (x0, y0) to the first collision is just the x-displacement
 
-# Given y0, output the Birkhoff point, disk and time for symmetric3g
+# Deprecated: use place1(); Given y0, output the Birkhoff point, disk and time of the first collision for symmetric3g  for v = [1, 0]
 function place0(r0, x0, y0)
     if y0.hi < r0/2 - 1
         b0 = [y0, prec(pi) - asin(y0)]
@@ -474,83 +474,146 @@ function place0(r0, x0, y0)
     
 end
 
-
-#starting_intervals = split_range(Interval(0, 0.24999), 1e-3)
-starting_intervals = split_range(Interval(0.250001, 0.499999), 1e-6)
-
-esctime_vs_y0 = Any[] #MultiDimInterval[] # May be IntUnions here, so change to something else or Any
-
-#b, n, t0 = place0(2.5, x0, y0)
-disks = range(1, length(cg))
-
-
-
-for i = 1:length(starting_intervals)
-    y = starting_intervals[i]
-    b, n, t0 = place0(2.5, x0, y)
-    
-    counter = 1
-    function collision_iterate_flat(n, rect_p, t0)
-        next_places = Array{PurityInterval, 1}[]
-        next_disks = Int[]
-        next_purities = Int[]
-        
-        for j = 1:length(cg) # From disk n transition to all other
-            if j != n # ...except n, of course
-                next_place = path_general(rect_p, cg, [n, j])
-                push!(next_places, next_place)
-                push!(next_disks, j)
-                push!(next_purities, min(next_place[1].flag, next_place[2].flag))
-            end        
+# A general function for a first collision time from the outside point x with velocity v of the arbitrary system c
+function place1(c, x, v)
+    times = Interval[]
+    x = map(Interval, x)
+    v = map(Interval, v)
+    n = length(c)
+    crossz(x, y) = x[1]*y[2] - x[2]*y[1]
+    norm2(x) = x[1]^2 + x[2]^2
+    v2 = norm2(v)
+	
+    for i = 1:n
+        X = x - c[i]
+        Xcrossv = crossz(X, v)
+        Xdotv = dot(X, v)
+        discr = v2 - Xcrossv^2
+        if discr.lo >= 0 #&& (-Xdotv - sqrt(discr)).lo >= 0 # If there is a real intersection ray-disk
+            t = (-Xdotv - sqrt(discr))/v2
+            push!(times, t)
         end
-        
-        #= In a system of non-screening disks (such as symmetric-3), in which a ray from one of the disks cannot 
-        intersect more than one disk, either all purities are -1 (particle escapes), or only one of all is equal 
-        to 0 or 1 (probably or certainly hits one of the disks). =#
-        
-        #@show next_purities
-        p_max = maximum(next_purities)
-        arr_ind = findfirst(next_purities, p_max)
-        k = next_disks[arr_ind]
-        next = next_places[arr_ind]
-        
-        if p_max == -1
-            #t0 += distance(rect_p, cg, n, j)
-            push!(esctime_vs_y0, [y, t0])
-            #println(counter, " collisions before escape starting from ", y)
-            #@show n, k
-        elseif p_max == 1
-            #@show rect_p
-            #@show n, k
-            if distance(rect_p, cg, n, k).flag == 1
-                t0 += distance(unpurify(rect_p), cg, n, k)
-                counter += 1
-                collision_iterate_flat(n, next, t0)
-            end
-        end
-end
-        
-    collision_iterate_flat(n, purify(b), t0)
-end
-
-
-#= With fine tolerance, the rectangles are too small. it's better to use midpoints of rectangles
-for i = 1:length(esctime_vs_y0)
-    draw_rectangle(esctime_vs_y0[i][1].lo, esctime_vs_y0[i][2].lo, diam(esctime_vs_y0[i][1]), diam(esctime_vs_y0[i][2]), "black")
-end
-axis([0, 0.25, 8, 12])
-=#
-
-z = Array{prec, 1}[]
-for i = 1:length(esctime_vs_y0)
-    if typeof(esctime_vs_y0[i]) == MultiDimInterval
-        push!(z, mid(esctime_vs_y0[i]))
     end
+    
+	# Extract the minimum positive time value (in case there is more than one real intersection)
+	t_minpos = Interval(Inf)
+	k = 0
+	for i = 1:length(times)
+		if times[i].hi < t_minpos.lo && times[i].lo > 0
+			t_minpos = times[i]
+			k = i
+		end				
+	end
+	
+	# So it landed on disk k after time (not distance if v is not scaled). Convert into Birkhoff coordinates
+	d = v*t_minpos # vector distance to first hit
+	D = norm(d)
+	R = x + d - c[k]
+    th = atan2(R[2], R[1])
+    if abs(d[1]) > abs(d[2])
+        w = (d[2]*cos(th) - d[1]*sin(th))/D
+    else
+        phi = acos((d[1]*cos(th) + d[2]*sin(th))/D)
+        w = sin(phi)
+    end
+    #@show (d[1]*cos(th) + d[2]*sin(th))/D
+    #phi = th - atan2(d[2], d[1]) # Gives errors when the vector is (almost) horizontal
+    
+    b = [w, th]
+    t = D/norm(v)
+    
+    return b, k, t
 end
+
+
+# Output escape time (time to last collision) for arbitrary disk system with fixed initial abscissa x and a range of ordinates y. Outputs midpoints of found intervals
+function escape_time(c, x, y_range::Interval, v, tol)
+
+	starting_intervals = split_range(y_range, tol)
+	#starting_intervals = split_range(Interval(0.250001, 0.499999), 1e-6)
+
+	esctime_vs_y0 = Any[] #MultiDimInterval[] # May be IntUnions here (less likely with smaller tolerance), so change to something else or Any
+
+	disks = range(1, length(c))
+
+
+	for i = 1:length(starting_intervals)
+		y = starting_intervals[i]
+		b, n, t0 = place1(c, [Interval(x), y], v)
+		
+		counter = 1
+		function collision_iterate_flat(n, rect_p, t0)
+		    next_places = Array{PurityInterval, 1}[]
+		    next_disks = Int[]
+		    next_purities = Int[]
+		    
+		    for j = 1:length(c) # From disk n transition to all other
+		        if j != n # ...except to n, of course
+		            next_place = path_general(rect_p, c, [n, j])
+		            push!(next_places, next_place)
+		            push!(next_disks, j)
+		            push!(next_purities, min(next_place[1].flag, next_place[2].flag))
+		        end        
+		    end
+		    
+		    #= In a system of non-screening disks (such as symmetric-3), in which a ray from one of the disks cannot 
+		    intersect more than one disk, either all purities are -1 (particle escapes), or only one of all is equal 
+		    to 0 or 1 (probably or certainly hits one of the disks). =#
+		    
+		    #@show next_purities
+		    p_max = maximum(next_purities)
+		    arr_ind = findfirst(next_purities, p_max)
+		    k = next_disks[arr_ind]
+		    next = next_places[arr_ind]
+		    
+		    if p_max == -1
+		        #t0 += distance(rect_p, cg, n, j)
+		        push!(esctime_vs_y0, [y, t0])
+		        #println(counter, " collisions before escape starting from ", y)
+		        #@show n, k
+		    elseif p_max == 1
+		        #@show rect_p
+		        #@show n, k
+		        if distance(rect_p, c, n, k).flag == 1
+		            t0 += distance(unpurify(rect_p), c, n, k)
+		            counter += 1
+		            collision_iterate_flat(n, next, t0)
+		        else
+		            @show y
+		            println("distance not clean! ", rect_p)
+		        end
+		    end
+	end
+		#@show b
+		collision_iterate_flat(n, purify(b), t0)
+	end
+
+
+	#= With fine tolerance, the rectangles are too small. it's better to use midpoints of rectangles. Commented out.
+	for i = 1:length(esctime_vs_y0)
+		draw_rectangle(esctime_vs_y0[i][1].lo, esctime_vs_y0[i][2].lo, diam(esctime_vs_y0[i][1]), diam(esctime_vs_y0[i][2]), "black")
+	end
+	axis([0, 0.25, 8, 12])
+	=#
+
+
+	z = Array{prec, 1}[]
+	for i = 1:length(esctime_vs_y0)
+		if typeof(esctime_vs_y0[i]) == MultiDimInterval
+		    push!(z, mid(esctime_vs_y0[i]))
+		end
+	end
+
+	return z
+end
+
+
+z = escape_time(symmetric3g(3.5), -10, Interval(0.0001, 0.8), [1, 0], 1e-5)
 
 #z = mid(esctime_vs_y0)
 x = [Float64(xx[1]) for xx in z]
 y = [Float64(log10(xx[2])) for xx in z]
 plot(x, y, ".b-", markersize = 1, alpha = 0.5) # ".b-" means "dots connected with blue lines"
-xlabel(L"{y_0}"); ylabel(L"\mathrm{lg} t_{esc}")
+xlabel(L"{y_0}", fontsize=30); ylabel(L"\mathrm{lg} \, t_{esc}", fontsize=30)
 legend()
+
