@@ -608,12 +608,12 @@ function escape_time(c, x, y_range::Interval, v, tol)
 end
 
 
-z = escape_time(symmetric3g(3.5), -10, Interval(0.0001, 0.8), [1, 0], 1e-5)
+#z = escape_time(symmetric3g(3.5), -10, Interval(0.0001, 0.8), [1, 0], 1e-5)
 
-#z = mid(esctime_vs_y0)
+#=
 x = [Float64(xx[1]) for xx in z]
 y = [Float64(log10(xx[2])) for xx in z]
 plot(x, y, ".b-", markersize = 1, alpha = 0.5) # ".b-" means "dots connected with blue lines"
 xlabel(L"{y_0}", fontsize=30); ylabel(L"\mathrm{lg} \, t_{esc}", fontsize=30)
 legend()
-
+=#
