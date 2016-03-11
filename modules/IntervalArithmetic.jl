@@ -3,8 +3,8 @@
 module IntervalArithmetic
 export prec, Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, all_inside, bisect, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip, arcsin_d, sqrt_d, normsq, IntUnion2D, collapse_isect_step, collapse_isect, split_range
 
-typealias prec Float64
-#typealias prec BigFloat
+#typealias prec Float64
+typealias prec BigFloat
 
 type Interval
 
@@ -637,6 +637,7 @@ sin(x::MultiDimInterval) = map(sin, x)
 sin(x::Array{Any, 1}) = map(sin, x)
 cos(x::MultiDimInterval) = map(cos, x)
 cos(x::Array{Any, 1}) = map(cos, x)
+hull(x::MultiDimInterval, y::MultiDimInterval) = [hull(x[1], y[1]), hull(x[2], y[2])]
 
 import Base.norm
 norm(x::MultiDimInterval) = sqrt(x[1]^2 + x[2]^2)
