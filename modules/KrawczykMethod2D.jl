@@ -136,18 +136,22 @@ function krawczyk2d_purity_periodic(f, a::MultiDimInterval, prec::Integer=64, to
     set_bigfloat_precision(prec)
     
     rect_count = 0
+    all_count = 0
     function krawczyk2d_purity_internal_periodic(f, a::MultiDimInterval, prec::Integer)
-        
+        all_count += 1
+        if all_count % 10000 == 0
+            println("Step $all_count: a = $a")
+        end
         #@show a
         p = purity(f, a)
         #@show p
         if p != -1
             if p == 1
                 rect_count += 1
-                if rect_count % 100 == 0
-                    println("Starting rectangle ", rect_count)
-                end
-                println(a, " clean")
+                #if rect_count % 100 == 0
+                #    println("Starting rectangle ", rect_count)
+                #end
+                #println(a, " clean")
                 #@show a
                 #@show f(a)
                 isect_step = isect(a, f(a))
@@ -160,9 +164,9 @@ function krawczyk2d_purity_periodic(f, a::MultiDimInterval, prec::Integer=64, to
                 
             elseif p == 0
 
-                println(a, " unclean")
+                #println(a, " unclean")
                 if max(diam(a)[1], diam(a)[2]) < tol
-			        print_with_color(:blue, "Krawczyk could not properly identify zeros here: tolerance reached at unclean\n")
+			        #print_with_color(:blue, "Krawczyk could not properly identify zeros here: tolerance reached at unclean\n")
 			    else
                     pieces = bisect(a)
                     for i = 1:4

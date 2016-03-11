@@ -530,12 +530,10 @@ end
 function escape_time(c, x, y_range::Interval, v, tol)
 
 	starting_intervals = split_range(y_range, tol)
-	#starting_intervals = split_range(Interval(0.250001, 0.499999), 1e-6)
 
 	esctime_vs_y0 = Any[] #MultiDimInterval[] # May be IntUnions here (less likely with smaller tolerance), so change to something else or Any
 
 	disks = range(1, length(c))
-
 
 	for i = 1:length(starting_intervals)
 		y = starting_intervals[i]
@@ -588,15 +586,6 @@ function escape_time(c, x, y_range::Interval, v, tol)
 		collision_iterate_flat(n, purify(b), t0)
 	end
 
-
-	#= With fine tolerance, the rectangles are too small. it's better to use midpoints of rectangles. Commented out.
-	for i = 1:length(esctime_vs_y0)
-		draw_rectangle(esctime_vs_y0[i][1].lo, esctime_vs_y0[i][2].lo, diam(esctime_vs_y0[i][1]), diam(esctime_vs_y0[i][2]), "black")
-	end
-	axis([0, 0.25, 8, 12])
-	=#
-
-
 	z = Array{prec, 1}[]
 	for i = 1:length(esctime_vs_y0)
 		if typeof(esctime_vs_y0[i]) == MultiDimInterval
@@ -617,3 +606,14 @@ plot(x, y, ".b-", markersize = 1, alpha = 0.5) # ".b-" means "dots connected wit
 xlabel(L"{y_0}", fontsize=30); ylabel(L"\mathrm{lg} \, t_{esc}", fontsize=30)
 legend()
 =#
+
+# (Periodic) orbit length: c is disk system, orbit is trajectory (e.g. [1, 2, 3, 1]), b0 is starting point on disk 1
+function L(c, b0, orbit)
+    l = 0
+    b1 = b0
+    for i = 1:length(orbit)-1
+        l += distance(b1, c, orbit[i], orbit[i+1])
+        b1 = T0(b1, c, orbit[i], orbit[i+1])
+    end
+    l
+end
