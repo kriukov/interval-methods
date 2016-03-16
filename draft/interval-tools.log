@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2011.4.19)  13 JAN 2016 18:39
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2011.4.19)  15 MAR 2016 23:37
 entering extended mode
  %&-line parsing enabled.
 **interval-tools.tex
@@ -626,7 +626,11 @@ Class revtex4-1 Info: Robustifying \LaTeX's \boldmath command on input line 29.
 Class revtex4-1 Info: cite was not loaded (OK!) on input line 29.
 Class revtex4-1 Info: mcite was not loaded (OK!) on input line 29.
 Class revtex4-1 Info: multicol was not loaded (OK!) on input line 29.
-(./interval-tools.aux)
+(./interval-tools.aux
+
+LaTeX Warning: Label `table:1' multiply defined.
+
+)
 \openout1 = `interval-tools.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 29.
@@ -765,23 +769,35 @@ LaTeX Font Info:    Try loading font information for U+bbold on input line 69.
 File: birkhoff-12-and-13_tol=1e-2.pdf Graphic file (type pdf)
 
 <use birkhoff-12-and-13_tol=1e-2.pdf>
+<fractal-plot.png, id=55, 1477.1988pt x 2130.5196pt>
+File: fractal-plot.png Graphic file (type png)
+ <use fractal-plot.png>
+
+LaTeX Warning: Float too large for page by 30.29504pt on input line 111.
+
+[3 <./birkhoff-12-and-13_tol=1e-2.pdf>] [4 <./fractal-plot.png>]
+
+pdfTeX warning: pdflatex (file ./figure-3disks.pdf): PDF inclusion: found PDF v
+ersion <1.5>, but at most version <1.4> allowed
+<figure-3disks.pdf, id=86, 361.35pt x 326.21875pt>
+File: figure-3disks.pdf Graphic file (type pdf)
+ <use figure-3disks.pdf>
 No file interval-tools.bbl.
 
 Class revtex4-1 Warning: Command \address is obsolete;
 Use \affiliation instead.
 
-[3 <./birkhoff-12-and-13_tol=1e-2.pdf>] (./interval-tools.aux)
+[5 <./figure-3disks.pdf>] (./interval-tools.aux)
 
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right .
-
+LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 7538 strings out of 495061
- 102177 string characters out of 1182621
+ 7577 strings out of 495061
+ 102575 string characters out of 1182621
  194209 words of memory out of 3000000
- 10518 multiletter control sequences out of 15000+50000
- 56082 words of font info for 134 fonts, out of 3000000 for 9000
+ 10532 multiletter control sequences out of 15000+50000
+ 64133 words of font info for 149 fonts, out of 3000000 for 9000
  28 hyphenation exceptions out of 8191
  38i,15n,28p,1079b,373s stack positions out of 5000i,500n,10000p,200000b,50000s
  </home/kriukov/.texmf-var/fonts/pk/ljfour/public/bbold/bbold10.600pk>{/usr/s
@@ -793,9 +809,9 @@ b></usr/share/texmf-texlive/fonts/type1/urw/symbol/usyr.pfb></usr/share/texmf-t
 exlive/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf-texlive/fonts/type1/u
 rw/times/utmbi8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/times/utmr8a.pfb
 ></usr/share/texmf-texlive/fonts/type1/urw/times/utmri8a.pfb>
-Output written on interval-tools.pdf (3 pages, 220254 bytes).
+Output written on interval-tools.pdf (5 pages, 456934 bytes).
 PDF statistics:
- 114 PDF objects out of 1000 (max. 8388607)
- 14 named destinations out of 1000 (max. 500000)
- 60 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 143 PDF objects out of 1000 (max. 8388607)
+ 21 named destinations out of 1000 (max. 500000)
+ 82 words of extra memory for PDF output out of 10000 (max. 10000000)
 

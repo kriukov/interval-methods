@@ -3,8 +3,8 @@
 module IntervalArithmetic
 export prec, Interval, ComplexInterval, MultiDimInterval, IntUnion, rad, diam, mid, mig, mag, belong, hd, hull, isect, isectext, lo, hi, left, right, make_intervals, all_inside, bisect, det2, inside, intunion, mod1, mod2, mod21, mod22, mod23, mod24, domaincheck, domaincheck2d, arcsin, sqrt1, flip, arcsin_d, sqrt_d, normsq, IntUnion2D, collapse_isect_step, collapse_isect, split_range
 
-#typealias prec Float64
-typealias prec BigFloat
+typealias prec Float64
+#typealias prec BigFloat
 
 type Interval
 

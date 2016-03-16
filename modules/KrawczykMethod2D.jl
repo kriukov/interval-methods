@@ -1,5 +1,5 @@
 module KrawczykMethod2D
-export krawczyk2d, differentiate, Interval, rad, diam, mid, mig, mag, lo, hi, belong, hd, hull, isect, isectext, K, all_inside, left, right, bisect, jacobian, MultiDimInterval, make_intervals, Y, krawczyk2d_internal, mod21, Ad, mod1, mod2, mod21, mod22, mod23, mod24, arcsin, sqrt1, krawczyk2d_purity, domaincheck, domaincheck2d, arcsin_d, sqrt_d, krawczyk2d_purity_periodic, purity
+export krawczyk2d, differentiate, Interval, rad, diam, mid, mig, mag, lo, hi, belong, hd, hull, isect, isectext, K, all_inside, left, right, bisect, jacobian, MultiDimInterval, make_intervals, Y, krawczyk2d_internal, mod21, Ad, mod1, mod2, mod21, mod22, mod23, mod24, arcsin, sqrt1, krawczyk2d_purity, domaincheck, domaincheck2d, arcsin_d, sqrt_d, krawczyk2d_purity_periodic, purity, krawczyk2d_w
 
 using IntervalArithmetic
 using AutoDiff
@@ -44,13 +44,12 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
     function krawczyk2d_internal(f, a::MultiDimInterval, bigprec::Integer)
 
 	    Ka = isect(a, K(f, a))
-
+	    
 	    if Ka != false
 
 		    dK = diam(Ka)
 
 		    if dK[1] < tol && dK[2] < tol #d == dK
-
 			    if all_inside(Ka, a) #&& all_inside(f(Ka), [Interval(-tol, tol), Interval(-tol, tol)])
 				    println("Unique zero in $Ka")
 				    push!(roots_array, Ka)
@@ -73,6 +72,24 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
     end
 
     return krawczyk2d_internal(f, a, bigprec)
+end
+
+# Workaround for krawczyk2d to increase precision of the solution
+
+function krawczyk2d_w(f, a::MultiDimInterval, bigprec::Integer=64)
+    roots_array = MultiDimInterval[]
+    set_bigfloat_precision(bigprec)
+    sol = krawczyk2d(f, a, bigprec)
+    for i = 1:length(sol)
+        z = sol[i]
+        z1 = [Interval(Inf), Interval(Inf)]
+        while z1 != z
+            z1 = z
+            z = krawczyk2d(f, z1, bigprec)[1]    
+        end
+        push!(roots_array, z)
+    end
+    roots_array
 end
 
 #=
