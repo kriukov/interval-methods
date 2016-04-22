@@ -434,6 +434,9 @@ push!(c1, [0, 0], [r0, 0], [r0/2, 1.3])
 ##################
 
 
+
+
+
 # Escape-time function
 
 # Symmetric 3-disk scatterer with variable separation r0

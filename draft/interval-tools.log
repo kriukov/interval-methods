@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2011.4.19)  15 MAR 2016 23:37
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2011.4.19)  19 APR 2016 00:28
 entering extended mode
  %&-line parsing enabled.
 **interval-tools.tex
@@ -751,19 +751,23 @@ l.51 \maketitle
 ? 
 [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
 
+Package natbib Warning: Citation `goldstein' on page 2 undefined on input line 
+58.
+
+
 ! Package inputenc Error: Unicode char \u8:  not set up for use with LaTeX.
 
 See the inputenc package documentation for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.57 ...h the two ends of a closed interval $[a, 
+l.60 ...h the two ends of a closed interval $[a, 
                                                   b]$ which contains $x$. Af...
 
 ? 
 LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <10> not available
-(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 69.
-LaTeX Font Info:    Try loading font information for U+bbold on input line 69.
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 72.
+LaTeX Font Info:    Try loading font information for U+bbold on input line 72.
 (/usr/share/texmf-texlive/tex/latex/bbold/Ubbold.fd) [2]
 <birkhoff-12-and-13_tol=1e-2.pdf, id=51, 578.16pt x 433.62pt>
 File: birkhoff-12-and-13_tol=1e-2.pdf Graphic file (type pdf)
@@ -773,7 +777,7 @@ File: birkhoff-12-and-13_tol=1e-2.pdf Graphic file (type pdf)
 File: fractal-plot.png Graphic file (type png)
  <use fractal-plot.png>
 
-LaTeX Warning: Float too large for page by 30.29504pt on input line 111.
+LaTeX Warning: Float too large for page by 30.29504pt on input line 114.
 
 [3 <./birkhoff-12-and-13_tol=1e-2.pdf>] [4 <./fractal-plot.png>]
 
@@ -787,16 +791,19 @@ No file interval-tools.bbl.
 Class revtex4-1 Warning: Command \address is obsolete;
 Use \affiliation instead.
 
+
+Package natbib Warning: There were undefined citations.
+
 [5 <./figure-3disks.pdf>] (./interval-tools.aux)
 
 LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 7577 strings out of 495061
- 102575 string characters out of 1182621
- 194209 words of memory out of 3000000
- 10532 multiletter control sequences out of 15000+50000
+ 7578 strings out of 495061
+ 102586 string characters out of 1182621
+ 193209 words of memory out of 3000000
+ 10533 multiletter control sequences out of 15000+50000
  64133 words of font info for 149 fonts, out of 3000000 for 9000
  28 hyphenation exceptions out of 8191
  38i,15n,28p,1079b,373s stack positions out of 5000i,500n,10000p,200000b,50000s
@@ -809,7 +816,7 @@ b></usr/share/texmf-texlive/fonts/type1/urw/symbol/usyr.pfb></usr/share/texmf-t
 exlive/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf-texlive/fonts/type1/u
 rw/times/utmbi8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/times/utmr8a.pfb
 ></usr/share/texmf-texlive/fonts/type1/urw/times/utmri8a.pfb>
-Output written on interval-tools.pdf (5 pages, 456934 bytes).
+Output written on interval-tools.pdf (5 pages, 457771 bytes).
 PDF statistics:
  143 PDF objects out of 1000 (max. 8388607)
  21 named destinations out of 1000 (max. 500000)

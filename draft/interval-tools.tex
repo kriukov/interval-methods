@@ -50,9 +50,12 @@ Abstract goes here.
 
 \maketitle
 
+\bibliographystyle{apsrev}
+%\bibliographystyle{unsrt}
+
 \section{Introduction}
 
-Chaotic systems form a subset of dynamical systems and are characterized by their high sensitivity to initial conditions. Even though these systems are deterministic (their future behaviour is fully determined by their initial conditions), small differences in initial conditions yield widely diverging outcomes, thus making long-term predictions generally impossible (see, e.g., textbook [1]). Study of chaotic systems has many practical applications in various fields of science, such as physics, engineering, meteorology, biology and economics [2 – 7]. Since chaotic systems are non-integrable, and perturbation methods work only in the cases of small deviations from the integrable system, numerical methods are generally necessary to study such systems.
+Chaotic systems form a subset of dynamical systems and are characterized by their high sensitivity to initial conditions. Even though these systems are deterministic (their future behaviour is fully determined by their initial conditions), small differences in initial conditions yield widely diverging outcomes, thus making long-term predictions generally impossible (see, e.g., textbook \cite{goldstein}). Study of chaotic systems has many practical applications in various fields of science, such as physics, engineering, meteorology, biology and economics [2 – 7]. Since chaotic systems are non-integrable, and perturbation methods work only in the cases of small deviations from the integrable system, numerical methods are generally necessary to study such systems.
 
 Methods of computational error control based on order estimates of approximation errors are not rigorous and they do not take into account rounding error accumulation. In this study we use the numerical technique known as interval analysis (IA), interval arithmetic or interval computation. The first books on modern IA were published in 1966 [10, 11]. It has since then been successfully used to solve various problems [12, 13]. The essence of this technique is to compute enclosures (containing intervals) of the values instead of approximations. Simply put, it represents each value as a range of possibilities. Interval algorithms provide rigorous bounds on accumulated rounding errors, approximation errors and propagated uncertainties. Instead of working with a real (uncertain) value $x$, we work with the two ends of a closed interval $[a, b]$ which contains $x$. After each operation, the output is an interval which reliably includes the true result [15, 16]. The size of the interval directly gives the rounding error estimate.
 
@@ -113,10 +116,10 @@ We also made the plots for the escape time function for the symmetric 3-disk sca
 Using our implemented two-dimensional interval Krawczyk method taking into account purity, we can seek periodic orbits in any two-dimensional multi-disk scatterer. Treating the initial position in Birkhoff coordinates as $\textbf{b} = (\omega, \theta)$ and the Birkhoff function (2) as $\textbf{T}_{nm}(\textbf{b})$ for the given system of disks giving the transition from disk $n$ to disk $m$, we obtain the equation for a periodic orbit between disks $c_i$, where $i = 1, 2, ..., k$:
 
 \begin{equation}
-\textbf{T}_{c_1 c_2} \circ \textbf{T}_{c_2 c_3} \circ ... \circ \textbf{T}_{c_k c_1} (\textbf{b}) = \textbf{b}
+\textbf{T}_{c_1 c_2} \circ \textbf{T}_{c_2 c_3} \circ ... \circ \textbf{T}_{c_{k-1} c_k} \circ \textbf{T}_{c_k c_1} (\textbf{b}) = \textbf{b}
 \end{equation}
 
-Placing both sides of (3) on one side, we can seek the zeros of the resulting function, which will give us the initial coordinate for the periodic orbit being sought, providing the range of possible initial coordinates as an interval value of $\textbf{b}$. As an example, we performed the calculation of two periodic orbits in a symmetric 3-disk scatterer with $r = 6$ oriented as shown in Figure 3 and also a periodic orbit in a non-symmetric (isosceles) 3-disk scatterer with the disk centers at the coordinates $(0, 0)$, $(r, 0)$ and $(r/2, d)$ with $r = 6$ and $d = 1.3$ accordingly. The obtained results, together with the analytical results where possible, are given in Tables 1 and 2.
+Placing both sides of (3) on one side, we can seek the zeros of the resulting function providing the range of possible initial coordinates as an interval value of $\textbf{b}$, which will give us the initial coordinate for the periodic orbit being sought. As an example, we performed the calculation of two periodic orbits in a symmetric 3-disk scatterer with $r = 6$ oriented as shown in Figure 3 and also a periodic orbit in a non-symmetric (isosceles) 3-disk scatterer with the disk centers at the coordinates $(0, 0)$, $(r, 0)$ and $(r/2, d)$ with $r = 6$ and $d = 1.3$ accordingly. The obtained results, together with the analytical results where possible, are given in Tables 1 and 2.
 
 \begin{figure}
 \centering
@@ -132,7 +135,7 @@ Placing both sides of (3) on one side, we can seek the zeros of the resulting fu
  \hline
  Orbit & Initial Birkhoff point & Initial Birkhoff point (analytical) \\ [0.5ex] 
  \hline\hline
- 123-1 & $(-0._{5000000000001931}^{49999999999999994}, 0.52359877559829_{67}^9)$ & $(-1/2, \pi/6)$ \\ [1ex] 
+ 123-1 & $(-0._{5000000000001931}^{49999999999999994}, 0.52359877559829_{67}^{90})$ & $(-1/2, \pi/6)$ \\ [1ex] 
  1213-1 & $(-0.581590932_{2057394}^{1268368}, 0.523598775_{5570859}^{6395176})$ & unknown  \\ [1ex] 
  123-1 isos. & $(-0.059700088163219_{02}^{00}, 0.0597356080137144_{35}^{56})$ & $(-\sin \theta_{is}, \theta_{is})$ \\ [1ex]
  \hline
@@ -161,8 +164,7 @@ In Tables 1 and 2, the value of $\theta_{is}$ is given by $\theta_{is} = \mathrm
 \vspace*{10pt}
 
 
-%\bibliographystyle{apsrev}
-\bibliographystyle{unsrt}
+
 \bibliography{interval-tools}
 
 
