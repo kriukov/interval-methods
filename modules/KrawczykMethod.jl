@@ -28,7 +28,7 @@ function krawczyk(f::Function, a::Interval, bigprec::Integer=64)
   function krawczyk_internal(f::Function, a::Interval, bigprec::Integer)
 
 	set_bigfloat_precision(bigprec)
-	#tol = 1e-20 #100eps(BigFloat)
+	tol = 1e-15 #100eps(BigFloat)
 
 	# If a is symmetric, i.e., mid(a) = 0, the process may stall. The initial interval should be slightly asymmetrized then. This fix also removes the "possible" roots which correctly merge into "unique".
 	if mid(a) == 0
@@ -36,15 +36,15 @@ function krawczyk(f::Function, a::Interval, bigprec::Integer=64)
 	end
 
 	Ka = isect(a, K(f, a))
-	@show a
-	@show Ka
+	#@show a
+	#@show Ka
     
 	if Ka != false
-	  @show diam(a) > diam(Ka)
-	  @show a1
+	  #@show diam(a) > diam(Ka)
+	  #@show a1
 	  #@show diam(K(a))
 
-	  if (a1 == a) && diam(Ka) < 1e-4 
+	  if diam(Ka) < tol #1e-4 && (Ka == a)
 	    if inside(Ka, a)   # inside
 	      println("Unique zero in $(Ka)")
 	      #if length(arr_a) > 0 && Ka != arr_a[length(arr_a)]
@@ -56,13 +56,13 @@ function krawczyk(f::Function, a::Interval, bigprec::Integer=64)
 	    end
 
 	  else
-        @show steps += 1
+        #@show steps += 1
         #if steps > 100
         #    error("Exiting")
         #end
-        @show a1 = a
-	    @show krawczyk_internal(f, left(Ka), bigprec)
-	    @show krawczyk_internal(f, right(Ka), bigprec)
+        #@show a1 = a
+	    krawczyk_internal(f, left(Ka), bigprec)
+	    krawczyk_internal(f, right(Ka), bigprec)
 	    
 	  end
 
@@ -72,7 +72,8 @@ function krawczyk(f::Function, a::Interval, bigprec::Integer=64)
   end
   
   #Weeding out duplicate and wrong roots
-  sol = krawczyk_internal(f, a, bigprec)
+  #=
+  @show sol = krawczyk_internal(f, a, bigprec)
   sol1 = Interval[]
   for i=1:length(sol)
      push!(sol1, sol[i][1])
@@ -85,7 +86,8 @@ function krawczyk(f::Function, a::Interval, bigprec::Integer=64)
     end
   end
   return sol3
-  #return krawczyk_internal(f, a, bigprec)
+  =#
+  return krawczyk_internal(f, a, bigprec)
 end
 
 #end of module

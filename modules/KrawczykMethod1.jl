@@ -32,8 +32,8 @@ function krawczyk(f::Function, a::Interval, bigprec::Integer=64)
 
     push!(arr_a, a)
     Ka = isect(a, K(f, a))
-    @show a
-    @show Ka
+    #@show a
+    #@show Ka
     
     #while a1 != a
         if Ka != false

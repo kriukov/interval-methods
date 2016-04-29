@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2011.4.19)  22 APR 2016 19:48
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2011.4.19)  29 APR 2016 16:27
 entering extended mode
  %&-line parsing enabled.
 **interval-tools.tex
@@ -933,11 +933,11 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 7605 strings out of 495061
- 103108 string characters out of 1182621
+ 7614 strings out of 495061
+ 103155 string characters out of 1182621
  194209 words of memory out of 3000000
  10558 multiletter control sequences out of 15000+50000
- 64133 words of font info for 149 fonts, out of 3000000 for 9000
+ 67397 words of font info for 158 fonts, out of 3000000 for 9000
  28 hyphenation exceptions out of 8191
  38i,15n,28p,1199b,373s stack positions out of 5000i,500n,10000p,200000b,50000s
  </home/kriukov/.texmf-var/fonts/pk/ljfour/public/bbold/bbold10.600pk>{/usr/s
@@ -949,7 +949,7 @@ b></usr/share/texmf-texlive/fonts/type1/urw/symbol/usyr.pfb></usr/share/texmf-t
 exlive/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf-texlive/fonts/type1/u
 rw/times/utmbi8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/times/utmr8a.pfb
 ></usr/share/texmf-texlive/fonts/type1/urw/times/utmri8a.pfb>
-Output written on interval-tools.pdf (5 pages, 457873 bytes).
+Output written on interval-tools.pdf (5 pages, 459295 bytes).
 PDF statistics:
  143 PDF objects out of 1000 (max. 8388607)
  21 named destinations out of 1000 (max. 500000)
