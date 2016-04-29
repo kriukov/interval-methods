@@ -1,0 +1,49 @@
+# Start with the function h(x) = sin(x) - 1. The zero is pi/2.
+
+using KrawczykMethod
+h(x) = sin(x) - 1
+sol = krawczyk(h, Interval(0,2), 64)
+
+# Gives 8 "near-true" solutions, all "unique". Find which ones are true (contain pi/2):
+
+for i = 1:length(sol)
+    println(belong(float(pi)/2, sol[i][1]))
+end
+
+# Only #4 is true. Increase precision:
+
+sol = krawczyk(h, Interval(0, 2), 512)
+
+# Now 6 solutions, only ## 3, 5, 6 are "unique". Check:
+
+for i = 1:length(sol)
+    println(belong(big(pi)/2, sol[i][1]))
+end
+
+# Only #3 is true. Further increase of the precision to 4096 does not change this.
+
+# Now, let's try an equation, also 1D, but without trigonometry:
+
+f(x) = 5040 - 3828x - 2356x^2 + 1009x^3 + 200x^4 - 62x^5 - 4x^6 + x^7
+sol = krawczyk(f, Interval(-7, 8), 64)
+# Found all the true roots well. Increase precision:
+sol = krawczyk(f, Interval(-7, 8), 1024)
+# The same. One thing which is notable is that the interval roots have a limit on the sequences of 9s and 0s (all 7 true roots are integer here). E.g., the interval enclosing the root -6:
+# Interval(-6.000000000000000002893091959758237502744309275641045566982224225892298329420351659878478181314725274680390599463151538945411438481303030061617009805979150902743398733954129489118393743776641031796429541621477306137209464585692063162404226979201522793482222220952494411824424336238881293905821360744761931890729, -5.999999999999999997453940966695154463121893717338317380410576809950202974649834024703607761091494845168582152932387443471051243011065496452124057933937550958496918598275425552519880091408968527867131750689396875841324360706601748801136283602172904039080885848020780364670085158383746467374193770103503966627884)
+
+# It looks like the computation does not completely switch from Float64 to BigFloat 1024, although there is no mention of Float64 in any of the included modules (in IntervalArithmetic "typealias prec BigFloat" is on and "typealias prec Float64" is off, and the dependent modules only employ "prec"). But regardless of that, the roots were found with no problem, whereas sin() seems to have caused the aforementioned problem.
+
+# I checked the KrawczykMethod module and found the possible culprit: tol = 1e-10. Changed to 1e-15. Now, for h(x)
+
+sol = krawczyk(h, Interval(0,2), 64)
+
+# gives 106 near-true "unique" solutions! However,
+
+sol = krawczyk(h, Interval(0,2), 512)
+
+# gives only 3, with only 1 "unique". Increasing the precision does not bring changes. Now try tol = 1e-20.
+
+sol = krawczyk(h, Interval(0,2), 1024)
+
+# gives 218 "near-true" roots. Increasing precision to 4096 did not change this number. Checking all 218 roots for containing pi/2 as above reveals that only 1 root was true.
+

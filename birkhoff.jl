@@ -368,6 +368,14 @@ function find_periodic_orbits(c, n, rect, prec, tol)
    #krawczyk2d_purity(f, rect, prec, tol)
 end
 
+function find_periodic_orbits_newton(c, n, rect, prec, tol)
+   f(x) = path_general(x, c, n) - x
+   #f = @anon x -> path_general(x, c, n) - x
+   newton2d_purity(f, rect, prec, tol)
+   #krawczyk2d_purity(f, rect, prec, tol)
+end
+
+
 # Time/distance function
 function distance(x, c, n, m)
 	ω, θ = x

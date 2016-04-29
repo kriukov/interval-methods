@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2011.4.19)  19 APR 2016 00:28
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2011.4.19)  22 APR 2016 19:48
 entering extended mode
  %&-line parsing enabled.
 **interval-tools.tex
@@ -755,6 +755,46 @@ Package natbib Warning: Citation `goldstein' on page 2 undefined on input line
 58.
 
 
+Package natbib Warning: Citation `tsonis' on page 2 undefined on input line 58.
+
+
+
+Package natbib Warning: Citation `shukla' on page 2 undefined on input line 58.
+
+
+
+Package natbib Warning: Citation `weixing1993quasiperiodic' on page 2 undefined
+ on input line 58.
+
+
+Package natbib Warning: Citation `giuggioli2013encounter' on page 2 undefined o
+n input line 58.
+
+
+Package natbib Warning: Citation `fradkov2005control' on page 2 undefined on in
+put line 58.
+
+
+Package natbib Warning: Citation `kopel1997improving' on page 2 undefined on in
+put line 58.
+
+
+Package natbib Warning: Citation `moore1966interval' on page 2 undefined on inp
+ut line 60.
+
+
+Package natbib Warning: Citation `moore2009introduction' on page 2 undefined on
+ input line 60.
+
+
+Package natbib Warning: Citation `zuhe1990solving' on page 2 undefined on input
+ line 60.
+
+
+Package natbib Warning: Citation `schichl2005interval' on page 2 undefined on i
+nput line 60.
+
+
 ! Package inputenc Error: Unicode char \u8:  not set up for use with LaTeX.
 
 See the inputenc package documentation for explanation.
@@ -765,19 +805,108 @@ l.60 ...h the two ends of a closed interval $[a, 
                                                   b]$ which contains $x$. Af...
 
 ? 
+
+Package natbib Warning: Citation `tucker2011validated' on page 2 undefined on i
+nput line 60.
+
+
+Package natbib Warning: Citation `moore2009introduction' on page 2 undefined on
+ input line 60.
+
+
+Package natbib Warning: Citation `JuliaArticle' on page 2 undefined on input li
+ne 62.
+
+
+Package natbib Warning: Citation `moore1966interval' on page 2 undefined on inp
+ut line 67.
+
+
+Package natbib Warning: Citation `tucker2011validated' on page 2 undefined on i
+nput line 67.
+
 LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <10> not available
 (Font)              Font shape `OT1/ptm/b/it' tried instead on input line 72.
 LaTeX Font Info:    Try loading font information for U+bbold on input line 72.
-(/usr/share/texmf-texlive/tex/latex/bbold/Ubbold.fd) [2]
+(/usr/share/texmf-texlive/tex/latex/bbold/Ubbold.fd)
+
+Package natbib Warning: Citation `gaspard2005chaos' on page 2 undefined on inpu
+t line 85.
+
+
+Package natbib Warning: Citation `eckhardt1987fractal' on page 2 undefined on i
+nput line 85.
+
+
+Package natbib Warning: Citation `jung1987cantor' on page 2 undefined on input 
+line 85.
+
+
+Package natbib Warning: Citation `gaspard1989scattering' on page 2 undefined on
+ input line 85.
+
+
+Package natbib Warning: Citation `gaspard1989semiclassical' on page 2 undefined
+ on input line 85.
+
+
+Package natbib Warning: Citation `gaspard1989exact' on page 2 undefined on inpu
+t line 85.
+
+
+Package natbib Warning: Citation `kovacs1990thermodynamics' on page 2 undefined
+ on input line 85.
+
+
+Package natbib Warning: Citation `korsch1991fractal' on page 2 undefined on inp
+ut line 85.
+
+
+Package natbib Warning: Citation `gaspard2005chaos' on page 2 undefined on inpu
+t line 85.
+
+[2]
+
+Package natbib Warning: Citation `nehmeier2014libieeep1788' on page 3 undefined
+ on input line 96.
+
 <birkhoff-12-and-13_tol=1e-2.pdf, id=51, 578.16pt x 433.62pt>
 File: birkhoff-12-and-13_tol=1e-2.pdf Graphic file (type pdf)
 
 <use birkhoff-12-and-13_tol=1e-2.pdf>
+
+Package natbib Warning: Citation `gaspard2005chaos' on page 3 undefined on inpu
+t line 105.
+
+
+Package natbib Warning: Citation `gaspard2005chaos' on page 3 undefined on inpu
+t line 107.
+
+
+Package natbib Warning: Citation `gaspard1989scattering' on page 3 undefined on
+ input line 107.
+
 <fractal-plot.png, id=55, 1477.1988pt x 2130.5196pt>
 File: fractal-plot.png Graphic file (type png)
  <use fractal-plot.png>
 
 LaTeX Warning: Float too large for page by 30.29504pt on input line 114.
+
+
+Package natbib Warning: Citation `artin1965periodic' on page 3 undefined on inp
+ut line 116.
+
+
+Package natbib Warning: Citation `block1980periodic' on page 3 undefined on inp
+ut line 116.
+
+
+Package natbib Warning: Citation `newhouse1977quasi' on page 3 undefined on inp
+ut line 116.
+
+
+Package natbib Warning: Citation `chothi1997s' on page 3 undefined on input lin
+e 116.
 
 [3 <./birkhoff-12-and-13_tol=1e-2.pdf>] [4 <./fractal-plot.png>]
 
@@ -786,7 +915,11 @@ ersion <1.5>, but at most version <1.4> allowed
 <figure-3disks.pdf, id=86, 361.35pt x 326.21875pt>
 File: figure-3disks.pdf Graphic file (type pdf)
  <use figure-3disks.pdf>
-No file interval-tools.bbl.
+
+Package natbib Warning: Citation `gaspard2005chaos' on page 5 undefined on inpu
+t line 151.
+
+(./interval-tools.bbl)
 
 Class revtex4-1 Warning: Command \address is obsolete;
 Use \affiliation instead.
@@ -800,13 +933,13 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 7578 strings out of 495061
- 102586 string characters out of 1182621
- 193209 words of memory out of 3000000
- 10533 multiletter control sequences out of 15000+50000
+ 7605 strings out of 495061
+ 103108 string characters out of 1182621
+ 194209 words of memory out of 3000000
+ 10558 multiletter control sequences out of 15000+50000
  64133 words of font info for 149 fonts, out of 3000000 for 9000
  28 hyphenation exceptions out of 8191
- 38i,15n,28p,1079b,373s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 38i,15n,28p,1199b,373s stack positions out of 5000i,500n,10000p,200000b,50000s
  </home/kriukov/.texmf-var/fonts/pk/ljfour/public/bbold/bbold10.600pk>{/usr/s
 hare/texmf-texlive/fonts/enc/dvips/base/8r.enc}</usr/share/texmf-texlive/fonts/
 type1/public/amsfonts/cm/cmex10.pfb></usr/share/texmf-texlive/fonts/type1/publi
@@ -816,7 +949,7 @@ b></usr/share/texmf-texlive/fonts/type1/urw/symbol/usyr.pfb></usr/share/texmf-t
 exlive/fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf-texlive/fonts/type1/u
 rw/times/utmbi8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/times/utmr8a.pfb
 ></usr/share/texmf-texlive/fonts/type1/urw/times/utmri8a.pfb>
-Output written on interval-tools.pdf (5 pages, 457771 bytes).
+Output written on interval-tools.pdf (5 pages, 457873 bytes).
 PDF statistics:
  143 PDF objects out of 1000 (max. 8388607)
  21 named destinations out of 1000 (max. 500000)
