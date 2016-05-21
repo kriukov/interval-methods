@@ -72,13 +72,79 @@ In a nutshell, instead of real numbers, the elements in computations are real in
 \textbf{\emph{a}} = [\underline{a}, \overline{a}] = \{x \in \mathbb{R}: \underline{a} \leq x \leq \overline{a}\}
 \end{equation}
 
+which contain the value under consideration. The basic arithmetic operations over intervals are as follows:
 
-[Further description of IA if needed]
+\begin{equation}
+\textbf{\emph{a}} + \textbf{\emph{b}} = [\underline{a} + \underline{b}, \overline{a} + \overline{b}]
+\end{equation}
 
+\begin{equation}
+\textbf{\emph{a}} - \textbf{\emph{b}} = [\underline{a} - \overline{b}, \overline{a} - \underline{b}]
+\end{equation}
+
+\begin{equation}
+\textbf{\emph{a}} \times \textbf{\emph{b}} = [\min(\underline{a} \underline{b}, \underline{a} \overline{b}, \overline{a} \underline{b}, \overline{a} \overline{b}), \max(\underline{a} \underline{b}, \underline{a} \overline{b}, \overline{a} \underline{b}, \overline{a} \overline{b})]
+\end{equation}
+
+\begin{equation}
+\textbf{\emph{a}} \div \textbf{\emph{b}} = \textbf{\emph{a}} \times [1 / \overline{b}, 1 / \underline{b}], \textrm{if  } 0 \notin \textbf{\emph{b}}
+\end{equation}
+
+To ensure that the true value is with certainty inside the interval, we always need to round down the lower end and round up the upper end of the interval at each operation. 
 
 \subsection{Zero-finding methods}
 
-[Chapter in .odt file if needed. Implementation of interval Newton's method and interval Krawczyk method.]
+The general idea of a zero-finding (or root-finding) method is the solution to the following problem: given the function $f(x)$, find a number $\xi$ such that $f(\xi) = 0$. Numerous numerical methods have been developed to solve this problem \cite{press2007numerical}. In our study, we implemented the extended interval Newton method – an interval version of the Newton method for solving one-dimensional equations, which has advantages over the non-interval version \cite{tucker2011validated}. This method uses the definition of an extended interval, a type of an interval $[a, b]$ with $b < a$:
+
+\begin{equation}
+[a, b] = (-\infty, b] \cup [a, +\infty), b < a
+\end{equation}
+
+The operation of \textit{extended division} is thus defined to make it possible to divide by intervals containing zero. Using this, it is possible to compute the Newton operator
+
+\begin{equation}
+N(\textbf{\emph{x}}) = \text{mid } \textbf{\emph{x}} - \frac{f(\text{mid } \textbf{\emph{x}})}{F'(\textbf{\emph{x}})}
+\end{equation}
+
+(where $F(\textbf{\emph{x}})$ is the \textit{natural interval extension} of $f(x)$ \cite{tucker2011validated} and $\text{mid } \textbf{\emph{x}}$ is the midpoint of $\textbf{\emph{x}}$) even when $F'(\textbf{\emph{x}})$ contains zero. Starting from an arbitrary interval, after each step
+
+\begin{equation}
+N(\textbf{\emph{$x_k$}}) \cap \textbf{\emph{$x_k$}} = \textbf{\emph{$x_{k+1}$}}
+\end{equation}
+
+we obtain an interval (normal or extended) containing the zeros. By repeating the process, it bisects the search domain in exactly the right places, thus \textit{finding all the zeros of the function in the given interval}.
+
+Another method, which avoids division by $F'(\textbf{\emph{x}})$, is the Krawczyk method \cite{krawczyk1969newton}. The interval Krawczyk operator, which is used in the same step procedure as $N(x)$ in (8), is defined as follows:
+
+\begin{equation}
+K(\textbf{\emph{x}}) = \text{mid } \textbf{\emph{x}} - C f(\text{mid } \textbf{\emph{x}})(1 - C F'(\textbf{\emph{x}})) (\textbf{\emph{x}} - \text{mid } \textbf{\emph{x}})  
+\end{equation}
+
+where we define the finite constant $C$ as
+
+\begin{equation}
+C = \frac{1}{f'(\text{mid } \textbf{\emph{x}})} 
+\end{equation}
+
+Applying the step procedure (8) with the Krawczyk operator, we bisect each existing intersection and after a number of iterations locate the zeros.
+
+We extended the interval Krawczyk method into two dimensions, which enables us to solve the systems of two equations \cite{moore2009introduction}. In this case, we work with two-dimensional intervals (rectangles) $[a, b] \times [c, d]$, where "$\times$" denotes the Cartesian product. The two-dimensional Krawczyk operator has the following form:
+
+\begin{equation}
+[Equation (15) in odt draft]
+\end{equation}
+
+where
+
+\begin{equation}
+Y = 1 / det(\frac{\partial \overrightarrow{f}}{\partial (\text{mid } \overrightarrow{x})})
+\end{equation}
+
+In (11) and (12), $\overrightarrow{f}$ is a two-dimensional function, $\frac{\partial \overrightarrow{f}}{\partial \overrightarrow{x}}$ is the Jacobian of $\overrightarrow{f}$ with respect to $\overrightarrow{x}$, $\overrightarrow{1}$ is a $2 \times 2$ unit matrix, and the function "mid" is defined as a two-dimensional vector consisting of the midpoints of each interval component of the two-dimensional interval. The bisection procedure therefore has four parts (two in each dimension).
+
+We describe the one-dimensional and two-dimensional Krawczyk methods in pseudocode in the Appendix.
+
+
 
 \section{Application to a hard multi-disk scatterer in two dimensions}
 

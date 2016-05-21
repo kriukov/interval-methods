@@ -1,0 +1,247 @@
+\documentclass{article}
+%\usepackage{dcolumn}
+%\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{mathptmx}
+\usepackage{subfigure}
+\usepackage[utf8]{inputenc}
+\usepackage{bbold}
+\usepackage{color}
+
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+
+\usepackage{pifont}
+\usepackage{mathtools}
+
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
+\renewcommand{\vec}[1]{\mathbf{#1}}
+
+\begin{document}
+
+\appendix
+\section{Pseudocode for the interval Krawczyk method in one and two dimensions} 
+
+Here we give the pseudocode for the interval Krawczyk method in one and two dimensions, which seeks zeros of a given function. 
+
+We use the following functions of the intervals:
+
+Midpoint: $$\text{mid } x = \frac{\overline{x} + \underline{x}}{2}$$
+
+Radius: $$\text{rad } x = \frac{\overline{x} - \underline{x}}{2}$$
+
+Diameter: $$\text{diam } x = \overline{x} - \underline{x}$$
+
+Magnitude: $$\text{mag } x = \max(| \underline{x}|, | \overline{x} |)$$
+
+\subsection{Krawczyk method in one dimension}
+
+For the factor $C$ in (10) to not return "division by thin zero" error, we slightly change the denominator in this case.
+
+\begin{algorithm}
+\caption{1D Krawczyk operator}
+\label{alg:K1D}
+\begin{algorithmic}
+\Function{C} {$f, \textbf{\emph{x}}$}
+\If {$f'(\text{mid } \textbf{\emph{x}}) == 0$}
+\State       return $1/(f'(\text{mid } \textbf{\emph{x}}) + 0.0001 \text{rad } \textbf{\emph{x}})$
+\Else
+\State       return $1/f'(\text{mid } \textbf{\emph{x}})$
+\EndIf
+\EndFunction
+
+$\textbf{\emph{K}} (\textbf{\emph{x}}) = \text{mid } \textbf{\emph{x}} - C(f, \textbf{\emph{x}}) f(\text{mid } \textbf{\emph{x}})(1 - C(f, \textbf{\emph{x}}) f'(\textbf{\emph{x}})) (\textbf{\emph{x}} - \text{mid } \textbf{\emph{x}})$
+
+
+
+\end{algorithmic}
+\end{algorithm}
+
+
+
+\begin{algorithm}
+\caption{Krawczyk algorithm in 1D}
+\label{alg:Krawczyk}
+\begin{algorithmic}
+\State $A = [\text{ } ]$ \Comment{Empty array of roots}
+\State $\delta = 10^{-10}$
+\Function{krawczyk} {$f, \textbf{\emph{a}}$}
+\State \Comment{If the midpoint of the starting interval is 0, it should be slightly asymmetrized to avoid issues}
+\If {\text{mid } \textbf{\emph{a}} == 0}
+\State $\textbf{\emph{a}} = [\underline{a}, \overline{a} + 0.0001 \text{mag \textbf{\emph{a}}}]$
+\EndIf
+
+
+\State $\textbf{\emph{k}}_a = \textbf{\emph{a}} \cap \textbf{\emph{K}} (f, \textbf{\emph{a}})$
+
+\If {$\textbf{\emph{k}}_a \neq \emptyset$}
+
+    \If {$\text{diam } \textbf{\emph{k}}_a < \delta$}
+    
+        \If {$\textbf{\emph{k}}_a \subset \textbf{\emph{a}}$ }
+            
+            \State \Comment{$\textbf{\emph{k}}_a$ contains a unique zero; add it to the array of roots}
+            \State $\textbf{\emph{k}}_a \rightarrow A$
+        \Else
+            \State \Comment{$\textbf{\emph{k}}_a$ contains a possible zero; add it to the array of roots}
+            \State $\textbf{\emph{k}}_a \rightarrow A$
+        
+        \EndIf
+    \Else
+        \State \Comment{Bisect the current interval and apply the function recursively}
+        \State $krawczyk(f, [\underline{\textbf{\emph{k}}_a}, \text{mid } \textbf{\emph{k}}_a])$
+        \State $krawczyk(f, [\text{mid } \textbf{\emph{k}}_a, \overline{\textbf{\emph{k}}_a}])$        
+    
+    \EndIf
+
+\EndIf
+
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\subsection{Krawczyk method in two dimensions}
+
+The Jacobian in (12) has to be invertible; if it is not, we slightly modify it.
+
+\begin{algorithm}
+\caption{2D Krawczyk operator}
+\label{alg:K2D}
+\begin{algorithmic}
+\Function{$\overrightarrow{Y}$} {$f, \textbf{\emph{x}}$}
+\If {$\text{det } (\frac{\partial \overrightarrow{f}}{\partial (\text{mid } \overrightarrow{x})}) == 0$}
+\State       return $1/(\frac{\partial \overrightarrow{f}}{\partial (\text{mid } \overrightarrow{x} + 0.0001 \| \text{diam } \overrightarrow{x} \| )})$
+\Else
+\State       return $1/(\frac{\partial \overrightarrow{f}}{\partial (\text{mid } \overrightarrow{x} )})$
+\EndIf
+\EndFunction
+
+\State $M(f, x) = 1 - Y(f, x) \frac{\partial \overrightarrow{f}}{\partial (\text{mid } \overrightarrow{x} )} $
+\State $K(f, x) = \text{mid } x - Y(f,x) f(\text{mid } x) + M(f,x) (x - \text{mid } x) $
+
+\end{algorithmic}
+\end{algorithm}
+
+
+
+
+\begin{algorithm}
+\caption{Krawczyk algorithm in 2D}
+\label{alg:Krawczyk2D}
+\begin{algorithmic}
+\State $A = [\text{ } ]$ \Comment{Empty array of roots}
+\State $\delta = 10^{-10}$
+
+\Function {bisect} {a}
+\State $b = [\text{ } ]$
+\State $([\underline{a_1}, \text{mid } a_1], [\underline{a_2}, \text{mid } a_2]) \rightarrow b$
+\State $([\text{mid } a_1, \overline{a_1}], [\underline{a_2}, \text{mid } a_2]) \rightarrow b$
+\State $([\underline{a_1}, \text{mid } a_1], [\text{mid } a_2, \overline{a_2}]) \rightarrow b$
+\State $([\text{mid } a_1, \overline{a_1}], [\text{mid } a_2, \overline{a_2}]) \rightarrow b$   
+\State return $b$     
+\EndFunction  
+
+
+
+\Function{krawczyk2d} {$f, \textbf{\emph{a}}$}
+
+\State $\textbf{\emph{k}}_a = \textbf{\emph{a}} \cap \textbf{\emph{K}} (f, \textbf{\emph{a}})$
+
+\If {$\textbf{\emph{k}}_a \neq \emptyset$}
+
+    \If {$(\text{diam } \textbf{\emph{k}}_a)_1 < \delta \text{ and } (\text{diam } \textbf{\emph{k}}_a)_2 < \delta $}
+    
+        \If {$\textbf{\emph{k}}_a \subset \textbf{\emph{a}}$ }
+            
+            \State \Comment{$\textbf{\emph{k}}_a$ contains a unique zero; add it to the array of roots}
+            \State $\textbf{\emph{k}}_a \rightarrow A$
+        \Else
+            \State \Comment{$\textbf{\emph{k}}_a$ contains a possible zero; add it to the array of roots}
+            \State $\textbf{\emph{k}}_a \rightarrow A$
+        
+        \EndIf
+    \Else
+        \State \Comment{Bisect the current interval and apply the function recursively}
+%        \State $krawczyk2d(f, ([\underline{(\textbf{\emph{k}}_a})_1, \text{mid } (\textbf{\emph{k}}_a)_1], [\underline{(\textbf{\emph{k}}_a})_2, \text{mid } (\textbf{\emph{k}}_a)_2]))$
+%        \State $krawczyk2d(f, [\text{mid } \textbf{\emph{k}}_a, \overline{\textbf{\emph{k}}_a}])$  
+        \State $b = bisect(a)$
+        \For {$i = 1 \text{ to } 4$}
+        \State $krawczyk2d(f, b_i)$
+        \EndFor
+
+          
+    
+    \EndIf
+
+\EndIf
+
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+
+\subsection{Krawczyk method in two dimensions with purity}
+
+In this algorithm, we specify the tolerance $\delta$, by reaching which the intervals of this size which still have purity 0 are left out. The function $purity(f, x)$ evaluates the intersection of $x$ and the domain of the function and returns $1$ if $x$ is fully inside of the domain, $0$ if $x$ is partially inside the domain, and $-1$ if $x$ is outside of the domain. If during the bisection procedure the interval has purity 1, we apply the regular Krawczyk method, if it is 0, we continue bisection and apply the Krawczyk method with purity recursively, and if it is $-1$, we discard it.
+
+\begin{algorithm}
+\caption{Krawczyk algorithm in 2D with purity}
+\label{alg:Krawczyk2Dp}
+\begin{algorithmic}
+\State $A = [\text{ } ]$ \Comment{Empty array of roots}
+\State $\delta = 10^{-5}$
+
+
+\Function{krawczyk2d\_purity} {$f, \textbf{\emph{a}}$}
+
+\State $p = purity(f, a)$
+
+\If {$p \neq -1$}
+
+    \If {$p == 1$}
+    
+        \State $roots = krawczyk2d(f, a)$
+        \If {$length(roots) > 0$}
+            \State $roots \rightarrow A$
+        \EndIf
+    \ElsIf {$p == 0$}
+        \If {$\max{(\text{diam } a})_1 < \delta \text{ and } \max{(\text{diam } a})_2 < \delta$}
+            \State \Comment{Discard interval with the size below tolerance}
+        \Else
+            \State{$b = bisect(a)$}
+            \For {$i = 1 \text{ to } 4$}
+                \State $krawczyk2d\_purity(f, b_i)$
+            \EndFor
+        \EndIf
+          
+    
+    \EndIf
+
+\EndIf
+
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
+
+
+\mathbb{Z}
+
