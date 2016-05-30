@@ -1,0 +1,10 @@
+f(x) = [2x[1] + sin(x[1]/x[2]), 4*sin(x[1]+x[2]) - 4] # [0, pi/2]
+a = [Interval(-1,2), Interval(-1,2)]
+krawczyk2d(f,a) # Very many zeros around x[1]=0 and stall
+krawczyk2d(f,a,1024) # 5 zeros around x[1]=0 and stall
+
+# The stall is caused by searching close to [pi/2, 0] (not the correct [0, pi/2]!), where sin(x[1]/x[2]) is underfined!
+
+f(x) = [x[1] + x[2]*sin(x[1]) - pi/2 - x[2], sin(x[1]*x[2]) - (2/pi)*x[1]*x[2]] # [pi/2, -1], [pi/2, 0], [pi/2, 1]
+a = [Interval(-1,2), Interval(-1,2)]
+

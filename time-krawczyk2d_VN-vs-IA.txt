@@ -1,0 +1,38 @@
+VN krawczyk2d:
+
+f(x) = [0.5*(-(17.76x[1] - 103.79x[1]^2 + 229.62x[1]^3 - 226.31x[1]^4 + 83.72x[1]^5) + x[2]), 0.2*(-x[1] - 1.5x[2] + 1.2)]
+f (generic function with 1 method)
+
+julia> a = IntervalBox(0..1, 0..1)
+[0, 1] × [0, 1]
+
+julia> @time krawczyk2d(f,a)
+Unique zero in [0.0626359, 0.062636] × [0.758242, 0.758243]
+Unique zero in [0.285368, 0.285369] × [0.609754, 0.609755]
+Unique zero in [0.884429, 0.88443] × [0.21038, 0.210381]
+  6.271713 seconds (29.84 M allocations: 950.671 MB, 3.83% gc time)
+3-element Array{ValidatedNumerics.IntervalBox{N,T},1}:
+ [0.0626359, 0.062636] × [0.758242, 0.758243]
+ [0.285368, 0.285369] × [0.609754, 0.609755] 
+ [0.884429, 0.88443] × [0.21038, 0.210381]  
+ 
+ 
+IA krawczyk2d:
+
+@time krawczyk2d(f,a)
+Unique zero in [IntervalArithmetic.Interval(6.26359592077153261376e-02,6.26359592110627750425e-02),IntervalArithmetic.Interval(7.58242693859291453523e-01,7.58242693861523086424e-01)]
+Unique zero in [IntervalArithmetic.Interval(2.85368724129917503986e-01,2.8536872413015453877e-01),IntervalArithmetic.Interval(6.09754183913230277754e-01,6.09754183913388301196e-01)]
+Unique zero in [IntervalArithmetic.Interval(8.84429588870164089037e-01,8.84429588870425287218e-01),IntervalArithmetic.Interval(2.10380274086383112353e-01,2.10380274086557244315e-01)]
+ 23.229596 seconds (106.42 M allocations: 12.139 GB, 6.70% gc time)
+3-element Array{Array{IntervalArithmetic.Interval,1},1}:
+ [IntervalArithmetic.Interval(6.26359592077153261376e-02,6.26359592110627750425e-02),IntervalArithmetic.Interval(7.58242693859291453523e-01,7.58242693861523086424e-01)]
+ [IntervalArithmetic.Interval(2.85368724129917503986e-01,2.8536872413015453877e-01),IntervalArithmetic.Interval(6.09754183913230277754e-01,6.09754183913388301196e-01)] 
+ [IntervalArithmetic.Interval(8.84429588870164089037e-01,8.84429588870425287218e-01),IntervalArithmetic.Interval(2.10380274086383112353e-01,2.10380274086557244315e-01)]
+
+=====================================================
+
+@time include("tests/tests-krawczyk2d.jl")
+23.830168 seconds (111.98 M allocations: 12.742 GB, 6.47% gc time)
+@time include("tests/tests-krawczyk2dvn.jl")
+7.768183 seconds (32.12 M allocations: 1.013 GB, 3.55% gc time)
+

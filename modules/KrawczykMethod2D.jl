@@ -26,7 +26,25 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
 		    return make_intervals(inv(jacobian(f, midx)))
 	    end
     end
-    #Y(f, x) = make_intervals(inv(jacobian(f, mid(x))))
+    
+    
+    # Magnitude of a 2x2 matrix
+	#magnitude(A) = max(abs(A[1]), abs(A[2]), abs(A[3]), abs(A[4]))
+
+    #= If the jacobian is non-invertible, the SingularException error is returned for Y. We need to choose a slightly different Y then.
+    function Y(f, x)
+        midx = mid(x)
+        J = jacobian(f, midx)
+        magJ = magnitude(J)
+	    if det(J) == 0 && magJ < 1e4
+		    return make_intervals(inv(jacobian(f, midx + 1)))
+		elseif (det(J) != 0 && magJ > 1e4) || (det(J) == 0 && magJ > 1e4)
+			return make_intervals(inv(jacobian(f, midx + 1)))
+	    else
+		    return make_intervals(inv(J))
+	    end
+    end
+    =#
 
     M(f, x) = I - Y(f, x)*jacobian(f, x)
 
@@ -46,7 +64,7 @@ function krawczyk2d(f, a::MultiDimInterval, bigprec::Integer=64)
 	    Ka = isect(a, K(f, a))
 	    
 	    if Ka != false
-
+            #@show Ka
 		    dK = diam(Ka)
 
 		    if dK[1] < tol && dK[2] < tol #d == dK
