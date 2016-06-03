@@ -5,14 +5,14 @@ using ValidatedNumerics
 using AutoDiff
 using PurityIntervalsVN
 
-function bisect(xx::IntervalBox)
+function bisect{N,T}(xx::IntervalBox{N,T})
  	if length(xx) != 2
 	    error("Only works for 2 at the moment")
 	end
 
 	x, y = xx
 
-	intervals = IntervalBox[]
+	intervals = IntervalBox{N,T}[]
 
 	push!(intervals, IntervalBox(x.lo..mid(x), y.lo..mid(y)))
 	push!(intervals, IntervalBox(x.lo..mid(x), mid(y)..y.hi))
@@ -27,11 +27,11 @@ make_intervals(x) = IntervalBox(x[1]..x[1], x[2]..x[2])
 
 println("Syntax: krawczyk2d(function, [Interval(lo, hi), Interval(lo, hi)], precision [default is 64])")
 
-function krawczyk2d(f::Function, a::IntervalBox, bigprec::Integer=64)
+function krawczyk2d{2,T}(f::Function, a::IntervalBox{2,T})
 
-    roots_array = IntervalBox[]
+    roots_array = IntervalBox{2,T}[]
 
-    set_bigfloat_precision(bigprec)
+    #set_bigfloat_precision(bigprec)
 
     tol = 1e-10
 
@@ -60,7 +60,7 @@ function krawczyk2d(f::Function, a::IntervalBox, bigprec::Integer=64)
 
     k = 1
 
-    function krawczyk2d_internal(f, a::IntervalBox, bigprec::Integer)
+    function krawczyk2d_internal(f, a::IntervalBox)
         
 	    Ka = intersect(a, K(f, a))
 	    if Ka[1] != ∅ && Ka[2] != ∅
@@ -80,7 +80,7 @@ function krawczyk2d(f::Function, a::IntervalBox, bigprec::Integer=64)
 			    k += 1
 			    pieces = bisect(Ka)
 			    for i = 1:4
-			        krawczyk2d_internal(f, pieces[i], bigprec)
+			        krawczyk2d_internal(f, pieces[i])
 			    end
 		    end
 
@@ -90,17 +90,17 @@ function krawczyk2d(f::Function, a::IntervalBox, bigprec::Integer=64)
     end
 
 
-    return krawczyk2d_internal(f, a, bigprec)
+    return krawczyk2d_internal(f, a)
 end
 
 
 # Version of krawczyk2d with purity
-function krawczyk2d_purity(f, a::IntervalBox, prec::Integer=64, tol=1e-4)
+function krawczyk2d_purity(f, a::IntervalBox, tol=1e-4)
     roots_array = Array{IntervalBox, 1}[]
-    set_bigfloat_precision(prec)
+    #set_bigfloat_precision(prec)
     
     rect_count = 0
-    function krawczyk2d_purity_internal(f, a::IntervalBox, prec::Integer)
+    function krawczyk2d_purity_internal(f, a::IntervalBox)
         
         @show a
         @show p = purity(f, a)
@@ -109,7 +109,7 @@ function krawczyk2d_purity(f, a::IntervalBox, prec::Integer=64, tol=1e-4)
             if p == 1
                 rect_count += 1
                 println("Clean")
-                roots = krawczyk2d(f, a, prec)
+                roots = krawczyk2d(f, a)
                 if length(roots) > 0
                     push!(roots_array, roots)
                 end
@@ -122,7 +122,7 @@ function krawczyk2d_purity(f, a::IntervalBox, prec::Integer=64, tol=1e-4)
 			    else
                     pieces = bisect(a)
                     for i = 1:4
-                        krawczyk2d_purity_internal(f, pieces[i], prec)
+                        krawczyk2d_purity_internal(f, pieces[i])
                     end
                 end
             end
@@ -130,19 +130,19 @@ function krawczyk2d_purity(f, a::IntervalBox, prec::Integer=64, tol=1e-4)
 
         return roots_array, rect_count
     end
-    return krawczyk2d_purity_internal(f, a, prec)
+    return krawczyk2d_purity_internal(f, a)
 end
 
 
 
 # Version of krawczyk2d with purity for periodic orbits (solving f(a) = a)
-function krawczyk2d_purity_periodic(f, a::IntervalBox, prec::Integer=64, tol=1e-4)
+function krawczyk2d_purity_periodic(f, a::IntervalBox, tol=1e-4)
     roots_array = Array{IntervalBox, 1}[]
-    set_bigfloat_precision(prec)
+    #set_bigfloat_precision(prec)
     
     rect_count = 0
     all_count = 0
-    function krawczyk2d_purity_internal_periodic(f, a::IntervalBox, prec::Integer)
+    function krawczyk2d_purity_internal_periodic(f, a::IntervalBox)
         all_count += 1
         if all_count % 10000 == 0
             println("Step $all_count: a = $a")
@@ -163,7 +163,7 @@ function krawczyk2d_purity_periodic(f, a::IntervalBox, prec::Integer=64, tol=1e-
                 #@show isect_step
                 # If both parts of the IntervalBox are not empty
                 if length(isect_step) > 0 #&& isect_step[1] != ∅ && isect_step[2] != ∅
-                    roots = krawczyk2d(x -> f(x) - x, a, prec)
+                    roots = krawczyk2d(x -> f(x) - x, a)
                     if length(roots) > 0
                         push!(roots_array, roots)
                     end
@@ -177,7 +177,7 @@ function krawczyk2d_purity_periodic(f, a::IntervalBox, prec::Integer=64, tol=1e-
 			    else
                     pieces = bisect(a)
                     for i = 1:4
-                        krawczyk2d_purity_internal_periodic(f, pieces[i], prec)
+                        krawczyk2d_purity_internal_periodic(f, pieces[i])
                     end
                 end
             end
@@ -185,7 +185,7 @@ function krawczyk2d_purity_periodic(f, a::IntervalBox, prec::Integer=64, tol=1e-
 
         return roots_array, rect_count
     end
-    return krawczyk2d_purity_internal_periodic(f, a, prec)
+    return krawczyk2d_purity_internal_periodic(f, a)
 end
 
 
