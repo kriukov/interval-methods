@@ -27,9 +27,9 @@ make_intervals(x) = IntervalBox(x[1]..x[1], x[2]..x[2])
 
 println("Syntax: krawczyk2d(function, [Interval(lo, hi), Interval(lo, hi)], precision [default is 64])")
 
-function krawczyk2d{2,T}(f::Function, a::IntervalBox{2,T})
+function krawczyk2d{N,T}(f::Function, a::IntervalBox{N,T})
 
-    roots_array = IntervalBox{2,T}[]
+    roots_array = IntervalBox{N,T}[]
 
     #set_bigfloat_precision(bigprec)
 
