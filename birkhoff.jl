@@ -3,7 +3,7 @@ using AutoDiff
 using PurityIntervals
 using KrawczykMethod2D
 
-using FastAnonymous
+#using FastAnonymous
 
 # The vector x = [ω, θ] in Birkhoff mapping
 
