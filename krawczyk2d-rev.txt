@@ -8,3 +8,7 @@ krawczyk2d(f,a,1024) # 5 zeros around x[1]=0 and stall
 f(x) = [x[1] + x[2]*sin(x[1]) - pi/2 - x[2], sin(x[1]*x[2]) - (2/pi)*x[1]*x[2]] # [pi/2, -1], [pi/2, 0], [pi/2, 1]
 a = [Interval(-1,2), Interval(-1,2)]
 
+f(x) = [sqrt(1-x[1]+x[2]),asin(x[1])-pi/6]
+# This function has a root [1/2, -1/2] on the boundary, so it is not possible to find it using purity (any small neighborhood will be always unclean)
+
+f(x) = [sqrt(1-x[1])+x[2],asin(x[1])-pi/6] # [1/2, 1/sqrt(2)]

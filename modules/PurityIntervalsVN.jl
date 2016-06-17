@@ -54,10 +54,10 @@ function sqrt(x::PurityInterval)
 		return PurityInterval(sqrt(x.interval), 1)
 	else
 		y = intersect(x.interval, domain)
-		if y != false
+		if y != ∅
 			return PurityInterval(sqrt(y), 0)
 		else
-			return PurityInterval(Interval(Inf, Inf), -1)
+			return PurityInterval(∅, -1)
 		end
 	end
 end
@@ -69,10 +69,10 @@ function asin(x::PurityInterval)
 		return PurityInterval(asin(x.interval), 1)
 	else
 		y = intersect(x.interval, domain)
-		if y != false
+		if y != ∅
 			return PurityInterval(asin(y), 0)
 		else
-			return PurityInterval(Interval(Inf, Inf), -1)
+			return PurityInterval(∅, -1)
 		end
 	end
 end

@@ -243,7 +243,7 @@ function T(x::Array{IntervalBox, 1}, n, m, r)
 end
 
 
-#using PyPlot
+using PyPlot
 
 distance_between_centers = 6.
 
@@ -306,7 +306,7 @@ purities = Int[]
 
 # More efficient plotting without dirty rectangles
 function plot_band_bisection(f, rect, tol)
-    limitrect(rect) = max(diam(rect)[1], diam(rect)[2]) < tol
+    limitrect(rect) = max(diam(rect[1]), diam(rect[2])) < tol
     p = purity(f, rect)
     if p != -1
         if p == 1
@@ -333,7 +333,7 @@ end
 
 # Plotting that includes dirty rectangles
 function plot_band_bisection_dirty(f, rect, tol)
-    limitrect(rect) = max(diam(rect)[1], diam(rect)[2]) < tol
+    limitrect(rect) = max(diam(rect[1]), diam(rect[2])) < tol
     p = purity(f, rect)
     if p == 1 || p == -1
         push!(points, rect)
@@ -361,9 +361,9 @@ plot(y, x, "o")
 =#
 
 # Function to draw rectangles
-#using PyCall
-#@pyimport matplotlib.patches as patches
-#rectangle = patches.Rectangle
+using PyCall
+@pyimport matplotlib.patches as patches
+rectangle = patches.Rectangle
 function draw_rectangle(x, y, xwidth, ywidth, color="grey")
     ax = gca()
     ax[:add_patch](rectangle((x, y), xwidth, ywidth, facecolor=color, alpha=0.5, linewidth=0))
@@ -544,10 +544,10 @@ function draw_phase_space(c, n, rect, tol)
     axis([0, pi/3, -1, 1])
 end
 
-function find_periodic_orbits(c, n, rect, prec, tol)
+function find_periodic_orbits(c, n, rect, tol)
    f(x) = path_general(x, c, n)
    #f = @anon x -> path_general(x, c, n) - x
-   krawczyk2d_purity_periodic(f, rect, prec, tol)
+   krawczyk2d_purity_periodic(f, rect, tol)
    #krawczyk2d_purity(f, rect, prec, tol)
 end
 

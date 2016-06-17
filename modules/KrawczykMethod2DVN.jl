@@ -112,12 +112,13 @@ function krawczyk2d_purity(f, a::IntervalBox, tol=1e-4)
                 roots = krawczyk2d(f, a)
                 if length(roots) > 0
                     push!(roots_array, roots)
+                    error("Roots found")
                 end
                 
             elseif p == 0
 
                 println("Unclean")
-                if max(diam(a)[1], diam(a)[2]) < tol
+                if max(diam(a[1]), diam(a[2])) < tol
 			        print_with_color(:blue, "Krawczyk could not properly identify zeros here: tolerance reached at unclean\n")
 			    else
                     pieces = bisect(a)
@@ -159,15 +160,15 @@ function krawczyk2d_purity_periodic(f, a::IntervalBox, tol=1e-4)
                 #println(a, " clean")
                 #@show a
                 #@show f(a)
-                isect_step = intersect(a, f(a))
+                #isect_step = intersect(a, f(a))
                 #@show isect_step
                 # If both parts of the IntervalBox are not empty
-                if length(isect_step) > 0 #&& isect_step[1] != ∅ && isect_step[2] != ∅
+                #if length(isect_step) > 0 #&& isect_step[1] != ∅ && isect_step[2] != ∅
                     roots = krawczyk2d(x -> f(x) - x, a)
                     if length(roots) > 0
                         push!(roots_array, roots)
                     end
-                end
+                #end
                 
             elseif p == 0
 
