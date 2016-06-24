@@ -44,7 +44,7 @@ and
 
 \begin{abstract}
 
-Abstract goes here.
+We used interval analysis (IA) to develop zero-finding software based on the interval Newton method in one dimension and on interval Krawczyk method in one and two dimensions. Due to the nature of IA, which operates on interval values instead of number values, we always obtain the enclosure containing the true value with certainty. We applied our software to the study of chaotic systems, where small difference in initial conditions may produce widely diverging outcomes, and where IA would be useful. Using our method, we could seek periodic orbits in an arbitrary system of hard two-dimensional disks. We found several periodic orbits in 3-disk systems in the symmetric and isosceles configurations and confirmed their validity by comparing them to previous results.
 
 \end{abstract}
 
@@ -226,6 +226,22 @@ Placing both sides of (3) on one side, we can seek the zeros of the resulting fu
 \end{table}
 
 In Tables 1 and 2, the value of $\theta_{is}$ is given by $\theta_{is} = \mathrm{arctg} p$, where $p$ is the minimum positive analytical solution of the equation $(p r - (d-1)(1-p^2))^2 = p^2 (1+p^2)$ with $r$ and $d$ being the parameters of the isosceles 3-disk system given above.
+
+\section{Conclusions}
+
+Using interval analysis, which enables us to carry out computations that output the enclosures containing the correct value with certainty, we developed zero-finding software based on interval Newton method and interval Krawczyk method in one and two dimensions. We applied our software to the study of a hard multi-disk two-dimensional scatterer, which is an important subject in chaotic dynamics. Using the Birkhoff mapping between two disks, which is a two-dimensional function, we could seek periodic orbits in an arbitrary system of disks as zeros of the function containing the composition of the corresponding Birkhoff mappings. As an example, we found several periodic orbits in 3-disk systems in the symmetric and isosceles configurations. The comparison of our results with the ones obtained previously confirms the validity of our method. The pseudocode for the interval Krawczyk method in one and two dimensions, including the purity version, is given in the Appendix.
+
+The future plans include significantly reducing the execution time. Even in the case of low-order periodic orbits in a symmetric 3-disk system, the execution time is still large if the whole phase space is given as the initial interval.
+
+
+
+
+
+
+
+
+
+
 
 \vspace*{10pt}
 

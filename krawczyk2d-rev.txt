@@ -12,3 +12,33 @@ f(x) = [sqrt(1-x[1]+x[2]),asin(x[1])-pi/6]
 # This function has a root [1/2, -1/2] on the boundary, so it is not possible to find it using purity (any small neighborhood will be always unclean)
 
 f(x) = [sqrt(1-x[1])+x[2],asin(x[1])-pi/6] # [1/2, 1/sqrt(2)]
+
+# With the example of 4-disk symmetric system, the orbit was found with very small tolerance:
+
+julia> find_periodic_orbits(c4, [1,2,3,4,1], IntervalBox(Interval(-0.708, -0.706), Interval(0.784, 0.786)), 1e-4)
+(Array{ValidatedNumerics.IntervalBox{N,T},1}[],0)
+
+julia> find_periodic_orbits(c4, [1,2,3,4,1], IntervalBox(Interval(-0.708, -0.706), Interval(0.784, 0.786)), 1e-5)
+Step 10000: a = [-0.706501, -0.706484] �[0.784671, 0.784688]
+(Array{ValidatedNumerics.IntervalBox{N,T},1}[],1821)
+
+julia> find_periodic_orbits(c4, [1,2,3,4,1], IntervalBox(Interval(-0.708, -0.706), Interval(0.784, 0.786)), 1e-6)
+Step 10000: a = [-0.707025, -0.707023] �[0.784318, 0.78432]
+Step 20000: a = [-0.707344, -0.707312] �[0.784781, 0.784813]
+Step 30000: a = [-0.707789, -0.707787] �[0.785264, 0.785266]
+Step 40000: a = [-0.70717, -0.707167] �[0.785464, 0.785467]
+Maybe a zero in [-0.707107, -0.707106] �[0.785398, 0.785399]
+Maybe a zero in [-0.707107, -0.707106] �[0.785398, 0.785399]
+Maybe a zero in [-0.707107, -0.707106] �[0.785398, 0.785399]
+Step 50000: a = [-0.70729, -0.707287] �[0.785708, 0.785711]
+Step 60000: a = [-0.7069, -0.706898] �[0.784086, 0.784088]
+Step 70000: a = [-0.706509, -0.706507] �[0.784738, 0.78474]
+Step 80000: a = [-0.706341, -0.706339] �[0.784439, 0.784441]
+Step 90000: a = [-0.706158, -0.706156] �[0.784303, 0.784305]
+Step 100000: a = [-0.706925, -0.706923] �[0.785153, 0.785155]
+([3-elementArray{ValidatedNumerics.IntervalBox{N,T},1}:
+ [-0.707107, -0.707106] �[0.785398, 0.785399]
+ [-0.707107, -0.707106] �[0.785398, 0.785399]
+ [-0.707107, -0.707106] �[0.785398, 0.785399]
+],26006)
+
