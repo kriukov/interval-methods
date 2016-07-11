@@ -1,11 +1,14 @@
 using ValidatedNumerics
-using AutoDiff
+#using AutoDiff
+using ForwardDiff
 using PurityIntervalsVN
 using KrawczykMethod2DVN
 
 using FastAnonymous
 
 typealias prec Float64
+
+import Base.convert; convert(Interval, x::Float64) = Interval(x, x)
 
 ########################################### Necessary function from IA not defined in VN
 #import Base.in
@@ -165,27 +168,27 @@ function in(x::IntUnion, y::Interval)
     end
 end
 
-import Base.mod
-function mod(x::Interval, y::Real)
+import Base.mod2pi
+function mod2pi(x::Interval)
     if x == ∅
         return ∅
     end
-	if diam(x) >= y
-		return Interval(0, y)
+	if diam(x) >= 2pi
+		return Interval(0, 2pi)
 	else
-		if in((floor(x.lo/y) + 1)*y, x)
-			return IntUnion([Interval(0, mod(x.hi, y)), Interval(mod(x.lo, y), y)]) 
+		if in((floor(x.lo/(2pi)) + 1)*2pi, x)
+			return IntUnion([Interval(0, mod2pi(x.hi)), Interval(mod2pi(x.lo), 2pi)]) 
 		else
-			return Interval(mod(x.lo, y), mod(x.hi, y))
+			return Interval(mod2pi(x.lo), mod2pi(x.hi))
 		end
 	end
 end
 
-function mod(x::IntUnion, y)
+function mod2pi(x::IntUnion)
     #println("mod of IntUnion! arg: ", x)
     res = Interval[]
     for i = 1:length(x.unionbody)
-        res_element = mod(x.unionbody[i], y)
+        res_element = mod2pi(x.unionbody[i])
         if typeof(res_element) == Interval{prec}
             push!(res, res_element)
         elseif typeof(res_element) == IntUnion
@@ -196,7 +199,9 @@ function mod(x::IntUnion, y)
     IntUnion(res)
 end
 
-
+Base.mod2pi(d::ForwardDiff.Dual) = ForwardDiff.Dual{2, Interval}(mod2pi(ForwardDiff.value(d)), ForwardDiff.partials(d))
+Base.mod2pi(d::ForwardDiff.Dual) = ForwardDiff.Dual{2, IntUnion}(mod2pi(ForwardDiff.value(d)), ForwardDiff.partials(d))
+Base.mod2pi(d::ForwardDiff.Dual) = ForwardDiff.Dual{2, Float64}(mod2pi(ForwardDiff.value(d)), ForwardDiff.partials(d))
 
 
 ###########################################
@@ -228,7 +233,7 @@ function T(x, n, m, r)
 	ω, θ = x
     #@show x, n, m 
 	ω_next = ω - r*(ω*cos(θ - alpha(n, m)) + √(1 - ω^2)*sin(θ - alpha(n, m)))
-	θ_next = mod(θ + big(pi) + asin(ω) + asin(ω_next), 2π)
+	θ_next = mod2pi(θ + big(pi) + asin(ω) + asin(ω_next))
 	#θ_next = θ + big(pi) + asin(ω) + asin(ω_next)
 	
     [ω_next, θ_next]
@@ -516,7 +521,7 @@ function T0(x, c, n, m)
 	r_nm, a_nm = table(c)
 	
 	ω_next = ω - r_nm[n, m]*(ω*cos(θ - a_nm[n, m]) + √(1 - ω^2)*sin(θ - a_nm[n, m]))
-	θ_next = mod(θ + prec(pi) + asin(ω) + asin(ω_next), 2π)
+	θ_next = mod2pi(θ + prec(pi) + asin(ω) + asin(ω_next))
 
     [ω_next, θ_next]
 end

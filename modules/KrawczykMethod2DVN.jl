@@ -2,7 +2,8 @@ module KrawczykMethod2DVN
 export krawczyk2d, differentiate, Interval, IntervalBox, rad, diam, mid, mig, mag, lo, hi, belong, hd, hull, K, bisect, jacobian, Y, krawczyk2d_internal, Ad, krawczyk2d_purity, krawczyk2d_purity_periodic, purity, PurityInterval
 
 using ValidatedNumerics
-using AutoDiff
+#using AutoDiff
+using ForwardDiff
 using PurityIntervalsVN
 
 function bisect{N,T}(xx::IntervalBox{N,T})
@@ -40,14 +41,14 @@ function krawczyk2d{N,T}(f::Function, a::IntervalBox{N,T})
     # If the jacobian is non-invertible, the SingularException error is returned for Y. We need to choose a slightly different Y then.
     function Y(f, x)
         midx = mid(x)
-	    if det(AutoDiff.jacobian(f, midx)) == 0
-		    return inv(AutoDiff.jacobian(f, midx + 0.0001*norm(diam(x))))
+	    if det(ForwardDiff.jacobian(f, midx)) == 0
+		    return inv(ForwardDiff.jacobian(f, midx + 0.0001*norm(diam(x))))
 	    else
-		    return inv(AutoDiff.jacobian(f, midx))
+		    return inv(ForwardDiff.jacobian(f, midx))
 	    end
     end
     
-    M(f, x) = I - Y(f, x)*AutoDiff.jacobian(f, x)
+    M(f, x) = I - Y(f, x)*ForwardDiff.jacobian(f, x)
 
     function K(f, x)
         midx = mid(x)

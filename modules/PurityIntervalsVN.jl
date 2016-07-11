@@ -43,6 +43,8 @@ import Base.cos
 cos(x::PurityInterval) = PurityInterval(cos(x.interval), x.flag)
 import Base.mod
 mod(x::PurityInterval, y::Real) = PurityInterval(mod(x.interval, y), x.flag)
+import Base.mod2pi
+mod2pi(x::PurityInterval) = PurityInterval(mod2pi(x.interval), x.flag)
 
 
 # On "empty-set" interval [Inf, Inf]: if you try to do [Inf, -Inf], then its subtraction may yield the whole real line!

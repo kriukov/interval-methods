@@ -94,6 +94,9 @@ rem(x::Ad, y::Real) = Ad(rem(x.u, y), x.up)
 import Base.mod
 mod(x::Ad, y::Real) = Ad(mod(x.u, y), x.up)
 
+import Base.mod2pi
+mod(x::Ad) = Ad(mod(x.u), x.up)
+
 import Base.mod1 # mod1 is a built-in function
 mod1(x::Ad, y::Real) = Ad(mod1(x.u, y), x.up)
 
