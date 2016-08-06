@@ -239,6 +239,16 @@ function T(x, n, m, r)
     [ω_next, θ_next]
 end
 
+function T1(x, n, m, r)
+	ω, θ = x
+    #@show x, n, m 
+	ω_next = ω - r*(ω*cos(θ - alpha(n, m)) + √(1 - ω^2)*sin(θ - alpha(n, m)))
+	θ_next = θ + big(pi) + asin(ω) + asin(ω_next)
+	#θ_next = θ + big(pi) + asin(ω) + asin(ω_next)
+	
+    [ω_next, θ_next]
+end
+
 function T(x::Array{IntervalBox, 1}, n, m, r)
 	sol = IntervalBox[]
 	for i = 1:length(x)
@@ -306,7 +316,8 @@ end
 #plot_band(x -> path(x, [1, 2, 3]), 100)
 
 rect = IntervalBox(-0.999..0.999, 0.001..(big(pi)/3-0.001))
-points = Array{Interval, 1}[]
+#points = Array{Interval, 1}[]
+points = IntervalBox[]
 purities = Int[]
 
 # More efficient plotting without dirty rectangles
@@ -547,6 +558,17 @@ function draw_phase_space(c, n, rect, tol)
         end
     end
     axis([0, pi/3, -1, 1])
+end
+
+function collect_phase_space(c, n, rect, tol)
+    points1 = IntervalBox[]
+    points, purities = plot_band_bisection(x -> path_general(x, c, n), rect, tol)
+    for i = 1:length(points)
+        if purities[i] == 1
+            push!(points1, points[i])
+        end
+    end
+    return points1
 end
 
 function find_periodic_orbits(c, n, rect, tol)
