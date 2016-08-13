@@ -29,3 +29,72 @@ julia> path_general(points1231[3], c, [1,2,3,1])
 2-element Array{ValidatedNumerics.Interval{Float64},1}:
   [-13.7249, 21.1265]
  [0, 6.28319]   
+
+===================
+
+julia> @time points1231 = collect_phase_space(c, [1,2,3,1], rect, 1e-5)
+4321.684488 seconds (32.80 G allocations: 927.840 GB, 15.34% gc time)
+4885559-element Array{ValidatedNumerics.IntervalBox{N,T},1}:
+
+julia> point = points1231[456]
+[-0.501497, -0.501481] × [0.286166, 0.286175]
+
+julia> diam(point)
+1.5243530273489903e-5
+
+julia> point1 = T0(point, c, 1, 2)
+2-element Array{ValidatedNumerics.Interval{Float64},1}:
+ [0.919684, 0.919849]
+ [4.0697, 4.07016]   
+
+julia> diam(point1[1])
+0.00016443396446697012
+
+julia> diam(point1[2])
+0.0004445704416244922
+
+julia> point2 = T0(point1, c, 2, 3)
+2-element Array{ValidatedNumerics.Interval{Float64},1}:
+ [0.925658, 0.931005]
+ [3.27816, 3.29341]  
+
+julia> diam(point2[1])
+0.005345713033230837
+
+julia> diam(point2[2])
+0.015245698820404385
+
+julia> point3 = T0(point2, c, 3, 1)
+2-element Array{ValidatedNumerics.Interval{Float64},1}:
+ [-0.857622, -0.681784]
+  [0.288715, 0.598772] 
+
+julia> diam(point3[1])
+0.17583751601781716
+
+julia> diam(point3[2])
+0.3100561597982745
+
+julia> path_general(point, c, [1,2,3,1])
+2-element Array{ValidatedNumerics.Interval{Float64},1}:
+ [-0.857622, -0.681784]
+  [0.288715, 0.598772] 
+
+
+for i = 1:length(points1231)
+    newpoint = path_general(points1231[i], c, [1,2,3,1])
+    if typeof(newpoint[2]) == IntUnion
+        draw_rectangle(newpoint[2].unionbody[1].lo, newpoint[1].lo, diam(newpoint[2].unionbody[1]), diam(newpoint[1]), "blue")
+        draw_rectangle(newpoint[2].unionbody[2].lo, newpoint[1].lo, diam(newpoint[2].unionbody[2]), diam(newpoint[1]), "blue")
+    else
+        draw_rectangle(newpoint[2].lo, newpoint[1].lo, diam(newpoint[2]), diam(newpoint[1]), "blue")
+    end
+end; axis([0, pi/3, -1, 1])
+
+# Tolerance 1e-6
+
+@time points1231 = collect_phase_space(c, [1,2,3,1], rect, 1e-6)
+44852.348930 seconds (264.24 G allocations: 7.296 TB, 32.19% gc time)
+39997489-element Array{ValidatedNumerics.IntervalBox{N,T},1}:
+
+
