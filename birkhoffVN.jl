@@ -4,7 +4,7 @@ using ForwardDiff
 using PurityIntervalsVN
 using KrawczykMethod2DVN
 
-using FastAnonymous
+#using FastAnonymous
 
 typealias prec Float64
 
@@ -85,6 +85,8 @@ function collapse_isect(x)
     x2
 end
 
+###### IntUnions
+
 type IntUnion
 	unionbody::Array{Interval, 1}
 	function IntUnion(x)
@@ -130,6 +132,8 @@ end
 *(x, y::IntUnion) = y*x
 /(x::IntUnion, y) = x/IntUnion([y])
 /(x, y::IntUnion) = 1/(y/x)
+
+# -(x::Array{Any,1}, y::ValidatedNumerics.IntervalBox) = 
 
 import Base.intersect
 function intersect(x::IntUnion, y::IntUnion)
@@ -203,6 +207,37 @@ Base.mod2pi(d::ForwardDiff.Dual) = ForwardDiff.Dual{2, Interval}(mod2pi(ForwardD
 Base.mod2pi(d::ForwardDiff.Dual) = ForwardDiff.Dual{2, IntUnion}(mod2pi(ForwardDiff.value(d)), ForwardDiff.partials(d))
 Base.mod2pi(d::ForwardDiff.Dual) = ForwardDiff.Dual{2, Float64}(mod2pi(ForwardDiff.value(d)), ForwardDiff.partials(d))
 
+####### IntUnion2D
+
+type IntUnion2D
+	unionbody::Array{IntervalBox, 1}
+end
+
+# Four arithmetic operations on IntUnion2D
+import Base.+, Base.-, Base.*, Base./
+for func in (:+, :-, :*, :/)
+    @eval begin
+        function $func(x::IntUnion2D, y::IntUnion2D)
+            res = IntervalBox[]
+            for i = 1:length(x.unionbody)
+                for j = 1:length(y.unionbody)
+                    push!(res, $func(x.unionbody[i], y.unionbody[j]))
+                end
+            end
+            return IntUnion2D(res)
+        end
+    end
+end
+
++(x::IntUnion2D, y::IntervalBox) = x + IntUnion2D([y])
++(x::IntervalBox, y::IntUnion2D) = y + x
+-(x::IntUnion2D) = IntUnion2D(-x.unionbody)
+-(x::IntUnion2D, y) = x - IntUnion2D([y])
+-(x::IntervalBox, y::IntUnion2D) = - (y - x)
+*(x::IntUnion2D, y::IntervalBox) = x*IntUnion2D([y])
+*(x::IntervalBox, y::IntUnion2D) = y*x
+/(x::IntUnion2D, y::IntervalBox) = x/IntUnion2D([y])
+/(x::IntervalBox, y::IntUnion2D) = 1/(y/x)
 
 ###########################################
 
@@ -528,19 +563,44 @@ end
 
 function T0(x, c, n, m)
 	ω, θ = x
-	#println("Argument into T0 with $n, $m: $x")
+	println("Argument into T0 with $n, $m: $x")
 	r_nm, a_nm = table(c)
 	
 	ω_next = ω - r_nm[n, m]*(ω*cos(θ - a_nm[n, m]) + √(1 - ω^2)*sin(θ - a_nm[n, m]))
 	θ_next = mod2pi(θ + prec(pi) + asin(ω) + asin(ω_next))
 
-    [ω_next, θ_next]
+    @show ω_next, θ_next
+	#=
+	if typeof(θ_next) == Interval{Float64}
+		return IntervalBox(ω_next, θ_next)
+	elseif typeof(θ_next) == IntUnion
+		res = IntervalBox[]
+		for i = 1:length(θ_next.unionbody)
+			push!(res, IntervalBox(ω_next, θ_next.unionbody[i]))
+		end
+	return IntUnion2D([res])
+	end
+	=#
+	return IntervalBox(ω_next, θ_next)
+end
+
+function T0gen(x, c, n, m)
+	if typeof(x) == IntervalBox{2, Float64}
+		return T0(x, c, n, m)
+	else
+		res = IntervalBox[]
+		th_parts = x[2].unionbody
+		for i = 1:length(th_parts)
+			push!(res, T0(IntervalBox(x[1], th_parts[i]), c, n, m))
+		end
+		return IntUnion2D([res])
+	end
 end
 
 function path_general(x, c, n)
     for i = 1:length(n)-1
         if n[i] != n[i+1]
-            x = T0(x, c, n[i], n[i+1])
+            @show x = T0(x, c, n[i], n[i+1])
         else
             error("Cannot hit the same disk twice in succession")
         end
@@ -838,3 +898,5 @@ function L(c, b0, orbit)
     end
     l
 end
+
+

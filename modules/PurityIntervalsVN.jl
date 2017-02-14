@@ -27,8 +27,8 @@ import Base.+, Base.-, Base.*, Base./
 for op in (:+, :-, :*, :/)
 	@eval begin
     	$op(x::PurityInterval, y::PurityInterval) = PurityInterval($op(x.interval, y.interval), min(x.flag, y.flag))
-	    $op(x::PurityInterval, c) = $op(x, PurityInterval(Interval(c)))
-	    $op(c, x::PurityInterval) = $op(PurityInterval(Interval(c)), x)
+	    $op(x::PurityInterval, c::Real) = $op(x, PurityInterval(Interval(c)))
+	    $op(c::Real, x::PurityInterval) = $op(PurityInterval(Interval(c)), x)
 	end
 end
 
